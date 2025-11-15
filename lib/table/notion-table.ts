@@ -109,6 +109,7 @@ export class NotionTable<T extends NotionPropertySchema> {
 
     try {
       const response = await this.client.pages.retrieve({ page_id: id })
+
       const notionPage = response as unknown as PageObjectResponse
 
       if (options?.cache) {
@@ -122,8 +123,12 @@ export class NotionTable<T extends NotionPropertySchema> {
         notionPage: notionPage,
         cache: this.cache,
       })
-    } catch {
-      return null
+    } catch (e) {
+      if (e instanceof Error) {
+        throw e
+      }
+
+      throw new Error("Unknown error occurred")
     }
   }
 

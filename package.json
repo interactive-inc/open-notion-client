@@ -1,6 +1,6 @@
 {
   "name": "@interactive-inc/notion-client",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "type": "module",
   "scripts": {
     "format": "biome check . --fix --unsafe",
@@ -12,17 +12,17 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@notionhq/client": "^5.3.0",
-    "marked": "^16.4.1",
-    "vitepress": "^1.6.4",
+    "@notionhq/client": "^5.4.0",
+    "marked": "^17.0.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.3",
+    "@biomejs/biome": "^2.3.5",
     "@types/bun": "latest",
-    "@typescript/native-preview": "^7.0.0-dev.20251104.1",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "@typescript/native-preview": "^7.0.0-dev.20251115.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitepress": "^1.6.4"
   },
   "publishConfig": {
     "access": "public"
