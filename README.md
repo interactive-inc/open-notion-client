@@ -1,6 +1,6 @@
 A TypeScript library that transforms Notion into a powerful, type-safe database. Seamlessly convert between Notion blocks and markdown, while enjoying simple database operations without the complexity of Notion's API.
 
-https://interactive-inc.github.io/open-notion/
+https://interactive-inc.github.io/open-notion-client/
 
 ## Use Notion as a Database
 

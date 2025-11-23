@@ -11,7 +11,7 @@ hero:
       link: /guides
     - theme: alt
       text: GitHub
-      link: https://github.com/interactive-inc/open-notion
+      link: https://github.com/interactive-inc/open-notion-client
     - theme: alt
       text: Contact
       link: https://www.inta.co.jp/contact/

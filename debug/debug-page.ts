@@ -1,13 +1,13 @@
 import { Client } from "@notionhq/client"
-import { PageReference } from "@/modules/page-reference"
+import { NotionPageReference } from "@/modules/notion-page-reference"
+import { NotionPropertyConverter } from "@/table/notion-property-converter"
 import { toNotionBlocks } from "@/to-notion-block/to-notion-blocks"
 
-// NotionクライアントをIBearTokenで初期化
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 })
 
-const pageId = "1dd842f961818176b2a4ce69051b69f0"
+const pageId = "d6ba86eb-e312-4999-be13-f3c01aeb500c"
 
 try {
   // ページを取得
@@ -17,12 +17,16 @@ try {
     throw new Error("Page not found or not accessible")
   }
 
+  // スキーマを定義（実際のページのプロパティに合わせて調整）
+  const schema = {}
+  const converter = new NotionPropertyConverter()
+
   // PageReferenceインスタンスを作成
-  const pageRef = new PageReference({
+  const pageRef = new NotionPageReference({
     notion,
-    pageId,
-    properties: page.properties,
-    rawData: page,
+    schema,
+    converter,
+    notionPage: page,
   })
 
   console.log("ページプロパティ:", pageRef.properties())

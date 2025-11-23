@@ -33,9 +33,9 @@
   "exports": {
     ".": "./build/index.js"
   },
-  "homepage": "https://interactive-inc.github.io/open-notion",
+  "homepage": "https://interactive-inc.github.io/open-notion-client",
   "repository": {
     "type": "git",
-    "url": "https://github.com/interactive-inc/open-notion.git"
+    "url": "https://github.com/interactive-inc/open-notion-client.git"
   }
 }

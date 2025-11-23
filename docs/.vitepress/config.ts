@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress"
 
 export default defineConfig({
   /** https://vitepress.dev/guide/deploy#setting-a-public-base-path */
-  base: "/open-notion/",
+  base: "/open-notion-client/",
   title: "notion-client",
   description: "Type-safe Notion database client for TypeScript",
   appearance: "force-dark",
@@ -65,7 +65,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/interactive-inc/open-notion",
+        link: "https://github.com/interactive-inc/open-notion-client",
       },
     ],
     search: {
