@@ -1,10 +1,10 @@
 ---
-description: 'ユーザと対話してcopilot-instructions.mdを初期化・更新する'
+description: 'ユーザと対話してCODEBASE.mdを初期化・更新する'
 ---
 
 # Initialize Project Documentation
 
-Checks and updates `.github/copilot-instructions.md` to ensure it contains all required project information. Gathers missing information through dialogue when needed.
+Checks and updates `CODEBASE.md` to ensure it contains all required project information. Gathers missing information through dialogue when needed.
 
 ## Core Principle
 
@@ -13,7 +13,7 @@ Checks and updates `.github/copilot-instructions.md` to ensure it contains all r
 ## Workflow
 
 1. **Check Current Documentation**
-   - Read `.github/copilot-instructions.md`
+   - Read `CODEBASE.md`
    - Analyze codebase structure
    - Identify missing or outdated information
 
@@ -30,7 +30,7 @@ Checks and updates `.github/copilot-instructions.md` to ensure it contains all r
      - Wait for user response before next question
 
 4. **Update Documentation**
-   - Update `.github/copilot-instructions.md` with gathered information
+   - Update `CODEBASE.md` with gathered information
    - Ensure all required sections are complete
    - Maintain consistency with actual codebase
 
@@ -39,7 +39,7 @@ Checks and updates `.github/copilot-instructions.md` to ensure it contains all r
 ### Initial Check Message
 ```
 プロジェクトの設定を確認させてください。
-.github/copilot-instructions.mdに必要な情報が不足しています。
+CODEBASE.mdに必要な情報が不足しています。
 
 まず最初の質問です：
 [Ask ONE question at a time from below]
@@ -86,7 +86,7 @@ During development, if information is unclear:
 
 ## Auto-Update Rules
 
-AI automatically appends discovered constraints to `.github/copilot-instructions.md`:
+AI automatically appends discovered constraints to `CODEBASE.md`:
 - Important architectural constraints discovered through implementation
 - New constraints affecting system separation
 - Constraints to prevent development drift
@@ -97,3 +97,40 @@ AI automatically appends discovered constraints to `.github/copilot-instructions
 - Focus on maintaining system separation
 - Avoid excessive documentation detail
 - When codebase is truth, update documentation to match
+
+## CODEBASE.md Template
+
+The following section names must never be changed:
+
+```markdown
+# Overview
+[Application overview description]
+
+## Directory Structure
+[Directory structure]
+
+## Technical Features
+[Technology stack]
+
+## Decoupled Design
+[System separation policy]
+
+## Core Location
+[Core functionality placement]
+
+## System Independence
+[Independence of each system]
+```
+
+### Optional Sections
+
+```markdown
+## Domain Systems
+[Domain-specific systems - for special business logic]
+
+## API Design
+[API design policy - for API-centric projects]
+
+## Data Flow
+[Data flow - for complex data processing]
+```
