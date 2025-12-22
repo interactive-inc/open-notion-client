@@ -6,10 +6,6 @@ description: 'ユーザと対話してCODEBASE.mdを初期化・更新する'
 
 Checks and updates `CODEBASE.md` to ensure it contains all required project information. Gathers missing information through dialogue when needed.
 
-## Core Principle
-
-**For this command only: Codebase is the source of truth** - When running init command, documentation must match the actual codebase structure. If documentation conflicts with code, update documentation to reflect reality.
-
 ## Workflow
 
 1. **Check Current Documentation**
@@ -35,6 +31,8 @@ Checks and updates `CODEBASE.md` to ensure it contains all required project info
    - Maintain consistency with actual codebase
 
 ## Interview Protocol
+
+**IMPORTANT**: Use the `AskUserQuestion` tool for all questions. This provides a better UX with selectable options.
 
 ### Initial Check Message
 ```
