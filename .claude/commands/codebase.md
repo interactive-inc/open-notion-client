@@ -1,134 +1,43 @@
 ---
-description: 'ユーザと対話してCODEBASE.mdを初期化・更新する'
+description: 'ユーザと対話してCLAUDE.mdを初期化・更新する'
 ---
 
-# Initialize Project Documentation
+# CLAUDE.md の初期化・更新
 
-Checks and updates `CODEBASE.md` to ensure it contains all required project information. Gathers missing information through dialogue when needed.
+`CLAUDE.md` のプロジェクト情報を確認し、不足があれば対話で収集して更新する。
 
-## Workflow
+## 前提
 
-1. **Check Current Documentation**
-   - Read `CODEBASE.md`
-   - Analyze codebase structure
-   - Identify missing or outdated information
+- 既存の CLAUDE.md の内容（参照ファイル、指示など）は保持する
+- 新しいセクションは既存コンテンツの後に追加する
 
-2. **Verification Against Codebase**
-   - Compare documentation with actual file structure
-   - Check if described directories exist
-   - Verify technical features match package.json/requirements
-   - If documentation is outdated, update to match codebase
+## ワークフロー
 
-3. **Information Gathering**
-   - If ANY required section is empty or contains placeholders:
-     - Start interview process
-     - Ask questions ONE at a time
-     - Wait for user response before next question
+1. **コード分析**: コードベースから自動抽出できる情報を収集
+2. **差分特定**: CLAUDE.md と比較し、不足・古い情報を洗い出す
+3. **質問**: 自動抽出できなかった情報のみ `AskUserQuestion` で質問
+4. **更新**: 収集した情報で CLAUDE.md を更新
 
-4. **Update Documentation**
-   - Update `CODEBASE.md` with gathered information
-   - Ensure all required sections are complete
-   - Maintain consistency with actual codebase
+## 自動抽出する情報
 
-## Interview Protocol
+- **Directory Structure** - ファイル構造から
+- **Tech Stack** - package.json, requirements.txt などから
+- **Sitemap** - ルーティング設定から
+- **Architecture** - 設定ファイル・コードから推測：
+  - インフラ構成（vercel.json, Dockerfile など）
+  - レンダリング戦略（SSR/CSR/SSG）
+  - データ管理（ORM, 状態管理）
+  - API通信の有無
+- **Features** - 主要機能を抽出：
+  - 認証（NextAuth, Firebase Auth など）
+  - 多言語化（i18n 設定）
+  - 決済（Stripe SDK など）
+  - 外部サービス連携（API、SaaS など）
+  - その他検出した機能
 
-**IMPORTANT**: Use the `AskUserQuestion` tool for all questions. This provides a better UX with selectable options.
+## 質問する情報
 
-### Initial Check Message
-```
-プロジェクトの設定を確認させてください。
-CODEBASE.mdに必要な情報が不足しています。
+自動抽出できない場合のみ質問：
 
-まず最初の質問です：
-[Ask ONE question at a time from below]
-```
-
-### Required Questions (Ask ONE at a time)
-
-1. **Application Purpose**:
-   ```
-   このアプリケーションの目的を教えてください：
-   - 実際の商品販売用ですか？
-   - デモ・プレゼンテーション用ですか？
-   - 学習・練習用ですか？
-   ```
-
-2. **System Separation**:
-   ```
-   システムの分離方針を教えてください：
-   - フロントエンドのみのモックでよいですか？
-   - バックエンドAPIとの連携予定はありますか？
-   - データの永続化は必要ですか？
-   ```
-
-3. **Core Functionality**:
-   ```
-   コア機能の配置について教えてください：
-   - 現在の構成でよいですか？
-   - 他に必要な機能や特別な要件はありますか？
-   ```
-
-## Continuous Information Gathering
-
-During development, if information is unclear:
-1. STOP current task
-2. Ask ONE clarifying question
-3. Wait for answer
-4. Continue implementation
-
-### Trigger Conditions
-- System separation requirements unclear → ASK before coding
-- Core functionality placement ambiguous → ASK before creating files
-- Architectural constraints missing → ASK before implementing
-- Implementation direction could drift → ASK before proceeding
-
-## Auto-Update Rules
-
-AI automatically appends discovered constraints to `CODEBASE.md`:
-- Important architectural constraints discovered through implementation
-- New constraints affecting system separation
-- Constraints to prevent development drift
-
-### Update Principles
-- Add constraints only when architectural direction drifts
-- Remove specifications that aren't preventing problems
-- Focus on maintaining system separation
-- Avoid excessive documentation detail
-- When codebase is truth, update documentation to match
-
-## CODEBASE.md Template
-
-The following section names must never be changed:
-
-```markdown
-# Overview
-[Application overview description]
-
-## Directory Structure
-[Directory structure]
-
-## Technical Features
-[Technology stack]
-
-## Decoupled Design
-[System separation policy]
-
-## Core Location
-[Core functionality placement]
-
-## System Independence
-[Independence of each system]
-```
-
-### Optional Sections
-
-```markdown
-## Domain Systems
-[Domain-specific systems - for special business logic]
-
-## API Design
-[API design policy - for API-centric projects]
-
-## Data Flow
-[Data flow - for complex data processing]
-```
+- **目的** - このアプリは何をするか
+- **制約・注意点** - 守るべきルール、避けるべきこと
