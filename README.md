@@ -218,18 +218,58 @@ const userTable = new NotionTable({
 | `- Item` | `bulleted_list_item` | - List item |
 | `1. Item` | `numbered_list_item` | 1. First item |
 | `` ```code``` `` | `code` | ```js<br>console.log()<br>``` |
+| `> Quote` | `quote` | > Quoted text |
+| `- [ ] Task` | `to_do` (unchecked) | - [ ] Todo |
+| `- [x] Task` | `to_do` (checked) | - [x] Done |
+| `---` | `divider` | Horizontal rule |
+| `$equation$` | `equation` | $E = mc^2$ |
 | `**bold**` | Rich text with bold | **Important** |
 | `*italic*` | Rich text with italic | *Emphasis* |
 | `~~strike~~` | Rich text with strikethrough | ~~Deleted~~ |
 | `` `code` `` | Rich text with code | `variable` |
 
 ### Notion to Markdown
+
+#### Text Blocks
+
 - Paragraph blocks → Plain text
 - Heading 1, 2, 3 blocks → `#`, `##`, `###`
 - Bulleted list items → `-` lists
 - Numbered list items → `1.` lists
 - Code blocks → `` ``` `` fenced code blocks
-- Rich text formatting preserved (bold, italic, strikethrough, inline code)
+- Quote blocks → `>` blockquotes
+- Callout blocks → `>` with emoji icon
+- To-do blocks → `- [ ]` / `- [x]` checkboxes
+- Toggle blocks → Bold text with nested content
+
+#### Layout Blocks
+
+- Divider blocks → `---` horizontal rules
+- Equation blocks → `$equation$` LaTeX
+- Table blocks → Markdown tables with `|` syntax
+- Column list/column blocks → Concatenated content
+
+#### Media Blocks
+
+- Image blocks → `![alt](url)` images
+- Video blocks → URL links
+- Audio blocks → `[音声](url)` links
+- File blocks → `[ファイル](url)` links
+- PDF blocks → `[PDF](url)` links
+
+#### Embed Blocks
+
+- Embed blocks → URL
+- Bookmark blocks → URL
+- Link preview blocks → URL
+- Child page blocks → `[title](notion-url)` links
+- Child database blocks → `[title](notion-url)` links
+- Link to page blocks → Notion URLs
+
+#### Rich Text Formatting
+
+- Bold, italic, strikethrough, inline code preserved
+- Links converted to markdown syntax
 
 ### Markdown to Notion
 - Plain text → Paragraph blocks
