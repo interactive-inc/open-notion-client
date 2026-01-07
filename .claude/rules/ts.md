@@ -40,6 +40,10 @@ const foo = {} as any // Do NOT use any type
 - Avoid if-else statements
 - Use early returns instead of nested if statements
 - Use if statements instead of switch statements
+- Do NOT wrap code in `main()` function - use top-level await directly
+  - NG: `async function main() { ... } main().catch(console.error)`
+  - NG: `async function main() { ... } await main()`
+  - OK: Write async code directly at top-level with `await`
 
 ### Comments
 
