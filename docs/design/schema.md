@@ -4,15 +4,19 @@ Learn how to define type-safe schemas for your Notion databases.
 
 ## Basic Schema
 
-Define your database structure with TypeScript:
+Define your database structure with TypeScript using the `properties` parameter:
 
 ```typescript
-const schema = {
-  title: { type: 'title' },
-  description: { type: 'rich_text' },
-  priority: { type: 'number' },
-  status: { type: 'select', options: ['todo', 'in_progress', 'done'] }
-} as const
+const tasksTable = new NotionTable({
+  client,
+  dataSourceId: 'your-database-id',
+  properties: {
+    title: { type: 'title' },
+    description: { type: 'rich_text' },
+    priority: { type: 'number' },
+    status: { type: 'select', options: ['todo', 'in_progress', 'done'] }
+  } as const
+})
 ```
 
 ## Property Types
@@ -51,24 +55,9 @@ Every Notion database must have exactly one title property:
 {
   // Basic number
   price: { type: 'number' },
-  
-  // With validation
-  age: {
-    type: 'number',
-    min: 0,
-    max: 150
-  },
-  
-  // Custom validation
-  rating: {
-    type: 'number',
-    validate: (value) => {
-      if (value % 0.5 !== 0) {
-        return 'Rating must be in 0.5 increments'
-      }
-      return true
-    }
-  }
+
+  // With format (percent, dollar, etc.)
+  discount: { type: 'number', format: 'percent' }
 }
 ```
 
@@ -81,11 +70,17 @@ Every Notion database must have exactly one title property:
     type: 'select',
     options: ['bug', 'feature', 'enhancement'] as const
   },
-  
+
   // Multi-select
   tags: {
     type: 'multi_select',
     options: ['urgent', 'blocked', 'needs-review'] as const
+  },
+
+  // Status (special select type)
+  status: {
+    type: 'status',
+    options: ['Not started', 'In progress', 'Done'] as const
   }
 }
 ```
@@ -94,12 +89,16 @@ Every Notion database must have exactly one title property:
 
 ```typescript
 {
-  // Simple date
-  createdAt: { type: 'date' },
-
-  // Date field
+  // Date with start and optional end
   deadline: { type: 'date' }
 }
+
+// Usage
+await table.create({
+  properties: {
+    deadline: { start: '2024-01-01', end: null }
+  }
+})
 ```
 
 ### Other Properties
@@ -108,223 +107,88 @@ Every Notion database must have exactly one title property:
 {
   // Boolean
   isActive: { type: 'checkbox' },
-  
+
   // User references
   assignee: { type: 'people' },
-  
+
   // File attachments
   attachments: { type: 'files' },
-  
+
   // Relations to other databases
   project: { type: 'relation' },
-  
-  // Computed values
+
+  // Computed values (read-only)
   total: { type: 'formula' },
-  
-  // Aggregated from relations
-  taskCount: { type: 'rollup' }
+
+  // Aggregated from relations (read-only)
+  taskCount: { type: 'rollup' },
+
+  // Auto-generated timestamps (read-only)
+  createdTime: { type: 'created_time' },
+  lastEditedTime: { type: 'last_edited_time' },
+
+  // Auto-generated users (read-only)
+  createdBy: { type: 'created_by' },
+  lastEditedBy: { type: 'last_edited_by' }
 }
 ```
 
 ## Type Inference
 
-The schema automatically infers TypeScript types:
+The properties automatically infer TypeScript types:
 
 ```typescript
-const taskSchema = {
+const taskProperties = {
   title: { type: 'title' },
   priority: { type: 'number' },
-  tags: { type: 'multi_select', options: ['bug', 'feature'] }
+  tags: { type: 'multi_select', options: ['bug', 'feature'] as const }
 } as const
 
-type Task = InferSchemaType<typeof taskSchema>
-// {
-//   id: string
-//   title: string | null
-//   priority: number | null
-//   tags: ('bug' | 'feature')[] | null
-// }
-```
-
-## Validation
-
-### Built-in Validation
-
-```typescript
-const productSchema = {
-  name: { type: 'title' },
-  price: {
-    type: 'number',
-    min: 0
-  },
-  stock: { 
-    type: 'number',
-    min: 0,
-    max: 10000
-  }
-} as const
-```
-
-### Custom Validators
-
-```typescript
-const userSchema = {
-  username: {
-    type: 'title',
-    validate: (value) => {
-      if (value.length < 3) {
-        return 'Username must be at least 3 characters'
-      }
-      if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-        return 'Username can only contain letters, numbers, and underscores'
-      }
-      return true
-    }
-  },
-  email: {
-    type: 'email',
-    validate: async (value) => {
-      // Async validation
-      const exists = await checkEmailExists(value)
-      if (exists) {
-        return 'Email already registered'
-      }
-      return true
-    }
-  }
-} as const
-```
-
-## Advanced Patterns
-
-### Dependent Fields
-
-```typescript
-const orderSchema = {
-  status: {
-    type: 'select',
-    options: ['pending', 'shipped', 'delivered']
-  },
-  shippedAt: { type: 'date' },
-  deliveredAt: { type: 'date' }
-} as const
-
-// Use hooks to enforce dependencies
-const ordersTable = new NotionTable({
-  schema: orderSchema,
-  hooks: {
-    beforeCreate: async (data) => {
-      if (data.status === 'shipped' && !data.shippedAt) {
-        throw new Error('Shipped date required for shipped orders')
-      }
-      return data
-    }
-  }
-})
-```
-
-### Computed Defaults
-
-```typescript
-const documentSchema = {
-  title: { type: 'title' },
-  slug: { type: 'rich_text' },
-  createdAt: { type: 'date' }
-} as const
-
-const documentsTable = new NotionTable({
-  schema: documentSchema,
-  hooks: {
-    beforeCreate: async (data) => {
-      return {
-        ...data,
-        // Auto-generate slug from title
-        slug: data.slug || data.title.toLowerCase().replace(/\s+/g, '-'),
-        // Set creation date
-        createdAt: data.createdAt || new Date().toISOString()
-      }
-    }
-  }
-})
-```
-
-### Nested Data with JSON
-
-```typescript
-const configSchema = {
-  name: { type: 'title' },
-  settings: { 
-    type: 'rich_text',
-    validate: (value) => {
-      try {
-        JSON.parse(value)
-        return true
-      } catch {
-        return 'Settings must be valid JSON'
-      }
-    }
-  }
-} as const
-
-// Helper functions for JSON fields
-const config = await configTable.create({
-  name: 'App Config',
-  settings: JSON.stringify({
-    theme: 'dark',
-    features: ['auth', 'analytics']
-  })
-})
-
-// Parse on retrieval
-const parsed = {
-  ...config,
-  settings: JSON.parse(config.settings)
-}
-```
-
-## Schema Evolution
-
-### Adding Fields
-
-New optional fields can be added safely:
-
-```typescript
-// Version 1
-const schemaV1 = {
-  title: { type: 'title' }
-}
-
-// Version 2 - Safe addition
-const schemaV2 = {
-  title: { type: 'title' },
-  description: { type: 'rich_text' }
-}
-```
-
-### Handling Breaking Changes
-
-```typescript
-// Migration strategy for default values
-const migrationSchema = {
-  title: { type: 'title' },
-  category: {
-    type: 'select',
-    options: ['general', 'important']
-  }
-}
-
-// Add default during migration period
 const table = new NotionTable({
-  schema: migrationSchema,
-  hooks: {
-    beforeCreate: async (data) => {
-      return {
-        ...data,
-        category: data.category || 'general'
-      }
-    }
+  client,
+  dataSourceId: 'db-id',
+  properties: taskProperties
+})
+
+// TypeScript infers correct types for create/update
+await table.create({
+  properties: {
+    title: 'Task',           // string
+    priority: 5,             // number | null
+    tags: ['bug', 'feature'] // ('bug' | 'feature')[]
   }
 })
+
+// And for query results
+const tasks = await table.findMany()
+for (const task of tasks) {
+  const props = task.properties()
+  // props.title: string
+  // props.priority: number | null
+  // props.tags: string[]
+}
+```
+
+## Using SchemaType
+
+Extract the TypeScript type from your properties definition:
+
+```typescript
+import type { SchemaType } from '@interactive-inc/notion-client'
+
+const properties = {
+  title: { type: 'title' },
+  status: { type: 'select', options: ['active', 'inactive'] as const },
+  count: { type: 'number' }
+} as const
+
+// Extract the type
+type MyRecord = SchemaType<typeof properties>
+// {
+//   title: string
+//   status: string | null
+//   count: number | null
+// }
 ```
 
 ## Best Practices
@@ -332,18 +196,18 @@ const table = new NotionTable({
 ### Use Const Assertions
 
 ```typescript
-// Good - preserves literal types
-const schema = {
-  status: { 
-    type: 'select', 
-    options: ['active', 'inactive'] as const 
+// Good - preserves literal types for options
+const properties = {
+  status: {
+    type: 'select',
+    options: ['active', 'inactive'] as const
   }
 } as const
 
 // Avoid - loses type information
-const schema = {
-  status: { 
-    type: 'select', 
+const properties = {
+  status: {
+    type: 'select',
     options: ['active', 'inactive']
   }
 }
@@ -352,21 +216,66 @@ const schema = {
 ### Organize Complex Schemas
 
 ```typescript
-// Separate concerns
-const baseSchema = {
-  id: { type: 'title' },
-  createdAt: { type: 'date' }
+// Define properties separately for reuse
+const baseProperties = {
+  title: { type: 'title' },
+  createdAt: { type: 'created_time' }
 } as const
 
-const userSchema = {
-  ...baseSchema,
+const userProperties = {
+  ...baseProperties,
   email: { type: 'email' },
-  role: { type: 'select', options: ['admin', 'user'] }
+  role: { type: 'select', options: ['admin', 'user'] as const }
 } as const
 
-const productSchema = {
-  ...baseSchema,
-  price: { type: 'number', min: 0 },
-  stock: { type: 'number', min: 0 }
+const productProperties = {
+  ...baseProperties,
+  price: { type: 'number' },
+  stock: { type: 'number' }
 } as const
 ```
+
+### Validate Before Operations
+
+Since the library doesn't include built-in validation, validate your data before database operations:
+
+```typescript
+function validateTask(data: { title?: string; priority?: number }) {
+  if (!data.title || data.title.length < 3) {
+    throw new Error('Title must be at least 3 characters')
+  }
+
+  if (data.priority !== undefined && (data.priority < 1 || data.priority > 10)) {
+    throw new Error('Priority must be between 1 and 10')
+  }
+}
+
+// Use before creation
+validateTask(input)
+await table.create({ properties: input })
+```
+
+## Property Type Reference
+
+| Type | TypeScript Type | Nullable | Notes |
+| ---- | --------------- | -------- | ----- |
+| `title` | `string` | No | Required, one per database |
+| `rich_text` | `string` | Yes | Plain text value |
+| `number` | `number` | Yes | Supports format option |
+| `select` | `string` | Yes | Single option |
+| `multi_select` | `string[]` | Yes | Multiple options |
+| `status` | `string` | Yes | Special select type |
+| `checkbox` | `boolean` | No | Always has value |
+| `date` | `{ start: string, end: string \| null }` | Yes | ISO date strings |
+| `url` | `string` | Yes | URL string |
+| `email` | `string` | Yes | Email string |
+| `phone_number` | `string` | Yes | Phone string |
+| `people` | `object[]` | Yes | User objects |
+| `files` | `object[]` | Yes | File objects |
+| `relation` | `object[]` | Yes | Related page refs |
+| `formula` | `string \| number \| boolean \| object` | Yes | Read-only |
+| `rollup` | `various` | Yes | Read-only |
+| `created_time` | `string` | No | Read-only, ISO date |
+| `last_edited_time` | `string` | No | Read-only, ISO date |
+| `created_by` | `object` | No | Read-only, user |
+| `last_edited_by` | `object` | No | Read-only, user |

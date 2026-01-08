@@ -55,10 +55,11 @@ With notion-client:
 // Fetch record
 const task = await tasksTable.findById('xxx')
 
-// Access value directly
-const title = task.title
-//            ^^^^^^^^^^
-//            Direct access!
+// Access properties via method
+const props = task.properties()
+const title = props.title
+//            ^^^^^^^^^^^
+//            Clean access via properties()!
 
 // Clean response:
 {
@@ -106,10 +107,12 @@ const response = await notion.pages.create({
 
 ```typescript
 const task = await tasksTable.create({
-  title: 'Complete project',
-  status: 'In Progress',
-  priority: 5,
-  tags: ['urgent', 'frontend']
+  properties: {
+    title: 'Complete project',
+    status: 'In Progress',
+    priority: 5,
+    tags: ['urgent', 'frontend']
+  }
 })
 ```
 
@@ -154,15 +157,19 @@ const tasks = response.results.map(page => ({
 **notion-client:**
 
 ```typescript
-const { records } = await tasksTable.findMany({
+const tasks = await tasksTable.findMany({
   where: {
-    status: { $ne: 'Done' },
-    priority: { $gte: 5 }
+    status: { does_not_equal: 'Done' },
+    priority: { greater_than_or_equal_to: 5 }
   },
-  sorts: [{ property: 'priority', direction: 'descending' }]
+  sorts: [{ field: 'priority', direction: 'desc' }]
 })
 
 // Data is already clean and typed
+for (const task of tasks) {
+  const props = task.properties()
+  console.log(props.title, props.priority)
+}
 ```
 
 ## Complex Properties Simplified
@@ -192,10 +199,11 @@ const tags = page.properties.Tags.multi_select.map(tag => tag.name)
 
 ```typescript
 // Setting
-{ tags: ['bug', 'critical'] }
+{ properties: { tags: ['bug', 'critical'] } }
 
 // Reading - already an array
-const tags = record.tags // ['bug', 'critical']
+const props = record.properties()
+const tags = props.tags // ['bug', 'critical']
 ```
 
 ### People
@@ -223,10 +231,11 @@ const assignees = page.properties.Assignee.people.map(person => person.id)
 
 ```typescript
 // Setting
-{ assignee: ['user-id-1', 'user-id-2'] }
+{ properties: { assignee: ['user-id-1', 'user-id-2'] } }
 
 // Reading
-const assignees = record.assignee // ['user-id-1', 'user-id-2']
+const props = record.properties()
+const assignees = props.assignee // [{ id: 'user-id-1', ... }, ...]
 ```
 
 ### Rich Text with Formatting
@@ -257,7 +266,9 @@ const assignees = record.assignee // ['user-id-1', 'user-id-2']
 
 ```typescript
 {
-  description: 'This is **bold** text'
+  properties: {
+    description: 'This is **bold** text'
+  }
 }
 ```
 
@@ -273,9 +284,11 @@ const assignees = record.assignee // ['user-id-1', 'user-id-2']
 ```typescript
 // notion-client provides full TypeScript support
 const task = await tasksTable.create({
-  title: 'Task',        // ✅ Required
-  status: 'todo',       // ✅ Auto-completes valid options
-  priority: 'high'      // ❌ Type error: must be number
+  properties: {
+    title: 'Task',        // ✅ Required
+    status: 'todo',       // ✅ Auto-completes valid options
+    priority: 'high'      // ❌ Type error: must be number
+  }
 })
 ```
 
@@ -283,13 +296,14 @@ const task = await tasksTable.create({
 
 ```typescript
 // Standard Notion API
-if (page.properties.Status.select?.name === 'Done' && 
+if (page.properties.Status.select?.name === 'Done' &&
     page.properties.Priority.number >= 5) {
   // ...
 }
 
 // notion-client
-if (task.status === 'Done' && task.priority >= 5) {
+const props = task.properties()
+if (props.status === 'Done' && props.priority >= 5) {
   // ...
 }
 ```
@@ -347,8 +361,8 @@ async function getTasks() {
 
 // After: notion-client
 async function getTasks() {
-  const { records } = await tasksTable.findMany()
-  return records
+  const tasks = await tasksTable.findMany()
+  return tasks.map(t => t.properties())
 }
 ```
 

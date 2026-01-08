@@ -61,7 +61,8 @@ const contact = await contactsTable.findOne({
 })
 
 if (contact) {
-  console.log(contact.name)
+  const props = contact.properties()
+  console.log(props.name)
 }
 ```
 
@@ -209,22 +210,39 @@ const all = await table.findMany()
 const active = all.filter(r => r.properties().status === 'active')
 ```
 
-### Implement Caching
+### Use Built-in Caching
+
+NotionTable has built-in caching for `findById`:
 
 ```typescript
-import { NotionMemoryCache } from '@interactive-inc/notion-client'
+// Use cache option to enable caching
+const page = await table.findById('page-id', { cache: true })
 
-const cache = new NotionMemoryCache({ ttl: 300000 }) // 5 minutes
+// Cache stores pages and blocks automatically
+// Clear cache when needed
+table.clearCache()
+```
 
-// Check cache first
-const cached = cache.get('active-tasks')
-if (cached) return cached
+You can also share a cache instance across multiple tables:
 
-// Fetch and cache
-const results = await tasksTable.findMany({
-  where: { status: 'active' }
+```typescript
+import { NotionMemoryCache, NotionTable } from '@interactive-inc/notion-client'
+
+const cache = new NotionMemoryCache()
+
+const tasksTable = new NotionTable({
+  client,
+  dataSourceId: 'tasks-db',
+  properties: { title: { type: 'title' } } as const,
+  cache
 })
-cache.set('active-tasks', results)
+
+const projectsTable = new NotionTable({
+  client,
+  dataSourceId: 'projects-db',
+  properties: { name: { type: 'title' } } as const,
+  cache
+})
 ```
 
 ## Error Handling
