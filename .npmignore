@@ -11,4 +11,4 @@ init.ts
 PRODUCT.md
 README.md
 tsconfig.json
-tsup.config.ts
+tsdown.config.ts
