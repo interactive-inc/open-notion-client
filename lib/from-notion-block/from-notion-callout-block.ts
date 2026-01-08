@@ -12,7 +12,7 @@ export function fromNotionCalloutBlock(block: NotionCalloutBlock): string {
   const content = `${prefix}${text}`
   const lines = content.split("\n").map((line) => `> ${line}`)
 
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return lines.join("\n")
   }
 

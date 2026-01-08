@@ -10,7 +10,7 @@ export function fromNotionToDoBlock(block: NotionToDoBlock): string {
   const checkbox = block.to_do.checked ? "[x]" : "[ ]"
   const itemText = `- ${checkbox} ${text}`
 
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return itemText
   }
 
