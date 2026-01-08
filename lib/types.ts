@@ -473,7 +473,14 @@ export type NotionConverterInterface = {
 import type {
   BlockObjectResponse,
   BulletedListItemBlockObjectResponse,
+  CalloutBlockObjectResponse,
+  ColumnBlockObjectResponse,
+  ColumnListBlockObjectResponse,
   NumberedListItemBlockObjectResponse,
+  QuoteBlockObjectResponse,
+  TableBlockObjectResponse,
+  ToDoBlockObjectResponse,
+  ToggleBlockObjectResponse,
 } from "@notionhq/client/build/src/api-endpoints"
 
 /**
@@ -488,8 +495,26 @@ export const BlockType = {
   NumberedListItem: "numbered_list_item",
   Code: "code",
   Quote: "quote",
+  Callout: "callout",
+  ToDo: "to_do",
+  Toggle: "toggle",
   Divider: "divider",
   Image: "image",
+  Video: "video",
+  Audio: "audio",
+  File: "file",
+  Pdf: "pdf",
+  Embed: "embed",
+  Bookmark: "bookmark",
+  LinkPreview: "link_preview",
+  LinkToPage: "link_to_page",
+  ChildPage: "child_page",
+  ChildDatabase: "child_database",
+  Table: "table",
+  TableRow: "table_row",
+  ColumnList: "column_list",
+  Column: "column",
+  Equation: "equation",
   Title: "title",
 } as const
 
@@ -537,6 +562,55 @@ export type NotionNumberedListItemBlock =
   NumberedListItemBlockObjectResponse & {
     children: NotionBlock[]
   }
+
+/**
+ * Notion quote block type
+ */
+export type NotionQuoteBlock = QuoteBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion callout block type
+ */
+export type NotionCalloutBlock = CalloutBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion to_do block type
+ */
+export type NotionToDoBlock = ToDoBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion toggle block type
+ */
+export type NotionToggleBlock = ToggleBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion table block type
+ */
+export type NotionTableBlock = TableBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion column list block type
+ */
+export type NotionColumnListBlock = ColumnListBlockObjectResponse & {
+  children: NotionBlock[]
+}
+
+/**
+ * Notion column block type
+ */
+export type NotionColumnBlock = ColumnBlockObjectResponse & {
+  children: NotionBlock[]
+}
 
 /* Notion API Request Property Types */
 
