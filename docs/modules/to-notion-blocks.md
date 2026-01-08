@@ -14,7 +14,7 @@ import { toNotionBlocks } from '@interactive-inc/notion-client'
 function toNotionBlocks(markdown: string): BlockObjectRequest[]
 ```
 
-Note: Block type transformation (e.g., heading level adjustment) is handled by the [NotionMarkdown](notion-markdown.md) option in NotionTable, not in this function directly.
+Note: Block type transformation (e.g., heading level adjustment) is handled by the [NotionMarkdown](./index#notionmarkdown) option in NotionTable, not in this function directly.
 
 ## Supported Markdown
 
