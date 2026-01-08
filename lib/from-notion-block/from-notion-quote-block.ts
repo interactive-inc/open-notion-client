@@ -9,7 +9,7 @@ export function fromNotionQuoteBlock(block: NotionQuoteBlock): string {
   const text = fromNotionRichTextItem(block.quote.rich_text)
   const lines = text.split("\n").map((line) => `> ${line}`)
 
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return lines.join("\n")
   }
 

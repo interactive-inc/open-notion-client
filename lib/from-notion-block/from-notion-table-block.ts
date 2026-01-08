@@ -5,7 +5,7 @@ import { fromNotionRichTextItem } from "@/utils"
  * Convert Notion table block to markdown
  */
 export function fromNotionTableBlock(block: NotionTableBlock): string {
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return ""
   }
 

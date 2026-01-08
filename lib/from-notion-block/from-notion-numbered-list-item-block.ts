@@ -7,7 +7,7 @@ export function fromNotionNumberedListItemBlock(
 ): string {
   const itemText = `1. ${fromNotionRichTextItem(block.numbered_list_item.rich_text)}`
 
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return itemText
   }
 

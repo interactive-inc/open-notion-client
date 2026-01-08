@@ -8,7 +8,7 @@ import { fromNotionRichTextItem } from "@/utils"
 export function fromNotionToggleBlock(block: NotionToggleBlock): string {
   const text = fromNotionRichTextItem(block.toggle.rich_text)
 
-  if (block.children.length === 0) {
+  if (!block.children || block.children.length === 0) {
     return `**${text}**`
   }
 
