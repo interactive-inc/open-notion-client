@@ -135,10 +135,8 @@ const result = await tasksTable.upsert({
 // Soft delete (archive)
 await tasksTable.delete('page-id')
 
-// Delete many
-const deletedCount = await tasksTable.deleteMany({
-  where: { status: 'cancelled' }
-})
+// Delete many (pass where condition directly)
+const deletedCount = await tasksTable.deleteMany({ status: 'cancelled' })
 
 // Restore
 await tasksTable.restore('page-id')

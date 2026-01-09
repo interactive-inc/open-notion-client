@@ -76,9 +76,11 @@ const tasksTable = new NotionTable({
 
 ```typescript
 const task = await tasksTable.create({
-  title: 'Learn notion-client',
-  status: 'todo',
-  priority: 1
+  properties: {
+    title: 'Learn notion-client',
+    status: 'todo',
+    priority: 1
+  }
 })
 
 console.log(task.id) // Notion page ID
@@ -88,7 +90,7 @@ console.log(task.id) // Notion page ID
 
 ```typescript
 // Find all
-const { records } = await tasksTable.findMany()
+const tasks = await tasksTable.findMany()
 
 // Find with filter
 const todoTasks = await tasksTable.findMany({
@@ -102,13 +104,21 @@ const task = await tasksTable.findOne({
 
 // Find by ID
 const specific = await tasksTable.findById('page-id')
+
+// Access properties
+if (task) {
+  const props = task.properties()
+  console.log(props.title)
+}
 ```
 
 ### Update Record
 
 ```typescript
 await tasksTable.update(task.id, {
-  status: 'done'
+  properties: {
+    status: 'done'
+  }
 })
 ```
 
@@ -181,32 +191,35 @@ const schema = {
 const projectTable = new NotionTable({
   client: notion,
   dataSourceId: 'your-database-id',
-  schema
+  properties: schema
 })
 
 // Create task
 const task = await projectTable.create({
-  title: 'Fix login bug',
-  description: 'Users cannot login with email',
-  status: 'todo',
-  priority: 5,
-  tags: ['bug']
+  properties: {
+    title: 'Fix login bug',
+    description: 'Users cannot login with email',
+    status: 'todo',
+    priority: 5,
+    tags: ['bug']
+  }
 })
 
 // Query tasks
 const urgentBugs = await projectTable.findMany({
   where: {
-    status: { $ne: 'done' },
-    priority: { $gte: 4 },
-    tags: { $contains: 'bug' }
+    status: { does_not_equal: 'done' },
+    priority: { greater_than_or_equal_to: 4 },
+    tags: { contains: 'bug' }
   },
-  sorts: [{ property: 'priority', direction: 'descending' }]
+  sorts: [{ field: 'priority', direction: 'desc' }]
 })
 
 // Update task
 await projectTable.update(task.id, {
-  status: 'in_progress',
-  assignee: ['user-id']
+  properties: {
+    status: 'in_progress'
+  }
 })
 ```
 

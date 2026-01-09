@@ -1,12 +1,15 @@
-A TypeScript library that transforms Notion into a powerful, type-safe database. Seamlessly convert between Notion blocks and markdown, while enjoying simple database operations without the complexity of Notion's API.
+# notion-client
+
+Notionを型安全なデータベースとして扱うためのTypeScriptライブラリ。NotionブロックとMarkdownの相互変換、シンプルなデータベース操作を提供します。
 
 https://interactive-inc.github.io/open-notion-client/
 
-## Use Notion as a Database
+## Notionをデータベースとして使う
 
-Working directly with Notion's API can be overwhelming. The API responses include extensive formatting information like text colors, bold/italic styles, annotations, and deeply nested metadata structures. What should be a simple database query becomes a complex parsing exercise.
+Notion APIを直接扱うのは大変です。APIレスポンスにはテキストの色、太字/斜体スタイル、アノテーション、深くネストされたメタデータ構造など、膨大なフォーマット情報が含まれています。シンプルなデータベースクエリが、複雑なパース処理になってしまいます。
 
-For example, retrieving a simple text value requires navigating through multiple nested objects:
+例えば、単純なテキスト値を取得するだけでも、複数のネストされたオブジェクトを辿る必要があります：
+
 ```json
 {
   "properties": {
@@ -24,26 +27,26 @@ For example, retrieving a simple text value requires navigating through multiple
 }
 ```
 
-notion-client simplifies this to just `{ name: "Hello World" }`, making Notion as easy to use as any traditional database.
+notion-clientはこれを `{ name: "Hello World" }` にシンプル化し、Notionを従来のデータベースのように簡単に使えるようにします。
 
-## Features
+## 特徴
 
-- **Bidirectional Conversion**: Convert between Notion blocks and markdown text
-- **Type-safe Database Operations**: Strongly-typed CRUD operations for Notion databases
-- **Block Type Support**: Supports paragraphs, headings (H1-H3), lists, and code blocks
-- **Rich Text Formatting**: Handles bold, italic, strikethrough, and inline code
-- **Recursive Block Fetching**: Automatically fetches nested child blocks
-- **Advanced Querying**: Filter, sort, and paginate database queries
+- **双方向変換**: NotionブロックとMarkdownテキストの相互変換
+- **型安全なデータベース操作**: Notionデータベースに対する型付きCRUD操作
+- **ブロックタイプサポート**: 25種類以上のNotionブロックタイプに対応（段落、見出し、リスト、コード、テーブル、To-do、トグルなど）
+- **リッチテキストフォーマット**: 太字、斜体、取り消し線、インラインコードに対応
+- **再帰的ブロック取得**: ネストされた子ブロックを自動的に取得
+- **高度なクエリ**: フィルター、ソート、ページネーションをサポート
 
-## Installation
+## インストール
 
 ```bash
 bun i @interactive-inc/notion-client
 ```
 
-## Usage
+## 使い方
 
-### Type-safe Database Operations
+### 型安全なデータベース操作
 
 ```typescript
 import { Client } from '@notionhq/client'
@@ -53,8 +56,8 @@ const client = new Client({ auth: process.env.NOTION_TOKEN })
 
 const tasksTable = new NotionTable({
   client,
-  tableId: 'your-database-id',
-  schema: {
+  dataSourceId: 'your-database-id',
+  properties: {
     title: { type: 'title' },
     status: { type: 'select', options: ['todo', 'in_progress', 'done'] },
     priority: { type: 'number' },
@@ -62,62 +65,68 @@ const tasksTable = new NotionTable({
   } as const
 })
 
-// Create a record
+// レコードを作成
 const task = await tasksTable.create({
-  title: 'Implement new feature',
-  status: 'todo',
-  priority: 1,
-  tags: ['feature']
+  properties: {
+    title: '新機能を実装する',
+    status: 'todo',
+    priority: 1,
+    tags: ['feature']
+  }
 })
 
-// Query records with filtering and sorting
-const { records } = await tasksTable.findMany({
+// フィルターとソートでレコードを検索
+const tasks = await tasksTable.findMany({
   where: {
     status: 'in_progress',
-    priority: { $gte: 3 }
+    priority: { greater_than_or_equal_to: 3 }
   },
-  sorts: [{ property: 'priority', direction: 'descending' }],
-  limit: 10
+  sorts: [{ field: 'priority', direction: 'desc' }],
+  count: 10
 })
 
-// Update a record
+// レコードを更新
 await tasksTable.update(task.id, {
-  status: 'done'
+  properties: {
+    status: 'done'
+  }
 })
 ```
 
-### Working with Markdown Content
+### Markdownコンテンツの操作
 
 ```typescript
 import { NotionTable, NotionMarkdown } from '@interactive-inc/notion-client'
 
-// Create a markdown enhancer to transform heading levels
-const enhancer = new NotionMarkdown({
-  heading_1: 'heading_2',  // Convert H1 to H2
-  heading_2: 'heading_3'   // Convert H2 to H3
+// 見出しレベルを変換するMarkdownエンハンサーを作成
+const markdown = new NotionMarkdown({
+  heading_1: 'heading_2',  // H1をH2に変換
+  heading_2: 'heading_3'   // H2をH3に変換
 })
 
-// Create table with markdown support
+// Markdownサポート付きでテーブルを作成
 const blogTable = new NotionTable({
   client,
-  tableId: 'your-blog-database-id',
-  schema: {
+  dataSourceId: 'your-blog-database-id',
+  properties: {
     title: { type: 'title' },
     content: { type: 'rich_text' }
-  },
-  enhancer  // Optional: transforms markdown before saving
+  } as const,
+  markdown  // オプション: 保存前にMarkdownを変換
 })
 
-// Create a post with markdown content
+// Markdownコンテンツで投稿を作成
 const post = await blogTable.create({
-  title: 'My Blog Post',
-  body: `# Introduction
-  
-This is a paragraph with **bold** and *italic* text.
+  properties: {
+    title: 'ブログ記事'
+  },
+  body: `# はじめに
 
-## Features
-- Feature 1
-- Feature 2
+**太字**と*斜体*を含む段落です。
+
+## 機能
+- 機能1
+- 機能2
 
 \`\`\`typescript
 const hello = "world"
@@ -126,185 +135,144 @@ const hello = "world"
 })
 ```
 
-### Advanced Querying
+### 高度なクエリ
 
 ```typescript
-// Complex queries with operators
+// 演算子を使った複雑なクエリ
 const results = await tasksTable.findMany({
   where: {
-    $or: [
+    or: [
       { status: 'todo' },
-      { 
-        $and: [
-          { priority: { $gte: 5 } },
-          { tags: { $contains: 'urgent' } }
+      {
+        and: [
+          { priority: { greater_than_or_equal_to: 5 } },
+          { tags: { contains: 'urgent' } }
         ]
       }
     ]
   },
   sorts: [
-    { property: 'priority', direction: 'descending' },
-    { property: 'created_time', direction: 'ascending' }
+    { field: 'priority', direction: 'desc' },
+    { field: 'created_time', direction: 'asc' }
   ],
-  limit: 20
+  count: 20
 })
 
-// Find one record
+// 1件のレコードを検索
 const urgentTask = await tasksTable.findOne({
-  where: { 
+  where: {
     status: 'todo',
-    priority: { $gte: 8 }
+    priority: { greater_than_or_equal_to: 8 }
   }
 })
 
-// Update multiple records
-await tasksTable.updateMany({
+// 複数レコードを更新
+const count = await tasksTable.updateMany({
   where: { status: 'todo' },
-  data: { status: 'in_progress' }
-})
-```
-
-### Validation and Hooks
-
-```typescript
-const userTable = new NotionTable({
-  client,
-  tableId: 'users-database-id',
-  schema: {
-    email: {
-      type: 'email',
-      validate: (value) => {
-        if (!value.includes('@')) {
-          return 'Invalid email format'
-        }
-        return true
-      }
-    },
-    age: {
-      type: 'number',
-      min: 0,
-      max: 120
-    }
-  } as const,
-  hooks: {
-    beforeCreate: async (data) => {
-      // Add timestamp
-      return {
-        ...data,
-        created_at: new Date().toISOString()
-      }
-    },
-    afterFind: async (records) => {
-      // Transform data after fetching
-      return records.map(record => ({
-        ...record,
-        displayName: record.email.split('@')[0]
-      }))
+  update: {
+    properties: {
+      status: 'in_progress'
     }
   }
 })
 ```
 
-## Supported Block Types
+## 対応ブロックタイプ
 
-### Block Type Mapping
+### ブロックタイプマッピング
 
-| Markdown | Notion Block Type | Example |
-|----------|------------------|---------|
-| Plain text | `paragraph` | Hello world |
-| `# Heading 1` | `heading_1` | # Title |
-| `## Heading 2` | `heading_2` | ## Subtitle |
-| `### Heading 3` | `heading_3` | ### Section |
-| `- Item` | `bulleted_list_item` | - List item |
-| `1. Item` | `numbered_list_item` | 1. First item |
+| Markdown | Notionブロックタイプ | 例 |
+| -------- | ------------------- | -- |
+| プレーンテキスト | `paragraph` | Hello world |
+| `# 見出し1` | `heading_1` | # タイトル |
+| `## 見出し2` | `heading_2` | ## サブタイトル |
+| `### 見出し3` | `heading_3` | ### セクション |
+| `- アイテム` | `bulleted_list_item` | - リスト項目 |
+| `1. アイテム` | `numbered_list_item` | 1. 最初の項目 |
 | `` ```code``` `` | `code` | ```js<br>console.log()<br>``` |
-| `> Quote` | `quote` | > Quoted text |
-| `- [ ] Task` | `to_do` (unchecked) | - [ ] Todo |
-| `- [x] Task` | `to_do` (checked) | - [x] Done |
-| `---` | `divider` | Horizontal rule |
+| `> 引用` | `quote` | > 引用テキスト |
+| `- [ ] タスク` | `to_do`（未完了） | - [ ] やること |
+| `- [x] タスク` | `to_do`（完了） | - [x] 完了 |
+| `---` | `divider` | 水平線 |
 | `$equation$` | `equation` | $E = mc^2$ |
-| `**bold**` | Rich text with bold | **Important** |
-| `*italic*` | Rich text with italic | *Emphasis* |
-| `~~strike~~` | Rich text with strikethrough | ~~Deleted~~ |
-| `` `code` `` | Rich text with code | `variable` |
+| `**太字**` | 太字リッチテキスト | **重要** |
+| `*斜体*` | 斜体リッチテキスト | *強調* |
+| `~~取り消し~~` | 取り消し線リッチテキスト | ~~削除~~ |
+| `` `code` `` | コードリッチテキスト | `variable` |
 
-### Notion to Markdown
+### Notion → Markdown
 
-#### Text Blocks
+#### テキストブロック
 
-- Paragraph blocks → Plain text
-- Heading 1, 2, 3 blocks → `#`, `##`, `###`
-- Bulleted list items → `-` lists
-- Numbered list items → `1.` lists
-- Code blocks → `` ``` `` fenced code blocks
-- Quote blocks → `>` blockquotes
-- Callout blocks → `>` with emoji icon
-- To-do blocks → `- [ ]` / `- [x]` checkboxes
-- Toggle blocks → Bold text with nested content
+- 段落ブロック → プレーンテキスト
+- 見出し1, 2, 3ブロック → `#`, `##`, `###`
+- 箇条書きリスト → `-` リスト
+- 番号付きリスト → `1.` リスト
+- コードブロック → ` ``` ` フェンスドコードブロック
+- 引用ブロック → `>` ブロック引用
+- コールアウトブロック → `>` + 絵文字アイコン
+- To-doブロック → `- [ ]` / `- [x]` チェックボックス
+- トグルブロック → 太字テキスト + ネストされたコンテンツ
 
-#### Layout Blocks
+#### レイアウトブロック
 
-- Divider blocks → `---` horizontal rules
-- Equation blocks → `$equation$` LaTeX
-- Table blocks → Markdown tables with `|` syntax
-- Column list/column blocks → Concatenated content
+- 区切りブロック → `---` 水平線
+- 数式ブロック → `$equation$` LaTeX
+- テーブルブロック → `|` 構文のMarkdownテーブル
+- カラムリスト/カラムブロック → 連結されたコンテンツ
 
-#### Media Blocks
+#### メディアブロック
 
-- Image blocks → `![alt](url)` images
-- Video blocks → URL links
-- Audio blocks → `[音声](url)` links
-- File blocks → `[ファイル](url)` links
-- PDF blocks → `[PDF](url)` links
+- 画像ブロック → `![alt](url)` 画像
+- 動画ブロック → URLリンク
+- 音声ブロック → `[Audio](url)` リンク
+- ファイルブロック → `[File](url)` リンク
+- PDFブロック → `[PDF](url)` リンク
 
-#### Embed Blocks
+#### 埋め込みブロック
 
-- Embed blocks → URL
-- Bookmark blocks → URL
-- Link preview blocks → URL
-- Child page blocks → `[title](notion-url)` links
-- Child database blocks → `[title](notion-url)` links
-- Link to page blocks → Notion URLs
+- 埋め込みブロック → URL
+- ブックマークブロック → URL
+- リンクプレビューブロック → URL
+- 子ページブロック → `[title](notion-url)` リンク
+- 子データベースブロック → `[title](notion-url)` リンク
+- ページリンクブロック → Notion URL
 
-#### Rich Text Formatting
+#### リッチテキストフォーマット
 
-- Bold, italic, strikethrough, inline code preserved
-- Links converted to markdown syntax
+- 太字、斜体、取り消し線、インラインコードを保持
+- リンクはMarkdown構文に変換
 
-### Markdown to Notion
-- Plain text → Paragraph blocks
-- Headers (`#`, `##`, `###`) → Heading blocks
-- Unordered lists (`-`, `*`, `+`) → Bulleted list items
-- Ordered lists (`1.`, `2.`) → Numbered list items
-- Fenced code blocks → Code blocks with language support
-- Inline formatting → Rich text with annotations
+### Markdown → Notion
 
-## API Reference
+- プレーンテキスト → 段落ブロック
+- 見出し（`#`, `##`, `###`）→ 見出しブロック
+- 箇条書きリスト（`-`, `*`, `+`）→ 箇条書きリスト項目
+- 番号付きリスト（`1.`, `2.`）→ 番号付きリスト項目
+- フェンスドコードブロック → 言語サポート付きコードブロック
+- インラインフォーマット → アノテーション付きリッチテキスト
+
+## APIリファレンス
 
 ### NotionTable
 
-Create a type-safe client for Notion database operations.
+Notionデータベース操作用の型安全なクライアントを作成します。
 
 ```typescript
-new NotionTable({
-  client: Client,           // Notion API client
-  tableId: string,         // Database ID
-  schema: Schema,          // Database schema definition
-  enhancer?: NotionMarkdown, // Optional markdown transformer
-  hooks?: {                // Optional lifecycle hooks
-    beforeCreate?: (data) => Promise<data>
-    afterCreate?: (record) => Promise<record>
-    beforeUpdate?: (id, data) => Promise<data>
-    afterUpdate?: (record) => Promise<record>
-    beforeFind?: (options) => Promise<options>
-    afterFind?: (records) => Promise<records>
-  }
+new NotionTable<T>({
+  client: Client,              // Notion APIクライアント
+  dataSourceId: string,        // データベースID
+  properties: T,               // 型安全なスキーマ定義
+  cache?: NotionMemoryCache,   // オプション: キャッシュインスタンス
+  queryBuilder?: NotionQueryBuilder,  // オプション: カスタムクエリビルダー
+  propertyConverter?: NotionPropertyConverter,  // オプション: カスタムコンバーター
+  markdown?: NotionMarkdown    // オプション: Markdownトランスフォーマー
 })
 ```
 
 ### NotionMarkdown
 
-Transform markdown content when saving to Notion.
+Notionに保存する際に見出しレベルを変換します。
 
 ```typescript
 new NotionMarkdown({
@@ -314,38 +282,43 @@ new NotionMarkdown({
 })
 ```
 
-### Table Methods
+### テーブルメソッド
 
-- `findMany(options?)` - Query multiple records
-  - `where` - Filter conditions with operators ($eq, $ne, $gt, $gte, $lt, $lte, $contains, $or, $and, $not)
-  - `sorts` - Array of sort specifications
-  - `limit` - Maximum number of records
-  - `cursor` - Pagination cursor
-  
-- `findOne(options?)` - Find the first matching record
-- `findById(id: string)` - Get a record by ID
-- `create(data)` - Create a new record with optional markdown body
-- `update(id, data)` - Update a record
-- `updateMany(options)` - Update multiple records
-- `upsert(options)` - Create or update based on conditions
-- `delete(id)` - Archive a record
-- `deleteMany(where?)` - Archive multiple records
-- `restore(id)` - Restore an archived record
+- `findMany(options?)` - 複数レコードを検索
+  - `where` - フィルター条件と演算子（equals, does_not_equal, contains, greater_than, less_than, greater_than_or_equal_to, less_than_or_equal_to, before, after, is_empty, is_not_empty, or, and）
+  - `sorts` - ソート指定の配列
+  - `count` - 最大レコード数
 
-### Schema Types
+- `findOne(options?)` - 最初にマッチするレコードを取得
+- `findById(id: string, options?)` - IDでレコードを取得（オプションでキャッシュ使用）
+- `create(input)` - 新規レコードを作成（オプションでMarkdownボディ付き）
+- `createMany(inputs)` - 複数レコードを作成（succeeded/failedを返す）
+- `update(id, input)` - レコードを更新
+- `updateMany(options)` - 複数レコードを更新
+- `upsert(options)` - 条件に基づいて作成または更新
+- `delete(id)` - レコードをアーカイブ
+- `deleteMany(where?)` - 複数レコードをアーカイブ
+- `restore(id)` - アーカイブされたレコードを復元
+- `clearCache()` - メモリキャッシュをクリア
 
-- `title` - Page title (required for all databases)
-- `rich_text` - Plain text content
-- `number` - Numeric values with optional min/max validation
-- `select` - Single selection from predefined options
-- `multi_select` - Multiple selections from predefined options
-- `checkbox` - Boolean values
-- `url` - URL strings
-- `email` - Email addresses
-- `phone_number` - Phone numbers
-- `date` - Date values
-- `files` - File attachments
-- `people` - User references
-- `relation` - Relations to other databases
-- `formula` - Computed values
-- `rollup` - Aggregated values from relations
+### スキーマタイプ
+
+- `title` - ページタイトル（全データベースで必須）
+- `rich_text` - プレーンテキストコンテンツ
+- `number` - 数値（オプションでフォーマット指定）
+- `select` - 定義されたオプションから単一選択
+- `multi_select` - 定義されたオプションから複数選択
+- `status` - 定義されたオプションからステータス選択
+- `checkbox` - ブール値
+- `url` - URL文字列
+- `email` - メールアドレス
+- `phone_number` - 電話番号
+- `date` - 開始/終了を持つ日付値
+- `files` - ファイル添付
+- `people` - ユーザー参照
+- `relation` - 他のデータベースへのリレーション
+- `formula` - 計算値（文字列、数値、ブール値、または日付）
+- `created_time` - 自動生成の作成日時
+- `created_by` - 自動生成の作成者
+- `last_edited_time` - 自動生成の最終編集日時
+- `last_edited_by` - 自動生成の最終編集者

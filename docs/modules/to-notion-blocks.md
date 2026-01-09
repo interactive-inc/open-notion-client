@@ -188,24 +188,24 @@ const blocks = toNotionBlocks(markdown)
 
 ## Limitations
 
-### Unsupported Markdown
+The following markdown features are not yet converted to Notion blocks:
 
-The following markdown features are not supported:
-
-| Feature | Behavior |
-|---------|----------|
-| Tables | Converted to paragraph |
-| Images `![alt](url)` | Converted to paragraph with text |
-| Links `[text](url)` | Only text is preserved |
-| Blockquotes `> ` | Converted to paragraph |
+| Feature | Current Behavior |
+| ------- | ---------------- |
+| Tables | Ignored |
+| Images `![alt](url)` | Ignored |
+| Blockquotes `>` | Ignored |
 | Horizontal rules `---` | Ignored |
-| HTML tags | Stripped or escaped |
+| To-do `- [ ]` | Ignored |
+| HTML tags | Stripped |
 
-### Markdown Variants
+Links `[text](url)` in inline text are converted to rich text with link annotations.
+
+Notes:
 
 - Only CommonMark and GitHub Flavored Markdown are supported
-- Custom markdown extensions are not supported
 - Indented code blocks (4 spaces) are treated as paragraphs
+- Nested lists are fully supported
 
 ## Usage with NotionTable
 

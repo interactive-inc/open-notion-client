@@ -216,31 +216,21 @@ fromNotionBlocks(blocksWithChildren)
 //   - Child item
 ```
 
+## All Supported Block Types
+
+All major Notion block types are supported:
+
+| Category | Block Types |
+| -------- | ----------- |
+| Text | `paragraph`, `heading_1`, `heading_2`, `heading_3`, `bulleted_list_item`, `numbered_list_item`, `code`, `quote`, `callout`, `to_do`, `toggle` |
+| Layout | `divider`, `equation`, `table`, `column_list`, `column` |
+| Media | `image`, `video`, `audio`, `file`, `pdf` |
+| Embed | `embed`, `bookmark`, `link_preview`, `child_page`, `child_database`, `link_to_page` |
+
+Unsupported blocks output an HTML comment: `<!-- 未対応のブロックタイプ: {type} -->`
+
 ## Limitations
 
-### Unsupported Blocks
-
-The following Notion blocks are not yet supported:
-- `toggle`
-- `to_do`
-- `quote`
-- `callout`
-- `divider`
-- `table`
-- `column_list`
-- `embed`
-- `image`
-- `video`
-- `file`
-- `pdf`
-- `bookmark`
-- `equation`
-
-Unsupported blocks are skipped during conversion.
-
-### Partial Support
-
-- Links in rich text are converted to plain text (URL information is lost)
 - Text color and background color annotations are ignored
 - Nested blocks beyond lists may not maintain proper structure
 
