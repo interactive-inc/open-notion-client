@@ -1,62 +1,52 @@
-See @.github/copilot-instructions.md for project overview and @package.json for available bun commands for this project.
+# CLAUDE.md
 
-## Additional Instructions
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- @.github/instructions/core.instructions.md
-- @.github/instructions/ts.instructions.md
+- @./package.json
 
-## Project Summary
+## Rules
 
-NotionをTypeScript対応のデータベースとして扱うためのラッパーライブラリ
+- Always respond in Japanese.
+- Use Bun instead of npm or yarn for package management and scripts.
+- Don't downgrade any dependencies; keep the latest versions.
 
-### Main Features
+## Overview
 
-- **NotionTable**: 型安全なCRUD操作（findMany, findOne, findById, create, update, delete, upsert等）
-- **Markdown変換**: Notion blocks → Markdown の変換（双方向対応中）
-- **プロパティ変換**: Notionの複雑なJSONをシンプルな値に変換
-- **キャッシュ**: メモリキャッシュによるAPI呼び出し最適化
+NotionをTypeScript対応のデータベースとして扱うためのOSSライブラリ。Notion APIの複雑なJSON構造をシンプルな値に変換し、型安全なCRUD操作とMarkdown相互変換を提供する。
 
-### Architecture
+## Commands
+
+```bash
+bun run check              # 型チェック（tsgo使用）
+bun run format             # Biomeでリント/フォーマット
+bun run build              # tsdownでビルド
+bun test                   # 全テスト実行
+bun test <file>            # 単一テスト実行（例: bun test lib/table/notion-table.test.ts）
+```
+
+## Architecture
 
 ```text
 lib/
-├── table/                # NotionTable, クエリビルダー, キャッシュ
-│   ├── notion-table.ts           # メインCRUD操作クラス
-│   ├── notion-query-builder.ts   # フィルター/ソート構築
+├── table/                    # メインAPI
+│   ├── notion-table.ts       # CRUD操作クラス（findMany, create, update, delete等）
+│   ├── notion-query-builder.ts    # フィルター/ソート構築
 │   ├── notion-property-converter.ts # プロパティ変換
-│   ├── notion-memory-cache.ts    # ページ/ブロックキャッシュ
-│   └── notion-markdown.ts        # ブロックタイプ変換設定
-├── from-notion-block/    # Notion → Markdown (30+ block types supported)
-├── to-notion-block/      # Markdown → Notion (heading, list, code, paragraph)
-├── from-notion-property/ # Notionプロパティ → 値
-├── to-notion-property/   # 値 → Notionプロパティ
-└── modules/              # NotionPageReference, NotionQueryResult
+│   ├── notion-memory-cache.ts # ページ/ブロックキャッシュ
+│   └── notion-markdown.ts    # 見出しレベル変換設定
+├── from-notion-block/        # Notion → Markdown変換（30+ブロックタイプ対応）
+├── to-notion-block/          # Markdown → Notion変換
+├── from-notion-property/     # Notionプロパティ → シンプルな値
+├── to-notion-property/       # シンプルな値 → Notionプロパティ
+└── modules/                  # NotionPageReference, NotionQueryResult
 ```
 
-### Key Exports
+## Key Patterns
 
-```typescript
-export { fromNotionBlock } from "./from-notion-block/from-notion-block"
-export { fromNotionBlocks } from "./from-notion-block/from-notion-blocks"
-export { NotionMarkdown } from "./table/notion-markdown"
-export { NotionMemoryCache } from "./table/notion-memory-cache"
-export { NotionPropertyConverter } from "./table/notion-property-converter"
-export { NotionQueryBuilder } from "./table/notion-query-builder"
-export { NotionTable } from "./table/notion-table"
-export { toNotionBlocks } from "./to-notion-block/to-notion-blocks"
-```
+- テストファイルはソースと同ディレクトリに `*.test.ts` として配置
+- 各変換関数は単一責務（1ブロックタイプ = 1ファイル）
+- `marked`ライブラリでMarkdownをパース、`zod`でスキーマバリデーション
 
-### Commands
+## Notes
 
-```bash
-bun run check     # 型チェック
-bun run format    # リント/フォーマット
-bun run build     # ビルド
-bun test          # テスト実行
-```
-
-### Dependencies
-
-- `@notionhq/client`: Notion公式APIクライアント
-- `marked`: Markdownパーサー
-- `zod`: ランタイムスキーマバリデーション
+- Notion APIにはレート制限あり（平均3リクエスト/秒）。バッチ操作やキャッシュ活用を検討する
