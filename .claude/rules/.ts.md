@@ -4,6 +4,16 @@ paths: "**/*.{ts,tsx}"
 
 # TypeScript Rules
 
+## File Structure
+
+- 1ファイル1関数 or 1クラス
+- ファイル名と関数名/クラス名を一致させる (例: `create-user.ts` → `createUser()`)
+
+## Import
+
+- `@/` による絶対パスを使用
+- 相対パス (`./`, `../`) 禁止
+
 ## Naming
 
 - Use lowercase with hyphens for file names
@@ -38,7 +48,7 @@ const foo = {} as any // Do NOT use any type
 
 - Use for-of loops instead of forEach
 - Avoid if-else statements
-- Use early returns instead of nested if statements
+- Use early returns/continue instead of nested if statements
 - Use if statements instead of switch statements
 - Do NOT wrap code in `main()` function - use top-level await directly
   - NG: `async function main() { ... } main().catch(console.error)`
