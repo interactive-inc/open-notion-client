@@ -59,6 +59,7 @@ const foo = {} as any // Do NOT use any type
 
 - Add comments only when function behavior is not easily predictable
 - Do NOT use param or return annotations
+- Do NOT write comments that repeat class/function names
 
 ## Design Principles
 
