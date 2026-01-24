@@ -41,11 +41,33 @@ lib/
 └── modules/                  # NotionPageReference, NotionQueryResult
 ```
 
+## Tech Stack
+
+- TypeScript 5.9
+- Bun（ランタイム・パッケージマネージャー）
+- @notionhq/client（Notion API公式クライアント）
+- marked（Markdownパーサー）
+- zod（スキーマバリデーション）
+- tsdown（ビルドツール）
+- Biome（リンター・フォーマッター）
+- VitePress（ドキュメントサイト）
+
+## Features
+
+- ORM風CRUD操作（create, findMany, update, delete, upsert）
+- バッチ操作（createMany, updateMany, deleteMany）
+- クエリビルダー（フィルター・ソート・ページネーション）
+- プロパティ双方向変換（Notion JSON ↔ シンプルな値）
+- Markdown双方向変換（27+ブロックタイプ対応）
+- インメモリキャッシュ（ページ・ブロック）
+- ソフトデリート（アーカイブ・リストア）
+
 ## Key Patterns
 
 - テストファイルはソースと同ディレクトリに `*.test.ts` として配置
 - 各変換関数は単一責務（1ブロックタイプ = 1ファイル）
 - `marked`ライブラリでMarkdownをパース、`zod`でスキーマバリデーション
+- 3層コンバーターパターン（スキーマ → ルーター → 個別ハンドラー）
 
 ## Notes
 

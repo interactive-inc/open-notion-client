@@ -1,5 +1,9 @@
 .PHONY: deploy check
 
+update-packages:
+	bunx npm-check-updates -u
+	bun i
+
 deploy:
 	bun biome check . --fix --unsafe
 	bun run check

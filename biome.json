@@ -10,16 +10,5 @@
     "formatter": {
       "semicolons": "asNeeded"
     }
-  },
-  "linter": {
-    "rules": {
-      "correctness": {
-        "noUnusedImports": "error"
-      },
-      "nursery": {
-        "useSortedClasses": "error"
-      },
-      "recommended": true
-    }
   }
 }

@@ -12,15 +12,15 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@notionhq/client": "^5.4.0",
-    "marked": "^17.0.0",
-    "zod": "^4.1.12"
+    "@notionhq/client": "^5.7.0",
+    "marked": "^17.0.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.5",
+    "@biomejs/biome": "^2.3.12",
     "@types/bun": "latest",
-    "@typescript/native-preview": "^7.0.0-dev.20251115.1",
-    "tsdown": "^0.19.0-beta.5",
+    "@typescript/native-preview": "^7.0.0-dev.20260122.4",
+    "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
     "vitepress": "^1.6.4"
   },
