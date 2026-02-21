@@ -83,7 +83,7 @@ const task = await tasksTable.create({
 })
 
 // Query tasks with filtering and sorting
-const tasks = await tasksTable.findMany({
+const { records: tasks } = await tasksTable.findMany({
   where: { status: 'todo' },
   sorts: [{ field: 'priority', direction: 'asc' }]
 })
@@ -212,7 +212,7 @@ Notion-native query syntax makes complex searches intuitive:
 
 ```typescript
 // Complex conditional queries
-const results = await tasksTable.findMany({
+const { records, hasMore, nextCursor } = await tasksTable.findMany({
   where: {
     or: [
       { priority: { greater_than_or_equal_to: 5 } },
@@ -228,7 +228,7 @@ const results = await tasksTable.findMany({
     { field: 'priority', direction: 'desc' },
     { field: 'created_time', direction: 'asc' }
   ],
-  count: 20
+  limit: 20
 })
 ```
 
@@ -282,7 +282,7 @@ const taskSystem = new NotionTable({
 })
 
 // Find overdue tasks
-const overdueTasks = await taskSystem.findMany({
+const { records: overdueTasks } = await taskSystem.findMany({
   where: {
     and: [
       { status: { does_not_equal: 'done' } },
@@ -311,7 +311,7 @@ const cms = new NotionTable({
 })
 
 // Get published articles
-const publishedArticles = await cms.findMany({
+const { records: publishedArticles } = await cms.findMany({
   where: {
     and: [
       { published: { equals: true } },
@@ -340,7 +340,7 @@ const crm = new NotionTable({
 })
 
 // Find high-value customers
-const vipCustomers = await crm.findMany({
+const { records: vipCustomers } = await crm.findMany({
   where: {
     and: [
       { status: { equals: 'customer' } },

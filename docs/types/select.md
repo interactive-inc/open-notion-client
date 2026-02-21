@@ -27,11 +27,11 @@ Use `as const` to preserve literal types.
 
 ```typescript
 await table.create({
-  status: 'todo'  // Auto-completes options
+  properties: { status: 'todo' }  // Auto-completes options
 })
 
 await table.update('page-id', {
-  status: 'done'
+  properties: { status: 'done' }
 })
 ```
 
@@ -43,19 +43,21 @@ await table.findMany({
   where: { status: 'done' }
 })
 
-// Multiple values
+// Multiple values (use or)
 await table.findMany({
-  where: { 
-    status: { $in: ['todo', 'in_progress'] }
+  where: {
+    or: [
+      { status: 'todo' },
+      { status: 'in_progress' }
+    ]
   }
 })
 
 // Available operators
-$eq           // Equals (default)
-$ne           // Not equals
-$in           // In array
-$is_empty     // No selection
-$is_not_empty // Has selection
+equals            // Equals (default)
+does_not_equal    // Not equals
+is_empty          // No selection
+is_not_empty      // Has selection
 ```
 
 ## Examples
@@ -63,33 +65,37 @@ $is_not_empty // Has selection
 ```typescript
 const tasksTable = new NotionTable({
   client,
-  tableId: 'tasks-db',
-  schema: {
+  dataSourceId: 'tasks-db',
+  properties: {
     title: { type: 'title' },
-    status: { 
-      type: 'select', 
+    status: {
+      type: 'select',
       options: ['backlog', 'todo', 'in_progress', 'review', 'done'] as const
     },
     priority: {
       type: 'select',
       options: ['low', 'medium', 'high', 'urgent'] as const,
-      
+
     }
   }
 })
 
 // Create with select values
 const task = await tasksTable.create({
-  title: 'Implement auth',
-  status: 'todo',
-  priority: 'high'
+  properties: {
+    title: 'Implement auth',
+    status: 'todo',
+    priority: 'high'
+  }
 })
 
 // Query by status
-const activeTasks = await tasksTable.findMany({
-  where: { 
-    status: { $in: ['todo', 'in_progress'] },
-    priority: { $ne: 'low' }
+const { records: activeTasks } = await tasksTable.findMany({
+  where: {
+    and: [
+      { or: [{ status: 'todo' }, { status: 'in_progress' }] },
+      { priority: { does_not_equal: 'low' } }
+    ]
   }
 })
 ```

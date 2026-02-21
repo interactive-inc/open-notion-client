@@ -24,21 +24,25 @@ Array<{
 
 ```typescript
 await table.create({
-  attachments: [
-    {
-      name: 'document.pdf',
-      url: 'https://example.com/files/document.pdf'
-    }
-  ]
+  properties: {
+    attachments: [
+      {
+        name: 'document.pdf',
+        url: 'https://example.com/files/document.pdf'
+      }
+    ]
+  }
 })
 
 await table.update('page-id', {
-  images: [
-    {
-      name: 'screenshot.png',
-      url: 'https://example.com/images/screenshot.png'
-    }
-  ]
+  properties: {
+    images: [
+      {
+        name: 'screenshot.png',
+        url: 'https://example.com/images/screenshot.png'
+      }
+    ]
+  }
 })
 ```
 
@@ -48,13 +52,13 @@ await table.update('page-id', {
 // Has files
 await table.findMany({
   where: { 
-    attachments: { $is_not_empty: true }
+    attachments: { is_not_empty: true }
   }
 })
 
 // Available operators
-$is_empty     // No files
-$is_not_empty // Has files
+is_empty      // No files
+is_not_empty  // Has files
 ```
 
 ## Examples
@@ -62,8 +66,8 @@ $is_not_empty // Has files
 ```typescript
 const documentsTable = new NotionTable({
   client,
-  tableId: 'documents-db',
-  schema: {
+  dataSourceId: 'documents-db',
+  properties: {
     title: { type: 'title' },
     attachments: { type: 'files' },
     screenshots: { type: 'files' },
@@ -73,36 +77,38 @@ const documentsTable = new NotionTable({
 
 // Create document with files
 const doc = await documentsTable.create({
-  title: 'Project Proposal',
-  attachments: [
-    {
-      name: 'proposal.pdf',
-      url: 'https://files.example.com/proposal.pdf'
-    },
-    {
-      name: 'budget.xlsx',
-      url: 'https://files.example.com/budget.xlsx'
-    }
-  ],
-  screenshots: [
-    {
-      name: 'mockup.png',
-      url: 'https://images.example.com/mockup.png'
-    }
-  ]
+  properties: {
+    title: 'Project Proposal',
+    attachments: [
+      {
+        name: 'proposal.pdf',
+        url: 'https://files.example.com/proposal.pdf'
+      },
+      {
+        name: 'budget.xlsx',
+        url: 'https://files.example.com/budget.xlsx'
+      }
+    ],
+    screenshots: [
+      {
+        name: 'mockup.png',
+        url: 'https://images.example.com/mockup.png'
+      }
+    ]
+  }
 })
 
 // Find documents with attachments
-const withFiles = await documentsTable.findMany({
-  where: { 
-    attachments: { $is_not_empty: true }
+const { records: withFiles } = await documentsTable.findMany({
+  where: {
+    attachments: { is_not_empty: true }
   }
 })
 
 // Find documents without screenshots
-const noScreenshots = await documentsTable.findMany({
-  where: { 
-    screenshots: { $is_empty: true }
+const { records: noScreenshots } = await documentsTable.findMany({
+  where: {
+    screenshots: { is_empty: true }
   }
 })
 ```

@@ -22,12 +22,14 @@ boolean | undefined
 
 ```typescript
 await table.create({
-  isActive: true,
-  isPublished: false
+  properties: {
+    isActive: true,
+    isPublished: false
+  }
 })
 
 await table.update('page-id', {
-  isPublished: true
+  properties: { isPublished: true }
 })
 ```
 
@@ -54,8 +56,8 @@ false  // Unchecked
 ```typescript
 const articlesTable = new NotionTable({
   client,
-  tableId: 'articles-db',
-  schema: {
+  dataSourceId: 'articles-db',
+  properties: {
     title: { type: 'title' },
     published: { type: 'checkbox' },
     featured: { type: 'checkbox' },
@@ -65,25 +67,27 @@ const articlesTable = new NotionTable({
 
 // Create draft article
 const article = await articlesTable.create({
-  title: 'Getting Started with TypeScript',
-  published: false,
-  featured: false,
-  allowComments: true
+  properties: {
+    title: 'Getting Started with TypeScript',
+    published: false,
+    featured: false,
+    allowComments: true
+  }
 })
 
 // Publish article
 await articlesTable.update(article.id, {
-  published: true
+  properties: { published: true }
 })
 
 // Find all published articles
-const publishedArticles = await articlesTable.findMany({
+const { records: publishedArticles } = await articlesTable.findMany({
   where: { published: true }
 })
 
 // Find featured articles
-const featured = await articlesTable.findMany({
-  where: { 
+const { records: featured } = await articlesTable.findMany({
+  where: {
     published: true,
     featured: true
   }

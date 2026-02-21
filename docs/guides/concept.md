@@ -157,7 +157,7 @@ const tasks = response.results.map(page => ({
 **notion-client:**
 
 ```typescript
-const tasks = await tasksTable.findMany({
+const { records: tasks } = await tasksTable.findMany({
   where: {
     status: { does_not_equal: 'Done' },
     priority: { greater_than_or_equal_to: 5 }
@@ -361,7 +361,7 @@ async function getTasks() {
 
 // After: notion-client
 async function getTasks() {
-  const tasks = await tasksTable.findMany()
+  const { records: tasks } = await tasksTable.findMany()
   return tasks.map(t => t.properties())
 }
 ```

@@ -22,11 +22,11 @@ string  // Always required
 
 ```typescript
 await table.create({
-  title: 'Project Alpha'
+  properties: { title: 'Project Alpha' }
 })
 
 await table.update('page-id', {
-  title: 'Project Beta'
+  properties: { title: 'Project Beta' }
 })
 ```
 
@@ -41,16 +41,16 @@ await table.findMany({
 // String operators
 await table.findMany({
   where: { 
-    title: { $contains: 'Project' }
+    title: { contains: 'Project' }
   }
 })
 
 // Available operators
-$contains     // Contains substring
-$starts_with  // Starts with string
-$ends_with    // Ends with string
-$is_empty     // Is empty
-$is_not_empty // Is not empty
+contains        // Contains substring
+starts_with     // Starts with string
+ends_with       // Ends with string
+is_empty        // Is empty
+is_not_empty    // Is not empty
 ```
 
 ## Examples
@@ -58,8 +58,8 @@ $is_not_empty // Is not empty
 ```typescript
 const projectsTable = new NotionTable({
   client,
-  tableId: 'projects-db',
-  schema: {
+  dataSourceId: 'projects-db',
+  properties: {
     title: { type: 'title' },
     description: { type: 'rich_text' }
   }
@@ -67,12 +67,14 @@ const projectsTable = new NotionTable({
 
 // Create project
 const project = await projectsTable.create({
-  title: 'Website Redesign',
-  description: 'Complete overhaul of company website'
+  properties: {
+    title: 'Website Redesign',
+    description: 'Complete overhaul of company website'
+  }
 })
 
 // Find by title
 const found = await projectsTable.findOne({
-  where: { title: { $contains: 'Website' } }
+  where: { title: { contains: 'Website' } }
 })
 ```

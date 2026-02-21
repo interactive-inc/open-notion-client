@@ -76,11 +76,11 @@ const page = await tasksTable.create({
 ### Read
 
 ```typescript
-// Find many - returns array of NotionPageReference
-const tasks = await tasksTable.findMany({
+// Find many - returns { records, hasMore, nextCursor }
+const { records: tasks, hasMore, nextCursor } = await tasksTable.findMany({
   where: { status: 'todo' },
   sorts: [{ field: 'priority', direction: 'desc' }],
-  count: 20
+  limit: 20
 })
 
 // Find one

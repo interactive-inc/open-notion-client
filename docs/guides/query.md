@@ -32,20 +32,26 @@ Retrieve multiple records with optional filtering:
 
 ```typescript
 // Get all records
-const contacts = await contactsTable.findMany()
+const { records } = await contactsTable.findMany()
 
 // With filtering
-const activeContacts = await contactsTable.findMany({
+const { records: activeContacts } = await contactsTable.findMany({
   where: { active: { equals: true } }
 })
 
-// With count limit
-const first10 = await contactsTable.findMany({
-  count: 10
+// With pagination
+const { records: first10, hasMore, nextCursor } = await contactsTable.findMany({
+  limit: 10
+})
+
+// Next page
+const { records: nextPage } = await contactsTable.findMany({
+  limit: 10,
+  cursor: nextCursor
 })
 
 // Access properties
-for (const contact of contacts) {
+for (const contact of records) {
   const props = contact.properties()
   console.log(props.name, props.email)
 }
@@ -80,17 +86,17 @@ const contact = await contactsTable.findById('page-id-here')
 
 ```typescript
 // Greater than or equal to
-const highPriority = await tasksTable.findMany({
+const { records: highPriority } = await tasksTable.findMany({
   where: { priority: { greater_than_or_equal_to: 8 } }
 })
 
 // Does not equal
-const activeTasks = await tasksTable.findMany({
+const { records: activeTasks } = await tasksTable.findMany({
   where: { status: { does_not_equal: 'completed' } }
 })
 
 // Range query using AND
-const mediumPriority = await tasksTable.findMany({
+const { records: mediumPriority } = await tasksTable.findMany({
   where: {
     and: [
       { priority: { greater_than_or_equal_to: 4 } },
@@ -104,17 +110,17 @@ const mediumPriority = await tasksTable.findMany({
 
 ```typescript
 // Contains
-const results = await contactsTable.findMany({
+const { records: results } = await contactsTable.findMany({
   where: { name: { contains: 'John' } }
 })
 
 // Starts with
-const results = await contactsTable.findMany({
+const { records: results } = await contactsTable.findMany({
   where: { email: { starts_with: 'admin@' } }
 })
 
 // Ends with
-const results = await contactsTable.findMany({
+const { records: results } = await contactsTable.findMany({
   where: { email: { ends_with: '@company.com' } }
 })
 ```
@@ -123,7 +129,7 @@ const results = await contactsTable.findMany({
 
 ```typescript
 // OR query
-const results = await tasksTable.findMany({
+const { records: results } = await tasksTable.findMany({
   where: {
     or: [
       { status: { equals: 'urgent' } },
@@ -133,7 +139,7 @@ const results = await tasksTable.findMany({
 })
 
 // Complex AND/OR
-const results = await tasksTable.findMany({
+const { records: results } = await tasksTable.findMany({
   where: {
     and: [
       { active: { equals: true } },
@@ -152,12 +158,12 @@ const results = await tasksTable.findMany({
 
 ```typescript
 // Single sort
-const results = await tasksTable.findMany({
+const { records: results } = await tasksTable.findMany({
   sorts: [{ field: 'priority', direction: 'desc' }]
 })
 
 // Multiple sorts
-const results = await contactsTable.findMany({
+const { records: results } = await contactsTable.findMany({
   sorts: [
     { field: 'company', direction: 'asc' },
     { field: 'name', direction: 'asc' }
@@ -170,7 +176,7 @@ const results = await contactsTable.findMany({
 Transform and use query results:
 
 ```typescript
-const contacts = await contactsTable.findMany({
+const { records: contacts } = await contactsTable.findMany({
   where: { active: { equals: true } }
 })
 
@@ -200,14 +206,14 @@ const simpleList = contacts.map(c => c.properties())
 
 ```typescript
 // Good: Specific query with filter
-const active = await table.findMany({
+const { records: active } = await table.findMany({
   where: { status: { equals: 'active' } },
-  count: 20
+  limit: 20
 })
 
 // Avoid: Fetching all then filtering in JavaScript
-const all = await table.findMany()
-const active = all.filter(r => r.properties().status === 'active')
+const { records: all } = await table.findMany()
+const activeOnly = all.filter(r => r.properties().status === 'active')
 ```
 
 ### Use Built-in Caching

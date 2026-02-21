@@ -21,12 +21,14 @@ string[] | undefined  // Array of page IDs
 
 ```typescript
 await table.create({
-  project: ['project-page-id'],
-  relatedTasks: ['task-1-id', 'task-2-id']
+  properties: {
+    project: ['project-page-id'],
+    relatedTasks: ['task-1-id', 'task-2-id']
+  }
 })
 
 await table.update('page-id', {
-  project: ['new-project-id']
+  properties: { project: ['new-project-id'] }
 })
 ```
 
@@ -36,16 +38,14 @@ await table.update('page-id', {
 // Contains specific relation
 await table.findMany({
   where: { 
-    project: { $contains: 'project-id' }
+    project: { contains: 'project-id' }
   }
 })
 
 // Available operators
-$contains      // Contains page ID
-$contains_any  // Contains any of page IDs
-$contains_all  // Contains all page IDs
-$is_empty      // No relations
-$is_not_empty  // Has relations
+contains       // Contains page ID
+is_empty       // No relations
+is_not_empty   // Has relations
 ```
 
 ## Examples
@@ -53,8 +53,8 @@ $is_not_empty  // Has relations
 ```typescript
 const tasksTable = new NotionTable({
   client,
-  tableId: 'tasks-db',
-  schema: {
+  dataSourceId: 'tasks-db',
+  properties: {
     title: { type: 'title' },
     project: { type: 'relation' },
     blockedBy: { type: 'relation' },
@@ -64,30 +64,35 @@ const tasksTable = new NotionTable({
 
 // Create task with relations
 const task = await tasksTable.create({
-  title: 'Implement authentication',
-  project: ['project-123'],
-  blockedBy: ['task-456'],
-  relatedTasks: ['task-789', 'task-101']
+  properties: {
+    title: 'Implement authentication',
+    project: ['project-123'],
+    blockedBy: ['task-456'],
+    relatedTasks: ['task-789', 'task-101']
+  }
 })
 
 // Find tasks in project
-const projectTasks = await tasksTable.findMany({
-  where: { 
-    project: { $contains: 'project-123' }
+const { records: projectTasks } = await tasksTable.findMany({
+  where: {
+    project: { contains: 'project-123' }
   }
 })
 
 // Find blocked tasks
-const blockedTasks = await tasksTable.findMany({
-  where: { 
-    blockedBy: { $is_not_empty: true }
+const { records: blockedTasks } = await tasksTable.findMany({
+  where: {
+    blockedBy: { is_not_empty: true }
   }
 })
 
-// Find tasks with specific relations
-const related = await tasksTable.findMany({
-  where: { 
-    relatedTasks: { $contains_any: ['task-789', 'task-101'] }
+// Find tasks with specific relations (OR: related to either task)
+const { records: related } = await tasksTable.findMany({
+  where: {
+    or: [
+      { relatedTasks: { contains: 'task-789' } },
+      { relatedTasks: { contains: 'task-101' } }
+    ]
   }
 })
 ```

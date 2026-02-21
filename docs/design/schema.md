@@ -160,7 +160,7 @@ await table.create({
 })
 
 // And for query results
-const tasks = await table.findMany()
+const { records: tasks } = await table.findMany()
 for (const task of tasks) {
   const props = task.properties()
   // props.title: string

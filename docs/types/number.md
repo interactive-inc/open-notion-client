@@ -27,12 +27,14 @@ number | undefined
 
 ```typescript
 await table.create({
-  price: 29.99,
-  quantity: 100
+  properties: {
+    price: 29.99,
+    quantity: 100
+  }
 })
 
 await table.update('page-id', {
-  price: 34.99
+  properties: { price: 34.99 }
 })
 ```
 
@@ -47,19 +49,19 @@ await table.findMany({
 // Comparison operators
 await table.findMany({
   where: { 
-    price: { $gte: 20, $lte: 50 }
+    price: { greater_than_or_equal_to: 20, less_than_or_equal_to: 50 }
   }
 })
 
 // Available operators
-$eq           // Equals (default)
-$ne           // Not equals
-$gt           // Greater than
-$gte          // Greater than or equal
-$lt           // Less than
-$lte          // Less than or equal
-$is_empty     // Is empty
-$is_not_empty // Is not empty
+equals                    // Equals (default)
+does_not_equal            // Not equals
+greater_than              // Greater than
+greater_than_or_equal_to  // Greater than or equal
+less_than                 // Less than
+less_than_or_equal_to     // Less than or equal
+is_empty                  // Is empty
+is_not_empty              // Is not empty
 ```
 
 ## Examples
@@ -67,15 +69,15 @@ $is_not_empty // Is not empty
 ```typescript
 const productsTable = new NotionTable({
   client,
-  tableId: 'products-db',
-  schema: {
+  dataSourceId: 'products-db',
+  properties: {
     name: { type: 'title' },
-    price: { 
-      type: 'number', 
-      
+    price: {
+      type: 'number',
+
       min: 0
     },
-    stock: { 
+    stock: {
       type: 'number',
       min: 0,
       max: 10000
@@ -90,23 +92,25 @@ const productsTable = new NotionTable({
 
 // Create product
 const product = await productsTable.create({
-  name: 'Premium Widget',
-  price: 49.99,
-  stock: 500,
-  rating: 4.5
+  properties: {
+    name: 'Premium Widget',
+    price: 49.99,
+    stock: 500,
+    rating: 4.5
+  }
 })
 
 // Find products in price range
-const affordable = await productsTable.findMany({
-  where: { 
-    price: { $gte: 10, $lte: 100 },
-    stock: { $gt: 0 }
+const { records: affordable } = await productsTable.findMany({
+  where: {
+    price: { greater_than_or_equal_to: 10, less_than_or_equal_to: 100 },
+    stock: { greater_than: 0 }
   },
-  sorts: [{ property: 'price', direction: 'ascending' }]
+  sorts: [{ field: 'price', direction: 'asc' }]
 })
 
 // Find highly rated products
-const topRated = await productsTable.findMany({
-  where: { rating: { $gte: 4 } }
+const { records: topRated } = await productsTable.findMany({
+  where: { rating: { greater_than_or_equal_to: 4 } }
 })
 ```

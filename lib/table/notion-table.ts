@@ -54,13 +54,15 @@ export class NotionTable<T extends NotionPropertySchema> {
     this.markdown = props.markdown || new NotionMarkdown()
   }
 
-  async findMany(
-    options: FindOptions<T> = {},
-  ): Promise<NotionPageReference<T>[]> {
+  async findMany(options: FindOptions<T> = {}): Promise<{
+    records: NotionPageReference<T>[]
+    hasMore: boolean
+    nextCursor: string | null
+  }> {
     const where = options.where || {}
-    const count = options.count || 100
+    const limit = options.limit || 100
 
-    const maxCount = Math.min(Math.max(1, count), 1024)
+    const maxCount = Math.min(Math.max(1, limit), 1024)
     const pageSize = Math.min(maxCount, 100)
 
     const notionFilter =
@@ -70,14 +72,19 @@ export class NotionTable<T extends NotionPropertySchema> {
 
     const notionSort = this.buildNotionSort(options.sorts)
 
-    const pages = await this.fetchPages(
+    const result = await this.fetchPages(
       maxCount,
       pageSize,
       notionFilter,
       notionSort,
+      options.cursor,
     )
 
-    return pages.references()
+    return {
+      records: result.references(),
+      hasMore: result.hasMore(),
+      nextCursor: result.cursor(),
+    }
   }
 
   async findOne(
@@ -85,9 +92,9 @@ export class NotionTable<T extends NotionPropertySchema> {
   ): Promise<NotionPageReference<T> | null> {
     const result = await this.findMany({
       ...options,
-      count: 1,
+      limit: 1,
     })
-    return result[0] || null
+    return result.records[0] || null
   }
 
   async findById(
@@ -258,12 +265,12 @@ export class NotionTable<T extends NotionPropertySchema> {
   async updateMany(options: UpdateManyOptions<T>): Promise<number> {
     const result = await this.findMany({
       where: options.where || {},
-      count: options.count || 1024,
+      limit: options.limit || 1024,
     })
 
     let updated = 0
 
-    for (const record of result) {
+    for (const record of result.records) {
       await this.update(record.id, options.update)
       updated++
     }
@@ -287,10 +294,10 @@ export class NotionTable<T extends NotionPropertySchema> {
   }
 
   async deleteMany(where: WhereCondition<T> = {}): Promise<number> {
-    const result = await this.findMany({ where, count: 1024 })
+    const result = await this.findMany({ where, limit: 1024 })
 
     let deleted = 0
-    for (const record of result) {
+    for (const record of result.records) {
       await this.delete(record.id)
       deleted++
     }
@@ -346,10 +353,11 @@ export class NotionTable<T extends NotionPropertySchema> {
     pageSize: number,
     notionFilter: Record<string, unknown> | undefined,
     notionSort: Array<Record<string, unknown>>,
+    startCursor?: string,
   ): Promise<NotionQueryResult<T>> {
     const references: NotionPageReference<T>[] = []
 
-    let nextCursor: string | null = null
+    let nextCursor: string | null = startCursor || null
     let hasMore = true
 
     while (hasMore && references.length < maxCount) {

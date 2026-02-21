@@ -90,10 +90,10 @@ console.log(task.id) // Notion page ID
 
 ```typescript
 // Find all
-const tasks = await tasksTable.findMany()
+const { records: tasks } = await tasksTable.findMany()
 
 // Find with filter
-const todoTasks = await tasksTable.findMany({
+const { records: todoTasks } = await tasksTable.findMany({
   where: { status: 'todo' }
 })
 
@@ -206,7 +206,7 @@ const task = await projectTable.create({
 })
 
 // Query tasks
-const urgentBugs = await projectTable.findMany({
+const { records: urgentBugs } = await projectTable.findMany({
   where: {
     status: { does_not_equal: 'done' },
     priority: { greater_than_or_equal_to: 4 },

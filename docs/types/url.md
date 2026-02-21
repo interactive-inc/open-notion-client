@@ -22,12 +22,14 @@ string | undefined
 
 ```typescript
 await table.create({
-  website: 'https://example.com',
-  documentation: 'https://docs.example.com'
+  properties: {
+    website: 'https://example.com',
+    documentation: 'https://docs.example.com'
+  }
 })
 
 await table.update('page-id', {
-  website: 'https://newsite.com'
+  properties: { website: 'https://newsite.com' }
 })
 ```
 
@@ -42,18 +44,18 @@ await table.findMany({
 // Domain search
 await table.findMany({
   where: { 
-    website: { $contains: 'github.com' }
+    website: { contains: 'github.com' }
   }
 })
 
 // Available operators
-$eq           // Equals (default)
-$ne           // Not equals
-$contains     // Contains substring
-$starts_with  // Starts with
-$ends_with    // Ends with
-$is_empty     // Is empty
-$is_not_empty // Is not empty
+equals            // Equals (default)
+does_not_equal    // Not equals
+contains          // Contains substring
+starts_with       // Starts with
+ends_with         // Ends with
+is_empty          // Is empty
+is_not_empty      // Is not empty
 ```
 
 ## Examples
@@ -61,8 +63,8 @@ $is_not_empty // Is not empty
 ```typescript
 const projectsTable = new NotionTable({
   client,
-  tableId: 'projects-db',
-  schema: {
+  dataSourceId: 'projects-db',
+  properties: {
     name: { type: 'title' },
     repository: { type: 'url' },
     homepage: { type: 'url' },
@@ -72,29 +74,31 @@ const projectsTable = new NotionTable({
 
 // Create project
 const project = await projectsTable.create({
-  name: 'Open Source Project',
-  repository: 'https://github.com/company/project',
-  homepage: 'https://project.example.com',
-  documentation: 'https://docs.project.example.com'
+  properties: {
+    name: 'Open Source Project',
+    repository: 'https://github.com/company/project',
+    homepage: 'https://project.example.com',
+    documentation: 'https://docs.project.example.com'
+  }
 })
 
 // Find GitHub projects
-const githubProjects = await projectsTable.findMany({
-  where: { 
-    repository: { $contains: 'github.com' }
+const { records: githubProjects } = await projectsTable.findMany({
+  where: {
+    repository: { contains: 'github.com' }
   }
 })
 
 // Find projects with documentation
-const documented = await projectsTable.findMany({
-  where: { 
-    documentation: { $is_not_empty: true }
+const { records: documented } = await projectsTable.findMany({
+  where: {
+    documentation: { is_not_empty: true }
   }
 })
 
 // Custom validation
 const resourceTable = new NotionTable({
-  schema: {
+  properties: {
     url: {
       type: 'url',
       

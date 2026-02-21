@@ -42,7 +42,5 @@ test("複雑な数式も正しく変換できる", () => {
   } as EquationBlockObjectResponse
 
   const result = fromNotionEquationBlock(complexBlock)
-  expect(result).toBe(
-    "$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$",
-  )
+  expect(result).toBe("$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$")
 })

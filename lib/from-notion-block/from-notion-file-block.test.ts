@@ -57,5 +57,7 @@ test("Notionファイルブロックをマークダウンリンクに変換で�
   } as FileBlockObjectResponse
 
   const result = fromNotionFileBlock(block)
-  expect(result).toBe("[ファイル](https://s3.amazonaws.com/notion/document.pdf)")
+  expect(result).toBe(
+    "[ファイル](https://s3.amazonaws.com/notion/document.pdf)",
+  )
 })

@@ -46,7 +46,7 @@ Each property type follows the same pattern:
 
 // Writing
 await table.create({
-  propertyName: value
+  properties: { propertyName: value }
 })
 
 // Querying

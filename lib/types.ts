@@ -384,7 +384,8 @@ export type WhereCondition<T extends NotionPropertySchema> =
 
 export type FindOptions<T extends NotionPropertySchema> = {
   where?: WhereCondition<T>
-  count?: number
+  limit?: number
+  cursor?: string
   sorts?: SortOption<T> | SortOption<T>[]
 }
 
@@ -401,7 +402,7 @@ export type UpdateInput<T extends NotionPropertySchema> = {
 export type UpdateManyOptions<T extends NotionPropertySchema> = {
   where?: WhereCondition<T>
   update: UpdateInput<T>
-  count?: number
+  limit?: number
 }
 
 export type UpsertOptions<T extends NotionPropertySchema> = {

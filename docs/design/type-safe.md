@@ -16,16 +16,18 @@ const taskSchema = {
 
 const tasksTable = new NotionTable({
   client,
-  tableId: 'tasks-db',
-  schema: taskSchema
+  dataSourceId: 'tasks-db',
+  properties: taskSchema
 })
 
 // IDE auto-completes all properties and values
 await tasksTable.create({
-  title: 'Fix login bug',        // ✅ String field
-  status: 'in_progress',         // ✅ Auto-completes: 'todo' | 'in_progress' | 'done'
-  priority: 5,                   // ✅ Number type
-  tags: ['bug']                  // ✅ Auto-completes: 'bug' | 'feature' | 'docs'
+  properties: {
+    title: 'Fix login bug',        // ✅ String field
+    status: 'in_progress',         // ✅ Auto-completes: 'todo' | 'in_progress' | 'done'
+    priority: 5,                   // ✅ Number type
+    tags: ['bug']                  // ✅ Auto-completes: 'bug' | 'feature' | 'docs'
+  }
 })
 ```
 
@@ -34,7 +36,7 @@ await tasksTable.create({
 The schema automatically generates TypeScript types:
 
 ```typescript
-type Task = InferSchemaType<typeof taskSchema>
+type Task = SchemaType<typeof taskSchema>
 // {
 //   id: string
 //   title: string | null
@@ -50,21 +52,21 @@ Queries also benefit from full type support:
 
 ```typescript
 // IDE knows all available fields and operators
-const results = await tasksTable.findMany({
+const { records } = await tasksTable.findMany({
   where: {
     status: 'done',              // ✅ Auto-completes valid options
-    priority: { $gte: 5 },       // ✅ Number operators available
-    tags: { $contains: 'bug' }   // ✅ Array operators available
+    priority: { greater_than_or_equal_to: 5 },  // ✅ Number operators available
+    tags: { contains: 'bug' }                  // ✅ Array operators available
   },
   sorts: [
-    { property: 'priority', direction: 'descending' }  // ✅ Auto-completes properties
+    { field: 'priority', direction: 'desc' }  // ✅ Auto-completes properties
   ]
 })
 
 // Results are fully typed
-results.records.forEach(task => {
-  console.log(task.title)        // string | null
-  console.log(task.status)       // 'todo' | 'in_progress' | 'done' | null
+records.forEach(task => {
+  console.log(task.properties().title)   // string | null
+  console.log(task.properties().status)  // 'todo' | 'in_progress' | 'done' | null
 })
 ```
 
@@ -74,12 +76,16 @@ TypeScript catches errors before runtime:
 
 ```typescript
 await tasksTable.create({
-  status: 'pending'              // ❌ Error: 'pending' is not a valid option
+  properties: {
+    status: 'pending'              // ❌ Error: 'pending' is not a valid option
+  }
 })
 
 // Update operations work with partial data
 await tasksTable.update('task-id', {
-  status: 'done'                 // ✅ Auto-completes valid options
+  properties: {
+    status: 'done'                 // ✅ Auto-completes valid options
+  }
 })
 ```
 

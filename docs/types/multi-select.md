@@ -23,11 +23,15 @@ Multiple choices from predefined options.
 
 ```typescript
 await table.create({
-  tags: ['bug', 'urgent']  // Array of options
+  properties: {
+    tags: ['bug', 'urgent']  // Array of options
+  }
 })
 
 await table.update('page-id', {
-  tags: ['feature']  // Replace all tags
+  properties: {
+    tags: ['feature']  // Replace all tags
+  }
 })
 ```
 
@@ -37,23 +41,24 @@ await table.update('page-id', {
 // Contains specific tag
 await table.findMany({
   where: { 
-    tags: { $contains: 'bug' }
+    tags: { contains: 'bug' }
   }
 })
 
-// Contains any of these tags
+// Contains any of these tags (use or)
 await table.findMany({
-  where: { 
-    tags: { $contains_any: ['bug', 'urgent'] }
+  where: {
+    or: [
+      { tags: { contains: 'bug' } },
+      { tags: { contains: 'urgent' } }
+    ]
   }
 })
 
 // Available operators
-$contains      // Contains specific value
-$contains_any  // Contains any of values
-$contains_all  // Contains all values
-$is_empty      // No tags
-$is_not_empty  // Has tags
+contains       // Contains specific value
+is_empty       // No tags
+is_not_empty   // Has tags
 ```
 
 ## Examples
@@ -61,11 +66,11 @@ $is_not_empty  // Has tags
 ```typescript
 const issuesTable = new NotionTable({
   client,
-  tableId: 'issues-db',
-  schema: {
+  dataSourceId: 'issues-db',
+  properties: {
     title: { type: 'title' },
-    tags: { 
-      type: 'multi_select', 
+    tags: {
+      type: 'multi_select',
       options: ['bug', 'feature', 'enhancement', 'docs', 'urgent', 'blocked'] as const
     },
     labels: {
@@ -77,22 +82,30 @@ const issuesTable = new NotionTable({
 
 // Create issue with multiple tags
 const issue = await issuesTable.create({
-  title: 'Login button not working',
-  tags: ['bug', 'urgent'],
-  labels: ['frontend']
-})
-
-// Find urgent bugs
-const urgentBugs = await issuesTable.findMany({
-  where: { 
-    tags: { $contains_all: ['bug', 'urgent'] }
+  properties: {
+    title: 'Login button not working',
+    tags: ['bug', 'urgent'],
+    labels: ['frontend']
   }
 })
 
-// Find frontend or backend issues
-const techIssues = await issuesTable.findMany({
+// Find urgent bugs (AND: must have both tags)
+const { records: urgentBugs } = await issuesTable.findMany({
   where: {
-    labels: { $contains_any: ['frontend', 'backend'] }
+    and: [
+      { tags: { contains: 'bug' } },
+      { tags: { contains: 'urgent' } }
+    ]
+  }
+})
+
+// Find frontend or backend issues (OR: has either tag)
+const { records: techIssues } = await issuesTable.findMany({
+  where: {
+    or: [
+      { labels: { contains: 'frontend' } },
+      { labels: { contains: 'backend' } }
+    ]
   }
 })
 ```

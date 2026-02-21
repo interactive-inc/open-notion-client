@@ -22,16 +22,18 @@ string | number | boolean | undefined  // Depends on formula result
 Formula fields are computed automatically by Notion and cannot be written directly.
 
 ```typescript
-// ❌ Cannot set formula values
+// Cannot set formula values
 await table.create({
-  total: 100  // This will be ignored
+  properties: { total: 100 }  // This will be ignored
 })
 
-// ✅ Set the source fields instead
+// Set the source fields instead
 await table.create({
-  price: 50,
-  quantity: 2
-  // total formula will compute to 100
+  properties: {
+    price: 50,
+    quantity: 2
+    // total formula will compute to 100
+  }
 })
 ```
 
@@ -41,13 +43,13 @@ await table.create({
 // Query computed values
 await table.findMany({
   where: { 
-    total: { $gte: 100 }
+    total: { greater_than_or_equal_to: 100 }
   }
 })
 
 // Available operators depend on formula type
-// Number formulas: $eq, $ne, $gt, $gte, $lt, $lte
-// String formulas: $contains, $starts_with, $ends_with
+// Number formulas: equals, does_not_equal, greater_than, greater_than_or_equal_to, less_than, less_than_or_equal_to
+// String formulas: contains, starts_with, ends_with
 // Boolean formulas: true, false
 ```
 
@@ -56,8 +58,8 @@ await table.findMany({
 ```typescript
 const ordersTable = new NotionTable({
   client,
-  tableId: 'orders-db',
-  schema: {
+  dataSourceId: 'orders-db',
+  properties: {
     product: { type: 'title' },
     price: { type: 'number' },
     quantity: { type: 'number' },
@@ -69,24 +71,26 @@ const ordersTable = new NotionTable({
 
 // Create order - formulas calculate automatically
 const order = await ordersTable.create({
-  product: 'Widget',
-  price: 29.99,
-  quantity: 3
-  // total: 89.97 (calculated)
-  // taxAmount: 8.997 (calculated)
-  // grandTotal: 98.967 (calculated)
+  properties: {
+    product: 'Widget',
+    price: 29.99,
+    quantity: 3
+    // total: 89.97 (calculated)
+    // taxAmount: 8.997 (calculated)
+    // grandTotal: 98.967 (calculated)
+  }
 })
 
 // Query by formula values
-const largeOrders = await ordersTable.findMany({
-  where: { 
-    grandTotal: { $gte: 1000 }
+const { records: largeOrders } = await ordersTable.findMany({
+  where: {
+    grandTotal: { greater_than_or_equal_to: 1000 }
   }
 })
 
 // String formula example
 const contactsTable = new NotionTable({
-  schema: {
+  properties: {
     firstName: { type: 'rich_text' },
     lastName: { type: 'rich_text' },
     fullName: { type: 'formula' }  // Concatenates names
@@ -94,9 +98,9 @@ const contactsTable = new NotionTable({
 })
 
 // Find by computed full name
-const john = await contactsTable.findMany({
-  where: { 
-    fullName: { $contains: 'John Smith' }
+const { records: john } = await contactsTable.findMany({
+  where: {
+    fullName: { contains: 'John Smith' }
   }
 })
 ```

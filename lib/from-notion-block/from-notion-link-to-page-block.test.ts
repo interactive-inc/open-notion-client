@@ -35,9 +35,7 @@ test("ページへのリンクをNotionURLに変換できる", () => {
   } as LinkToPageBlockObjectResponse
 
   const result = fromNotionLinkToPageBlock(block)
-  expect(result).toBe(
-    "https://www.notion.so/abcd1234567890abcdef1234567890ab",
-  )
+  expect(result).toBe("https://www.notion.so/abcd1234567890abcdef1234567890ab")
 })
 
 test("データベースへのリンクをNotionURLに変換できる", () => {
@@ -50,9 +48,7 @@ test("データベースへのリンクをNotionURLに変換できる", () => {
   } as LinkToPageBlockObjectResponse
 
   const result = fromNotionLinkToPageBlock(block)
-  expect(result).toBe(
-    "https://www.notion.so/dbcd1234567890abcdef1234567890ab",
-  )
+  expect(result).toBe("https://www.notion.so/dbcd1234567890abcdef1234567890ab")
 })
 
 test("IDからハイフンが削除される", () => {

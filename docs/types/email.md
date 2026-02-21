@@ -22,12 +22,14 @@ string | undefined
 
 ```typescript
 await table.create({
-  email: 'user@example.com',
-  workEmail: 'john@company.com'
+  properties: {
+    email: 'user@example.com',
+    workEmail: 'john@company.com'
+  }
 })
 
 await table.update('page-id', {
-  email: 'newemail@example.com'
+  properties: { email: 'newemail@example.com' }
 })
 ```
 
@@ -42,18 +44,18 @@ await table.findMany({
 // Domain search
 await table.findMany({
   where: { 
-    email: { $ends_with: '@company.com' }
+    email: { ends_with: '@company.com' }
   }
 })
 
 // Available operators
-$eq           // Equals (default)
-$ne           // Not equals
-$contains     // Contains substring
-$starts_with  // Starts with
-$ends_with    // Ends with  
-$is_empty     // Is empty
-$is_not_empty // Is not empty
+equals            // Equals (default)
+does_not_equal    // Not equals
+contains          // Contains substring
+starts_with       // Starts with
+ends_with         // Ends with
+is_empty          // Is empty
+is_not_empty      // Is not empty
 ```
 
 ## Examples
@@ -61,8 +63,8 @@ $is_not_empty // Is not empty
 ```typescript
 const contactsTable = new NotionTable({
   client,
-  tableId: 'contacts-db',
-  schema: {
+  dataSourceId: 'contacts-db',
+  properties: {
     name: { type: 'title' },
     email: { type: 'email' },
     alternateEmail: { type: 'email' }
@@ -71,9 +73,11 @@ const contactsTable = new NotionTable({
 
 // Create contact
 const contact = await contactsTable.create({
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  alternateEmail: 'johndoe@personal.com'
+  properties: {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    alternateEmail: 'johndoe@personal.com'
+  }
 })
 
 // Find by exact email
@@ -82,15 +86,15 @@ const found = await contactsTable.findOne({
 })
 
 // Find all company emails
-const companyContacts = await contactsTable.findMany({
-  where: { 
-    email: { $ends_with: '@company.com' }
+const { records: companyContacts } = await contactsTable.findMany({
+  where: {
+    email: { ends_with: '@company.com' }
   }
 })
 
 // Custom validation
 const userTable = new NotionTable({
-  schema: {
+  properties: {
     email: {
       type: 'email',
       

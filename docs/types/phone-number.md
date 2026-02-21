@@ -22,12 +22,14 @@ string | undefined
 
 ```typescript
 await table.create({
-  phone: '+1-555-123-4567',
-  mobile: '+81-90-1234-5678'
+  properties: {
+    phone: '+1-555-123-4567',
+    mobile: '+81-90-1234-5678'
+  }
 })
 
 await table.update('page-id', {
-  phone: '(555) 987-6543'
+  properties: { phone: '(555) 987-6543' }
 })
 ```
 
@@ -42,18 +44,18 @@ await table.findMany({
 // Contains search
 await table.findMany({
   where: { 
-    phone: { $contains: '555' }
+    phone: { contains: '555' }
   }
 })
 
 // Available operators
-$eq           // Equals (default)
-$ne           // Not equals
-$contains     // Contains substring
-$starts_with  // Starts with
-$ends_with    // Ends with
-$is_empty     // Is empty
-$is_not_empty // Is not empty
+equals            // Equals (default)
+does_not_equal    // Not equals
+contains          // Contains substring
+starts_with       // Starts with
+ends_with         // Ends with
+is_empty          // Is empty
+is_not_empty      // Is not empty
 ```
 
 ## Examples
@@ -61,8 +63,8 @@ $is_not_empty // Is not empty
 ```typescript
 const contactsTable = new NotionTable({
   client,
-  tableId: 'contacts-db',
-  schema: {
+  dataSourceId: 'contacts-db',
+  properties: {
     name: { type: 'title' },
     phone: { type: 'phone_number' },
     mobile: { type: 'phone_number' },
@@ -72,22 +74,24 @@ const contactsTable = new NotionTable({
 
 // Create contact
 const contact = await contactsTable.create({
-  name: 'John Smith',
-  phone: '+1-555-123-4567',
-  mobile: '+1-555-987-6543'
+  properties: {
+    name: 'John Smith',
+    phone: '+1-555-123-4567',
+    mobile: '+1-555-987-6543'
+  }
 })
 
 // Find by area code
-const areaCode555 = await contactsTable.findMany({
-  where: { 
-    phone: { $contains: '555' }
+const { records: areaCode555 } = await contactsTable.findMany({
+  where: {
+    phone: { contains: '555' }
   }
 })
 
 // Find contacts with phone numbers
-const withPhone = await contactsTable.findMany({
-  where: { 
-    phone: { $is_not_empty: true }
+const { records: withPhone } = await contactsTable.findMany({
+  where: {
+    phone: { is_not_empty: true }
   }
 })
 ```

@@ -22,15 +22,17 @@ string | number | boolean | undefined  // Depends on rollup type
 Rollup fields aggregate data from relations and cannot be written directly.
 
 ```typescript
-// ❌ Cannot set rollup values
+// Cannot set rollup values
 await table.create({
-  taskCount: 5  // This will be ignored
+  properties: { taskCount: 5 }  // This will be ignored
 })
 
-// ✅ Rollups update automatically based on relations
+// Rollups update automatically based on relations
 await table.create({
-  relatedTasks: ['task-1', 'task-2', 'task-3']
-  // taskCount rollup will show 3
+  properties: {
+    relatedTasks: ['task-1', 'task-2', 'task-3']
+    // taskCount rollup will show 3
+  }
 })
 ```
 
@@ -40,13 +42,13 @@ await table.create({
 // Query aggregated values
 await table.findMany({
   where: { 
-    taskCount: { $gte: 5 }
+    taskCount: { greater_than_or_equal_to: 5 }
   }
 })
 
 // Available operators depend on rollup type
-// Count/Sum: $eq, $ne, $gt, $gte, $lt, $lte
-// Average: $eq, $ne, $gt, $gte, $lt, $lte
+// Count/Sum: equals, does_not_equal, greater_than, greater_than_or_equal_to, less_than, less_than_or_equal_to
+// Average: equals, does_not_equal, greater_than, greater_than_or_equal_to, less_than, less_than_or_equal_to
 // Show original: depends on original field type
 ```
 
@@ -55,8 +57,8 @@ await table.findMany({
 ```typescript
 const projectsTable = new NotionTable({
   client,
-  tableId: 'projects-db',
-  schema: {
+  dataSourceId: 'projects-db',
+  properties: {
     name: { type: 'title' },
     tasks: { type: 'relation' },
     taskCount: { type: 'rollup' },  // Count of related tasks
@@ -68,26 +70,26 @@ const projectsTable = new NotionTable({
 
 // Rollups calculate automatically from relations
 const project = await projectsTable.findById('project-123')
-console.log(project.taskCount)     // e.g., 15
-console.log(project.totalHours)    // e.g., 120
-console.log(project.avgPriority)   // e.g., 7.5
+console.log(project.properties().taskCount)     // e.g., 15
+console.log(project.properties().totalHours)    // e.g., 120
+console.log(project.properties().avgPriority)   // e.g., 7.5
 
 // Query by rollup values
-const largeProjects = await projectsTable.findMany({
-  where: { 
-    taskCount: { $gte: 10 }
+const { records: largeProjects } = await projectsTable.findMany({
+  where: {
+    taskCount: { greater_than_or_equal_to: 10 }
   }
 })
 
-const timeIntensive = await projectsTable.findMany({
-  where: { 
-    totalHours: { $gt: 100 }
+const { records: timeIntensive } = await projectsTable.findMany({
+  where: {
+    totalHours: { greater_than: 100 }
   }
 })
 
 // Team example with member stats
 const teamsTable = new NotionTable({
-  schema: {
+  properties: {
     name: { type: 'title' },
     members: { type: 'relation' },
     memberCount: { type: 'rollup' },  // Count
@@ -97,9 +99,9 @@ const teamsTable = new NotionTable({
 })
 
 // Find teams by size
-const largeTeams = await teamsTable.findMany({
-  where: { 
-    memberCount: { $gte: 10 }
+const { records: largeTeams } = await teamsTable.findMany({
+  where: {
+    memberCount: { greater_than_or_equal_to: 10 }
   }
 })
 ```

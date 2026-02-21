@@ -73,11 +73,13 @@ test("基本的な統合テスト", async () => {
   })
 
   // findManyのテスト
-  const results = await table.findMany()
-  expect(results).toHaveLength(1)
-  expect(results[0]?.properties().title).toBe("タスク1")
-  expect(results[0]?.properties().status).toBe("todo")
-  expect(results[0]?.properties().priority).toBe(3)
+  const result = await table.findMany()
+  expect(result.records).toHaveLength(1)
+  expect(result.hasMore).toBe(false)
+  expect(result.nextCursor).toBeNull()
+  expect(result.records[0]?.properties().title).toBe("タスク1")
+  expect(result.records[0]?.properties().status).toBe("todo")
+  expect(result.records[0]?.properties().priority).toBe(3)
 
   // createのテスト
   const created = await table.create({
@@ -138,11 +140,333 @@ test("高度なクエリのテスト", async () => {
   })
 
   // 高度なクエリ
-  await table.findMany({
+  const result = await table.findMany({
     where: {
       or: [{ status: "todo" }, { priority: { greater_than_or_equal_to: 5 } }],
     },
   })
+  expect(result.records).toHaveLength(0)
+  expect(result.hasMore).toBe(false)
+  expect(result.nextCursor).toBeNull()
+})
+
+test("findMany が limit オプションを正しく処理する", async () => {
+  let capturedPageSize: number | undefined
+
+  const mockNotion = {
+    dataSources: {
+      query: async (params: { data_source_id: string; page_size?: number }) => {
+        capturedPageSize = params.page_size
+        return {
+          results: [
+            {
+              id: "page-1",
+              created_time: "2024-01-01T00:00:00Z",
+              last_edited_time: "2024-01-01T00:00:00Z",
+              archived: false,
+              properties: {
+                title: { type: "title", title: [{ plain_text: "タスク1" }] },
+              },
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+        }
+      },
+    },
+    pages: {
+      create: async () => ({}),
+      retrieve: async () => ({}),
+      update: async () => ({}),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [] }),
+        append: async () => ({}),
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+  }
+
+  const table = new NotionTable({
+    client: mockNotion,
+    dataSourceId: "test-db",
+    properties: schema,
+  })
+
+  await table.findMany({ limit: 5 })
+  expect(capturedPageSize).toBe(5)
+})
+
+test("findMany が cursor オプションを正しく処理する", async () => {
+  let capturedStartCursor: string | undefined
+
+  const mockNotion = {
+    dataSources: {
+      query: async (params: {
+        data_source_id: string
+        start_cursor?: string
+      }) => {
+        capturedStartCursor = params.start_cursor
+        return {
+          results: [
+            {
+              id: "page-2",
+              created_time: "2024-01-01T00:00:00Z",
+              last_edited_time: "2024-01-01T00:00:00Z",
+              archived: false,
+              properties: {
+                title: { type: "title", title: [{ plain_text: "タスク2" }] },
+              },
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+        }
+      },
+    },
+    pages: {
+      create: async () => ({}),
+      retrieve: async () => ({}),
+      update: async () => ({}),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [] }),
+        append: async () => ({}),
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+  }
+
+  const table = new NotionTable({
+    client: mockNotion,
+    dataSourceId: "test-db",
+    properties: schema,
+  })
+
+  await table.findMany({ cursor: "cursor-abc-123" })
+  expect(capturedStartCursor).toBe("cursor-abc-123")
+})
+
+test("findMany がページネーション情報を返す", async () => {
+  const mockNotion = {
+    dataSources: {
+      query: async () => ({
+        results: [
+          {
+            id: "page-1",
+            created_time: "2024-01-01T00:00:00Z",
+            last_edited_time: "2024-01-01T00:00:00Z",
+            archived: false,
+            properties: {
+              title: { type: "title", title: [{ plain_text: "タスク1" }] },
+            },
+          },
+        ],
+        next_cursor: "cursor-next-page",
+        has_more: true,
+      }),
+    },
+    pages: {
+      create: async () => ({}),
+      retrieve: async () => ({}),
+      update: async () => ({}),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [] }),
+        append: async () => ({}),
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+  }
+
+  const table = new NotionTable({
+    client: mockNotion,
+    dataSourceId: "test-db",
+    properties: schema,
+  })
+
+  const result = await table.findMany({ limit: 1 })
+  expect(result.records).toHaveLength(1)
+  expect(result.hasMore).toBe(false)
+  expect(result.nextCursor).toBe("cursor-next-page")
+})
+
+test("findMany でページネーションを跨いでレコードを取得する", async () => {
+  let callCount = 0
+
+  const mockNotion = {
+    dataSources: {
+      query: async (params: {
+        data_source_id: string
+        start_cursor?: string
+        page_size?: number
+      }) => {
+        callCount++
+
+        if (callCount === 1) {
+          expect(params.start_cursor).toBeUndefined()
+          return {
+            results: [
+              {
+                id: "page-1",
+                created_time: "2024-01-01T00:00:00Z",
+                last_edited_time: "2024-01-01T00:00:00Z",
+                archived: false,
+                properties: {
+                  title: { type: "title", title: [{ plain_text: "タスク1" }] },
+                },
+              },
+            ],
+            next_cursor: "cursor-page-2",
+            has_more: true,
+          }
+        }
+
+        expect(params.start_cursor).toBe("cursor-page-2")
+        return {
+          results: [
+            {
+              id: "page-2",
+              created_time: "2024-01-01T00:00:00Z",
+              last_edited_time: "2024-01-01T00:00:00Z",
+              archived: false,
+              properties: {
+                title: { type: "title", title: [{ plain_text: "タスク2" }] },
+              },
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+        }
+      },
+    },
+    pages: {
+      create: async () => ({}),
+      retrieve: async () => ({}),
+      update: async () => ({}),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [] }),
+        append: async () => ({}),
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+  }
+
+  const table = new NotionTable({
+    client: mockNotion,
+    dataSourceId: "test-db",
+    properties: schema,
+  })
+
+  const result = await table.findMany({ limit: 200 })
+  expect(result.records).toHaveLength(2)
+  expect(callCount).toBe(2)
+})
+
+test("findMany の cursor を使ったページ送り", async () => {
+  let _callCount = 0
+
+  const mockNotion = {
+    dataSources: {
+      query: async (params: {
+        data_source_id: string
+        start_cursor?: string
+      }) => {
+        _callCount++
+
+        if (params.start_cursor === "cursor-page-2") {
+          return {
+            results: [
+              {
+                id: "page-2",
+                created_time: "2024-01-01T00:00:00Z",
+                last_edited_time: "2024-01-01T00:00:00Z",
+                archived: false,
+                properties: {
+                  title: { type: "title", title: [{ plain_text: "タスク2" }] },
+                },
+              },
+            ],
+            next_cursor: null,
+            has_more: false,
+          }
+        }
+
+        return {
+          results: [
+            {
+              id: "page-1",
+              created_time: "2024-01-01T00:00:00Z",
+              last_edited_time: "2024-01-01T00:00:00Z",
+              archived: false,
+              properties: {
+                title: { type: "title", title: [{ plain_text: "タスク1" }] },
+              },
+            },
+          ],
+          next_cursor: "cursor-page-2",
+          has_more: true,
+        }
+      },
+    },
+    pages: {
+      create: async () => ({}),
+      retrieve: async () => ({}),
+      update: async () => ({}),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [] }),
+        append: async () => ({}),
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+  }
+
+  const table = new NotionTable({
+    client: mockNotion,
+    dataSourceId: "test-db",
+    properties: schema,
+  })
+
+  // 1ページ目
+  const page1 = await table.findMany({ limit: 1 })
+  expect(page1.records).toHaveLength(1)
+  expect(page1.records[0]?.properties().title).toBe("タスク1")
+  expect(page1.nextCursor).toBe("cursor-page-2")
+
+  // 2ページ目（cursorを使用）
+  const cursor = page1.nextCursor ?? undefined
+  const page2 = await table.findMany({ limit: 1, cursor })
+  expect(page2.records).toHaveLength(1)
+  expect(page2.records[0]?.properties().title).toBe("タスク2")
+  expect(page2.hasMore).toBe(false)
+  expect(page2.nextCursor).toBeNull()
 })
 
 test("NotionMarkdownとの統合", async () => {
