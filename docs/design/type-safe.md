@@ -89,15 +89,6 @@ await tasksTable.update('task-id', {
 })
 ```
 
-## VS Code Integration
-
-![VS Code Auto-completion](https://example.com/vscode-demo.gif)
-
-- Property names auto-complete as you type
-- Hover for type information
-- Red squiggles for type errors
-- IntelliSense for all methods and options
-
 ## Best Practice
 
 Always use `as const` for literal types:
