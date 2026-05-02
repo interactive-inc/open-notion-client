@@ -1,0 +1,5 @@
+RyukyuInteractive/inta:
+  - .claude/rules/md.md
+  - .claude/rules/ts.md
+  - .github/ISSUE_TEMPLATE.md
+  - .github/PULL_REQUEST_TEMPLATE.md
