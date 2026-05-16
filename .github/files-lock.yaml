@@ -1,5 +1,17 @@
 RyukyuInteractive/inta:
   - .claude/rules/md.md
   - .claude/rules/ts.md
+  - .claude/skills/docs/SKILL.md
+  - .claude/skills/docs/references/backlogs.md
+  - .claude/skills/docs/references/decisions.md
+  - .claude/skills/docs/references/formats.md
+  - .claude/skills/docs/references/glossary.md
+  - .claude/skills/docs/references/index.md
+  - .claude/skills/docs/references/signals.md
+  - .claude/skills/docs/references/validation.md
+  - .claude/skills/docs/references/writing-rules.md
+  - .claude/skills/issue-planning/SKILL.md
+  - .claude/skills/issue/SKILL.md
+  - .claude/skills/pr/SKILL.md
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
