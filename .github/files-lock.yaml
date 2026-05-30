@@ -10,8 +10,20 @@ RyukyuInteractive/inta:
   - .claude/skills/docs/references/signals.md
   - .claude/skills/docs/references/validation.md
   - .claude/skills/docs/references/writing-rules.md
-  - .claude/skills/issue-planning/SKILL.md
-  - .claude/skills/issue/SKILL.md
-  - .claude/skills/pr/SKILL.md
+  - .claude/skills/gh-issue-template/SKILL.md
+  - .claude/skills/software-design/README.md
+  - .claude/skills/software-design/SKILL.md
+  - .claude/skills/software-design/references/architecture.md
+  - .claude/skills/software-design/references/error-handling.md
+  - .claude/skills/software-design/references/fluent-api.md
+  - .claude/skills/software-design/references/fsm.md
+  - .claude/skills/software-design/references/phantom-type.md
+  - .claude/skills/software-design/references/react.md
+  - .claude/skills/software-design/references/reducer.md
+  - .claude/skills/software-design/references/service-layer.md
+  - .claude/skills/software-design/references/ux-five-planes.md
+  - .claude/skills/software-design/references/value-object.md
+  - .claude/skills/triage/SKILL.md
+  - .claude/skills/triage/references/screenshot-upload.md
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
