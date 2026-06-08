@@ -188,9 +188,7 @@ test("テーブルブロックをマークダウンに変換できる", () => {
   } as NotionTableBlock
 
   const result = fromNotionTableBlock(block)
-  expect(result).toBe(
-    "| 名前 | 年齢 | 職業 |\n| --- | --- | --- |\n| 田中 | 30 | エンジニア |",
-  )
+  expect(result).toBe("| 名前 | 年齢 | 職業 |\n| --- | --- | --- |\n| 田中 | 30 | エンジニア |")
 })
 
 test("子要素なしのテーブルブロックは空文字を返す", () => {

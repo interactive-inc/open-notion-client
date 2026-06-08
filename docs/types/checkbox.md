@@ -24,12 +24,12 @@ boolean | undefined
 await table.create({
   properties: {
     isActive: true,
-    isPublished: false
-  }
+    isPublished: false,
+  },
 })
 
-await table.update('page-id', {
-  properties: { isPublished: true }
+await table.update("page-id", {
+  properties: { isPublished: true },
 })
 ```
 
@@ -38,17 +38,17 @@ await table.update('page-id', {
 ```typescript
 // Exact match
 await table.findMany({
-  where: { isActive: true }
+  where: { isActive: true },
 })
 
 // Find unchecked
 await table.findMany({
-  where: { isPublished: false }
+  where: { isPublished: false },
 })
 
 // Available operators
-true   // Checked
-false  // Unchecked
+true // Checked
+false // Unchecked
 ```
 
 ## Examples
@@ -56,40 +56,40 @@ false  // Unchecked
 ```typescript
 const articlesTable = new NotionTable({
   client,
-  dataSourceId: 'articles-db',
+  dataSourceId: "articles-db",
   properties: {
-    title: { type: 'title' },
-    published: { type: 'checkbox' },
-    featured: { type: 'checkbox' },
-    allowComments: { type: 'checkbox' }
-  }
+    title: { type: "title" },
+    published: { type: "checkbox" },
+    featured: { type: "checkbox" },
+    allowComments: { type: "checkbox" },
+  },
 })
 
 // Create draft article
 const article = await articlesTable.create({
   properties: {
-    title: 'Getting Started with TypeScript',
+    title: "Getting Started with TypeScript",
     published: false,
     featured: false,
-    allowComments: true
-  }
+    allowComments: true,
+  },
 })
 
 // Publish article
 await articlesTable.update(article.id, {
-  properties: { published: true }
+  properties: { published: true },
 })
 
 // Find all published articles
 const { records: publishedArticles } = await articlesTable.findMany({
-  where: { published: true }
+  where: { published: true },
 })
 
 // Find featured articles
 const { records: featured } = await articlesTable.findMany({
   where: {
     published: true,
-    featured: true
-  }
+    featured: true,
+  },
 })
 ```

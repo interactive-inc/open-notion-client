@@ -5,7 +5,7 @@ Convert markdown text to Notion block objects.
 ## Import
 
 ```typescript
-import { toNotionBlocks } from '@interactive-inc/notion-client'
+import { toNotionBlocks } from "@interactive-inc/notion-client"
 ```
 
 ## Function Signature
@@ -20,12 +20,12 @@ Note: Block type transformation (e.g., heading level adjustment) is handled by t
 
 ### Headings
 
-| Markdown | Notion Block | Example |
-|----------|--------------|---------|
-| `# ` | `heading_1` | `# Title` |
-| `## ` | `heading_2` | `## Section` |
-| `### ` | `heading_3` | `### Subsection` |
-| `#### ` and below | `heading_3` | `#### Details` → H3 |
+| Markdown          | Notion Block | Example             |
+| ----------------- | ------------ | ------------------- |
+| `# `              | `heading_1`  | `# Title`           |
+| `## `             | `heading_2`  | `## Section`        |
+| `### `            | `heading_3`  | `### Subsection`    |
+| `#### ` and below | `heading_3`  | `#### Details` → H3 |
 
 ```typescript
 const markdown = `# Main Title
@@ -42,9 +42,9 @@ const blocks = toNotionBlocks(markdown)
 
 ### Paragraphs
 
-| Markdown | Notion Block |
-|----------|--------------|
-| Plain text | `paragraph` |
+| Markdown   | Notion Block |
+| ---------- | ------------ |
+| Plain text | `paragraph`  |
 
 ```typescript
 const markdown = `This is a paragraph.
@@ -60,9 +60,9 @@ const blocks = toNotionBlocks(markdown)
 
 ### Lists
 
-| Markdown | Notion Block | Example |
-|----------|--------------|---------|
-| `- `, `* `, `+ ` | `bulleted_list_item` | `- Item` |
+| Markdown           | Notion Block         | Example    |
+| ------------------ | -------------------- | ---------- |
+| `- `, `* `, `+ `   | `bulleted_list_item` | `- Item`   |
 | `1. `, `2. `, etc. | `numbered_list_item` | `1. First` |
 
 ```typescript
@@ -79,10 +79,10 @@ const blocks = toNotionBlocks(markdown)
 
 ### Code Blocks
 
-| Markdown | Notion Block |
-|----------|--------------|
-| ` ```lang ` | `code` with language |
-| ` ``` ` | `code` without language |
+| Markdown    | Notion Block            |
+| ----------- | ----------------------- |
+| ` ```lang ` | `code` with language    |
+| ` ``` `     | `code` without language |
 
 ```typescript
 const markdown = `\`\`\`typescript
@@ -102,12 +102,12 @@ const blocks = toNotionBlocks(markdown)
 
 ### Inline Formatting
 
-| Markdown | Notion Annotation | Example |
-|----------|------------------|---------|
-| `**text**` | `bold: true` | `**Bold text**` |
-| `*text*` or `_text_` | `italic: true` | `*Italic text*` |
-| `~~text~~` | `strikethrough: true` | `~~Strikethrough~~` |
-| `` `text` `` | `code: true` | `` `inline code` `` |
+| Markdown             | Notion Annotation     | Example             |
+| -------------------- | --------------------- | ------------------- |
+| `**text**`           | `bold: true`          | `**Bold text**`     |
+| `*text*` or `_text_` | `italic: true`        | `*Italic text*`     |
+| `~~text~~`           | `strikethrough: true` | `~~Strikethrough~~` |
+| `` `text` ``         | `code: true`          | `` `inline code` `` |
 
 ```typescript
 const markdown = `This has **bold**, *italic*, ~~strike~~, and \`code\`.`
@@ -152,24 +152,24 @@ const blocks = toNotionBlocks(markdown)
 ### With Block Type Transformation
 
 ```typescript
-import { NotionMarkdown, NotionTable } from '@interactive-inc/notion-client'
+import { NotionMarkdown, NotionTable } from "@interactive-inc/notion-client"
 
 const markdown = new NotionMarkdown({
-  heading_1: 'heading_2',  // # becomes ##
-  heading_2: 'heading_3'   // ## becomes ###
+  heading_1: "heading_2", // # becomes ##
+  heading_2: "heading_3", // ## becomes ###
 })
 
 const table = new NotionTable({
   client,
-  dataSourceId: 'db-id',
-  properties: { title: { type: 'title' } },
-  markdown  // Transformation applied during create/update
+  dataSourceId: "db-id",
+  properties: { title: { type: "title" } },
+  markdown, // Transformation applied during create/update
 })
 
 // Title is heading_2, Subtitle is heading_3
 await table.create({
-  properties: { title: 'Document' },
-  body: `# Title\n## Subtitle`
+  properties: { title: "Document" },
+  body: `# Title\n## Subtitle`,
 })
 ```
 
@@ -190,14 +190,14 @@ const blocks = toNotionBlocks(markdown)
 
 The following markdown features are not yet converted to Notion blocks:
 
-| Feature | Current Behavior |
-| ------- | ---------------- |
-| Tables | Ignored |
-| Images `![alt](url)` | Ignored |
-| Blockquotes `>` | Ignored |
-| Horizontal rules `---` | Ignored |
-| To-do `- [ ]` | Ignored |
-| HTML tags | Stripped |
+| Feature                | Current Behavior |
+| ---------------------- | ---------------- |
+| Tables                 | Ignored          |
+| Images `![alt](url)`   | Ignored          |
+| Blockquotes `>`        | Ignored          |
+| Horizontal rules `---` | Ignored          |
+| To-do `- [ ]`          | Ignored          |
+| HTML tags              | Stripped         |
 
 Links `[text](url)` in inline text are converted to rich text with link annotations.
 
@@ -212,16 +212,16 @@ Notes:
 ```typescript
 const blogTable = new NotionTable({
   client,
-  dataSourceId: 'blog-db',
+  dataSourceId: "blog-db",
   properties: {
-    title: { type: 'title' }
-  }
+    title: { type: "title" },
+  },
 })
 
 // Create page with markdown content
 const post = await blogTable.create({
   properties: {
-    title: 'My Blog Post'
+    title: "My Blog Post",
   },
   body: `# Introduction
 
@@ -242,7 +242,7 @@ interface User {
 
 ## Conclusion
 
-Thanks for reading!`
+Thanks for reading!`,
 })
 ```
 
@@ -252,10 +252,10 @@ Thanks for reading!`
 
 ```typescript
 // Escape backticks in inline code
-const markdown = 'Use \\`console.log()\\` to debug'
+const markdown = "Use \\`console.log()\\` to debug"
 
 // Escape asterisks if not formatting
-const markdown = 'Multiply 5 \\* 10'
+const markdown = "Multiply 5 \\* 10"
 ```
 
 ### Handle Empty Lines
@@ -264,7 +264,7 @@ const markdown = 'Multiply 5 \\* 10'
 const markdown = `Paragraph one
 
 
-Paragraph two`  // Multiple empty lines
+Paragraph two` // Multiple empty lines
 
 const blocks = toNotionBlocks(markdown)
 // Only creates two paragraph blocks
@@ -293,8 +293,8 @@ const markdown = `\`\`\`javascript
 
 ```typescript
 // Process large documents in chunks
-const chunks = markdown.split('\n\n')
-const blockArrays = chunks.map(chunk => toNotionBlocks(chunk))
+const chunks = markdown.split("\n\n")
+const blockArrays = chunks.map((chunk) => toNotionBlocks(chunk))
 const allBlocks = blockArrays.flat()
 ```
 

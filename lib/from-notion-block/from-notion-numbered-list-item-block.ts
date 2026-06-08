@@ -2,9 +2,7 @@ import { fromNotionBlock } from "@/from-notion-block/from-notion-block"
 import type { NotionNumberedListItemBlock } from "@/types"
 import { fromNotionRichTextItem } from "@/utils"
 
-export function fromNotionNumberedListItemBlock(
-  block: NotionNumberedListItemBlock,
-): string {
+export function fromNotionNumberedListItemBlock(block: NotionNumberedListItemBlock): string {
   const itemText = `1. ${fromNotionRichTextItem(block.numbered_list_item.rich_text)}`
 
   if (!block.children || block.children.length === 0) {

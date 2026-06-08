@@ -5,10 +5,7 @@ import type {
 } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionRichTextProperty } from "./from-notion-rich-text-property"
 
-type RichTextProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "rich_text" }
->
+type RichTextProperty = Extract<PageObjectResponse["properties"][string], { type: "rich_text" }>
 
 test("単一のテキストを変換", () => {
   const property: RichTextProperty = {

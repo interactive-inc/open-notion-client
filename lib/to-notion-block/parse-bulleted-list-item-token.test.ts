@@ -155,8 +155,14 @@ test("太字を含む箇条書きアイテムを変換", () => {
       rich_text: [
         {
           type: "text",
-          text: { content: "Bold item" },
-          plain_text: "Bold item",
+          text: { content: "Bold" },
+          plain_text: "Bold",
+          annotations: { bold: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " item" },
+          plain_text: " item",
           annotations: {},
         } as RichTextItemResponse,
       ],
@@ -165,7 +171,7 @@ test("太字を含む箇条書きアイテムを変換", () => {
   })
 })
 
-test("テキストトークンがない場合エラーをスロー", () => {
+test("テキストトークンがない場合は空の項目を返す", () => {
   const item: Tokens.ListItem = {
     type: "list_item",
     raw: "- ",
@@ -176,9 +182,15 @@ test("テキストトークンがない場合エラーをスロー", () => {
     tokens: [],
   }
 
-  expect(() => parseBulletedListItemToken(item)).toThrow(
-    "Text token not found in list item",
-  )
+  const result = parseBulletedListItemToken(item)
+
+  expect(result).toEqual({
+    type: "bulleted_list_item",
+    bulleted_list_item: {
+      rich_text: [],
+      children: undefined,
+    },
+  })
 })
 
 test("番号付きリストが混在するネストを変換", () => {

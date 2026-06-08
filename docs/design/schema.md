@@ -9,13 +9,13 @@ Define your database structure with TypeScript using the `properties` parameter:
 ```typescript
 const tasksTable = new NotionTable({
   client,
-  dataSourceId: 'your-database-id',
+  dataSourceId: "your-database-id",
   properties: {
-    title: { type: 'title' },
-    description: { type: 'rich_text' },
-    priority: { type: 'number' },
-    status: { type: 'select', options: ['todo', 'in_progress', 'done'] }
-  } as const
+    title: { type: "title" },
+    description: { type: "rich_text" },
+    priority: { type: "number" },
+    status: { type: "select", options: ["todo", "in_progress", "done"] },
+  } as const,
 })
 ```
 
@@ -27,7 +27,9 @@ Every Notion database must have exactly one title property:
 
 ```typescript
 {
-  title: { type: 'title' }
+  title: {
+    type: "title"
+  }
 }
 ```
 
@@ -90,14 +92,16 @@ Every Notion database must have exactly one title property:
 ```typescript
 {
   // Date with start and optional end
-  deadline: { type: 'date' }
+  deadline: {
+    type: "date"
+  }
 }
 
 // Usage
 await table.create({
   properties: {
-    deadline: { start: '2024-01-01', end: null }
-  }
+    deadline: { start: "2024-01-01", end: null },
+  },
 })
 ```
 
@@ -139,24 +143,24 @@ The properties automatically infer TypeScript types:
 
 ```typescript
 const taskProperties = {
-  title: { type: 'title' },
-  priority: { type: 'number' },
-  tags: { type: 'multi_select', options: ['bug', 'feature'] as const }
+  title: { type: "title" },
+  priority: { type: "number" },
+  tags: { type: "multi_select", options: ["bug", "feature"] as const },
 } as const
 
 const table = new NotionTable({
   client,
-  dataSourceId: 'db-id',
-  properties: taskProperties
+  dataSourceId: "db-id",
+  properties: taskProperties,
 })
 
 // TypeScript infers correct types for create/update
 await table.create({
   properties: {
-    title: 'Task',           // string
-    priority: 5,             // number | null
-    tags: ['bug', 'feature'] // ('bug' | 'feature')[]
-  }
+    title: "Task", // string
+    priority: 5, // number | null
+    tags: ["bug", "feature"], // ('bug' | 'feature')[]
+  },
 })
 
 // And for query results
@@ -174,12 +178,12 @@ for (const task of tasks) {
 Extract the TypeScript type from your properties definition:
 
 ```typescript
-import type { SchemaType } from '@interactive-inc/notion-client'
+import type { SchemaType } from "@interactive-inc/notion-client"
 
 const properties = {
-  title: { type: 'title' },
-  status: { type: 'select', options: ['active', 'inactive'] as const },
-  count: { type: 'number' }
+  title: { type: "title" },
+  status: { type: "select", options: ["active", "inactive"] as const },
+  count: { type: "number" },
 } as const
 
 // Extract the type
@@ -199,17 +203,17 @@ type MyRecord = SchemaType<typeof properties>
 // Good - preserves literal types for options
 const properties = {
   status: {
-    type: 'select',
-    options: ['active', 'inactive'] as const
-  }
+    type: "select",
+    options: ["active", "inactive"] as const,
+  },
 } as const
 
 // Avoid - loses type information
 const properties = {
   status: {
-    type: 'select',
-    options: ['active', 'inactive']
-  }
+    type: "select",
+    options: ["active", "inactive"],
+  },
 }
 ```
 
@@ -218,20 +222,20 @@ const properties = {
 ```typescript
 // Define properties separately for reuse
 const baseProperties = {
-  title: { type: 'title' },
-  createdAt: { type: 'created_time' }
+  title: { type: "title" },
+  createdAt: { type: "created_time" },
 } as const
 
 const userProperties = {
   ...baseProperties,
-  email: { type: 'email' },
-  role: { type: 'select', options: ['admin', 'user'] as const }
+  email: { type: "email" },
+  role: { type: "select", options: ["admin", "user"] as const },
 } as const
 
 const productProperties = {
   ...baseProperties,
-  price: { type: 'number' },
-  stock: { type: 'number' }
+  price: { type: "number" },
+  stock: { type: "number" },
 } as const
 ```
 
@@ -242,11 +246,11 @@ Since the library doesn't include built-in validation, validate your data before
 ```typescript
 function validateTask(data: { title?: string; priority?: number }) {
   if (!data.title || data.title.length < 3) {
-    throw new Error('Title must be at least 3 characters')
+    throw new Error("Title must be at least 3 characters")
   }
 
   if (data.priority !== undefined && (data.priority < 1 || data.priority > 10)) {
-    throw new Error('Priority must be between 1 and 10')
+    throw new Error("Priority must be between 1 and 10")
   }
 }
 
@@ -257,25 +261,25 @@ await table.create({ properties: input })
 
 ## Property Type Reference
 
-| Type | TypeScript Type | Nullable | Notes |
-| ---- | --------------- | -------- | ----- |
-| `title` | `string` | No | Required, one per database |
-| `rich_text` | `string` | Yes | Plain text value |
-| `number` | `number` | Yes | Supports format option |
-| `select` | `string` | Yes | Single option |
-| `multi_select` | `string[]` | Yes | Multiple options |
-| `status` | `string` | Yes | Special select type |
-| `checkbox` | `boolean` | No | Always has value |
-| `date` | `{ start: string, end: string \| null }` | Yes | ISO date strings |
-| `url` | `string` | Yes | URL string |
-| `email` | `string` | Yes | Email string |
-| `phone_number` | `string` | Yes | Phone string |
-| `people` | `object[]` | Yes | User objects |
-| `files` | `object[]` | Yes | File objects |
-| `relation` | `object[]` | Yes | Related page refs |
-| `formula` | `string \| number \| boolean \| object` | Yes | Read-only |
-| `rollup` | `various` | Yes | Read-only |
-| `created_time` | `string` | No | Read-only, ISO date |
-| `last_edited_time` | `string` | No | Read-only, ISO date |
-| `created_by` | `object` | No | Read-only, user |
-| `last_edited_by` | `object` | No | Read-only, user |
+| Type               | TypeScript Type                          | Nullable | Notes                      |
+| ------------------ | ---------------------------------------- | -------- | -------------------------- |
+| `title`            | `string`                                 | No       | Required, one per database |
+| `rich_text`        | `string`                                 | Yes      | Plain text value           |
+| `number`           | `number`                                 | Yes      | Supports format option     |
+| `select`           | `string`                                 | Yes      | Single option              |
+| `multi_select`     | `string[]`                               | Yes      | Multiple options           |
+| `status`           | `string`                                 | Yes      | Special select type        |
+| `checkbox`         | `boolean`                                | No       | Always has value           |
+| `date`             | `{ start: string, end: string \| null }` | Yes      | ISO date strings           |
+| `url`              | `string`                                 | Yes      | URL string                 |
+| `email`            | `string`                                 | Yes      | Email string               |
+| `phone_number`     | `string`                                 | Yes      | Phone string               |
+| `people`           | `object[]`                               | Yes      | User objects               |
+| `files`            | `object[]`                               | Yes      | File objects               |
+| `relation`         | `object[]`                               | Yes      | Related page refs          |
+| `formula`          | `string \| number \| boolean \| object`  | Yes      | Read-only                  |
+| `rollup`           | `various`                                | Yes      | Read-only                  |
+| `created_time`     | `string`                                 | No       | Read-only, ISO date        |
+| `last_edited_time` | `string`                                 | No       | Read-only, ISO date        |
+| `created_by`       | `object`                                 | No       | Read-only, user            |
+| `last_edited_by`   | `object`                                 | No       | Read-only, user            |

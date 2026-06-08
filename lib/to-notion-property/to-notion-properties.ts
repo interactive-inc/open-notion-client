@@ -1,12 +1,9 @@
-import type {
-  NotionPropertyRequest,
-  NotionPropertySchema,
-  SchemaType,
-} from "@/types"
+import type { NotionPropertyRequest, NotionPropertySchema, SchemaType } from "@/types"
 import { toNotionProperty } from "./to-notion-property"
 
 /**
  * スキーマに基づいてオブジェクトをNotionプロパティに変換
+ * 読み取り専用プロパティ（created_*, last_edited_*, formula）は黙ってスキップする
  */
 export function toNotionProperties<
   T extends NotionPropertySchema,
@@ -21,7 +18,13 @@ export function toNotionProperties<
       continue
     }
 
-    properties[key] = toNotionProperty(config, value)
+    const converted = toNotionProperty(config, value)
+
+    if (converted === null) {
+      continue
+    }
+
+    properties[key] = converted
   }
 
   return properties

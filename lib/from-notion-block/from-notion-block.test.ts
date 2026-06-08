@@ -155,11 +155,11 @@ test("太字の段落を変換できる", () => {
   expect(result).toBe("**太字のテキスト**")
 })
 
-test("未対応のブロックタイプの場合", () => {
+test("未対応のブロックタイプは空文字列として無視される", () => {
   const block = {
     type: "unsupported_block_type",
   } as unknown as NotionBlock
 
   const result = fromNotionBlock(block)
-  expect(result).toBe("<!-- 未対応のブロックタイプ: unsupported_block_type -->")
+  expect(result).toBe("")
 })

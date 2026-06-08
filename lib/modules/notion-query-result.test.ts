@@ -13,10 +13,7 @@ test("ページ参照の配列を取得できる", () => {
 
   const mockClient = {} as Client
   const mockConverter = {
-    fromNotion: (
-      _schema: NotionPropertySchema,
-      properties: Record<string, unknown>,
-    ) => {
+    fromNotion: (_schema: NotionPropertySchema, properties: Record<string, unknown>) => {
       return { title: properties.id === "page-1" ? "Page 1" : "Page 2" }
     },
     toNotion: () => ({}),
@@ -97,10 +94,7 @@ test("ページ数を取得できる", () => {
 
   const mockClient = {} as Client
   const mockConverter = {
-    fromNotion: (
-      _: NotionPropertySchema,
-      properties: Record<string, unknown>,
-    ) => {
+    fromNotion: (_: NotionPropertySchema, properties: Record<string, unknown>) => {
       return { title: `Page ${properties.id}` }
     },
     toNotion: () => ({}),
@@ -126,7 +120,7 @@ test("ページ数を取得できる", () => {
     hasMore: false,
   })
 
-  expect(queryResult.length()).toBe(5)
+  expect(queryResult.length).toBe(5)
 })
 
 test("空の結果の場合", () => {
@@ -137,7 +131,7 @@ test("空の結果の場合", () => {
   })
 
   expect(queryResult.references()).toEqual([])
-  expect(queryResult.length()).toBe(0)
+  expect(queryResult.length).toBe(0)
   expect(queryResult.hasMore()).toBe(false)
   expect(queryResult.cursor()).toBeNull()
 })

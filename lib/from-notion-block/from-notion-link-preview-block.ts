@@ -3,8 +3,6 @@ import type { LinkPreviewBlockObjectResponse } from "@notionhq/client/build/src/
 /**
  * Convert Notion link preview block to markdown
  */
-export function fromNotionLinkPreviewBlock(
-  block: LinkPreviewBlockObjectResponse,
-): string {
+export function fromNotionLinkPreviewBlock(block: LinkPreviewBlockObjectResponse): string {
   return block.link_preview.url
 }

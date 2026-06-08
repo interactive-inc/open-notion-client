@@ -4,16 +4,33 @@ import type {
   UpdatePageResponse,
 } from "@notionhq/client/build/src/api-endpoints"
 
+/**
+ * UpdatePageResponse (PageObjectResponse | PartialPageObjectResponse) を
+ * PageObjectResponseとして取り出す。partialの場合は内部矛盾なのでthrow
+ */
 export function toNotionPage(resp: UpdatePageResponse): PageObjectResponse {
-  return resp as unknown as PageObjectResponse
+  if (!("properties" in resp)) {
+    throw new Error(`Notion returned a partial page (id=${resp.id})`)
+  }
+  return resp
+}
+
+function extractHref(item: RichTextItemResponse): string | null {
+  if (item.href) {
+    return item.href
+  }
+  if (item.type === "text" && item.text.link && item.text.link.url) {
+    return item.text.link.url
+  }
+  return null
 }
 
 /**
  * Convert Notion rich text to markdown text
+ * 注釈 (bold/italic/strikethrough/code) とリンクをマークダウン記法に変換する
+ * リンクは text.text.link.url を優先し、なければ href を見る
  */
-export function fromNotionRichTextItem(
-  richTexts: RichTextItemResponse[],
-): string {
+export function fromNotionRichTextItem(richTexts: RichTextItemResponse[]): string {
   if (!richTexts || richTexts.length === 0) return ""
 
   let result = ""
@@ -28,8 +45,9 @@ export function fromNotionRichTextItem(
       if (text.annotations.code) textResult = `\`${textResult}\``
     }
 
-    if (text.href) {
-      textResult = `[${textResult}](${text.href})`
+    const href = extractHref(text)
+    if (href) {
+      textResult = `[${textResult}](${href})`
     }
 
     result += textResult

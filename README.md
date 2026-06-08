@@ -13,10 +13,12 @@ Working directly with the Notion API is painful. A simple text value comes burie
   "properties": {
     "Name": {
       "type": "title",
-      "title": [{
-        "text": { "content": "Hello World" },
-        "annotations": { "bold": false, "italic": false }
-      }]
+      "title": [
+        {
+          "text": { "content": "Hello World" },
+          "annotations": { "bold": false, "italic": false }
+        }
+      ]
     }
   }
 }
@@ -82,7 +84,7 @@ const task = await tasks.create({
 const allTasks = await tasks.findMany({
   where: { status: "doing" },
   sorts: [{ field: "priority", direction: "desc" }],
-  count: 10,
+  limit: 10,
 })
 
 // Find one record
@@ -131,7 +133,7 @@ await tasks.upsert({
     properties: { title: "Daily standup", status: "todo" },
   },
   update: {
-    properties: { status: "todo" },
+    properties: { status: "in_progress" },
   },
 })
 ```
@@ -160,10 +162,7 @@ const results = await tasks.findMany({
     or: [
       { status: "todo" },
       {
-        and: [
-          { priority: { greater_than_or_equal_to: 5 } },
-          { tags: { contains: "urgent" } },
-        ],
+        and: [{ priority: { greater_than_or_equal_to: 5 } }, { tags: { contains: "urgent" } }],
       },
     ],
   },
@@ -172,25 +171,25 @@ const results = await tasks.findMany({
 
 ## Property Types
 
-| Type | Description | Example Value |
-| --- | --- | --- |
-| `title` | Page title (required) | `"Task name"` |
-| `rich_text` | Text content | `"Description"` |
-| `number` | Numeric value | `42` |
-| `select` | Single select | `"option1"` |
-| `multi_select` | Multiple select | `["tag1", "tag2"]` |
-| `status` | Status field | `"In Progress"` |
-| `checkbox` | Boolean | `true` |
-| `url` | URL string | `"https://..."` |
-| `email` | Email address | `"user@example.com"` |
-| `phone_number` | Phone number | `"555-123-4567"` |
-| `date` | Date value | `{ start: "2024-01-01" }` |
-| `files` | File attachments | `[{ url: "..." }]` |
-| `people` | User references | `[{ id: "user-id" }]` |
-| `relation` | Relations | `["page-id"]` |
-| `formula` | Computed value | Read-only |
-| `created_time` | Creation timestamp | Read-only |
-| `last_edited_time` | Last edit timestamp | Read-only |
+| Type               | Description           | Example Value             |
+| ------------------ | --------------------- | ------------------------- |
+| `title`            | Page title (required) | `"Task name"`             |
+| `rich_text`        | Text content          | `"Description"`           |
+| `number`           | Numeric value         | `42`                      |
+| `select`           | Single select         | `"option1"`               |
+| `multi_select`     | Multiple select       | `["tag1", "tag2"]`        |
+| `status`           | Status field          | `"In Progress"`           |
+| `checkbox`         | Boolean               | `true`                    |
+| `url`              | URL string            | `"https://..."`           |
+| `email`            | Email address         | `"user@example.com"`      |
+| `phone_number`     | Phone number          | `"555-123-4567"`          |
+| `date`             | Date value            | `{ start: "2024-01-01" }` |
+| `files`            | File attachments      | `[{ url: "..." }]`        |
+| `people`           | User references       | `[{ id: "user-id" }]`     |
+| `relation`         | Relations             | `["page-id"]`             |
+| `formula`          | Computed value        | Read-only                 |
+| `created_time`     | Creation timestamp    | Read-only                 |
+| `last_edited_time` | Last edit timestamp   | Read-only                 |
 
 ## Markdown Support
 
@@ -250,8 +249,8 @@ const tasks = new NotionTable({
   cache,
 })
 
-// Fetch with caching enabled
-const task = await tasks.findById("page-id", { cache: true })
+// All operations transparently use the provided cache
+const task = await tasks.findById("page-id")
 
 // Clear cache when needed
 tasks.clearCache()

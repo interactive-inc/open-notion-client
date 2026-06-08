@@ -276,7 +276,5 @@ test("CRITICAL: Mixed paragraph blocks with and without internal newlines", () =
   const result = fromNotionBlocks(mockBlocks)
 
   // CRITICAL: Should properly handle mixed scenarios
-  expect(result).toBe(
-    "Normal paragraph\n\nMulti-line\n\nparagraph\n\nFinal paragraph",
-  )
+  expect(result).toBe("Normal paragraph\n\nMulti-line\n\nparagraph\n\nFinal paragraph")
 })

@@ -207,10 +207,7 @@ test("findMany が cursor オプションを正しく処理する", async () => 
 
   const mockNotion = {
     dataSources: {
-      query: async (params: {
-        data_source_id: string
-        start_cursor?: string
-      }) => {
+      query: async (params: { data_source_id: string; start_cursor?: string }) => {
         capturedStartCursor = params.start_cursor
         return {
           results: [
@@ -389,10 +386,7 @@ test("findMany の cursor を使ったページ送り", async () => {
 
   const mockNotion = {
     dataSources: {
-      query: async (params: {
-        data_source_id: string
-        start_cursor?: string
-      }) => {
+      query: async (params: { data_source_id: string; start_cursor?: string }) => {
         _callCount++
 
         if (params.start_cursor === "cursor-page-2") {

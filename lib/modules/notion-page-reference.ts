@@ -1,10 +1,10 @@
 import type { Client } from "@notionhq/client"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import { enhance } from "../enhance"
-import { fromNotionBlocks } from "../from-notion-block/from-notion-blocks"
-import type { NotionMemoryCache } from "../table/notion-memory-cache"
-import type { NotionPropertyConverter } from "../table/notion-property-converter"
-import type { NotionPage, NotionPropertySchema, SchemaType } from "../types"
+import { enhance } from "@/enhance"
+import { fromNotionBlocks } from "@/from-notion-block/from-notion-blocks"
+import type { NotionMemoryCache } from "@/table/notion-memory-cache"
+import type { NotionPropertyConverter } from "@/table/notion-property-converter"
+import type { NotionPage, NotionPropertySchema, SchemaType } from "@/types"
 
 type Props<T extends NotionPropertySchema> = {
   readonly schema: T
@@ -42,18 +42,11 @@ export class NotionPageReference<T extends NotionPropertySchema> {
     return this.props.notionPage.archived
   }
 
-  get isDeleted() {
-    return this.props.notionPage.archived
-  }
-
   /**
    * テーブルのプロパティを取得
    */
   properties(): SchemaType<T> {
-    return this.props.converter.fromNotion(
-      this.props.schema,
-      this.props.notionPage.properties,
-    )
+    return this.props.converter.fromNotion(this.props.schema, this.props.notionPage.properties)
   }
 
   /**
@@ -77,9 +70,7 @@ export class NotionPageReference<T extends NotionPropertySchema> {
       block_id: this.props.notionPage.id,
     })
 
-    if (this.props.cache) {
-      this.props.cache.setBlocks(this.id, blocks)
-    }
+    this.props.cache?.setBlocks(this.id, blocks)
 
     return fromNotionBlocks(blocks)
   }

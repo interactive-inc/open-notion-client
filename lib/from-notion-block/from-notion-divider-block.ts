@@ -3,8 +3,6 @@ import type { DividerBlockObjectResponse } from "@notionhq/client/build/src/api-
 /**
  * Convert Notion divider block to markdown
  */
-export function fromNotionDividerBlock(
-  _block: DividerBlockObjectResponse,
-): string {
+export function fromNotionDividerBlock(_block: DividerBlockObjectResponse): string {
   return "---"
 }

@@ -35,9 +35,9 @@ export type NotionPropertyType =
 /* Notion user type */
 export type NotionUser = {
   id: string
-  name?: string
-  avatar_url?: string
-  email?: string
+  name: string | null
+  avatarUrl: string | null
+  email: string | null
 }
 
 /* Notion file type */
@@ -51,13 +51,15 @@ export type NotionFile = {
 export type DateRange = {
   start: string
   end: string | null
-  timeZone?: string
+  timeZone: string | null
 }
 
 /* Rich text types */
 /**
- * Type for rich text item response
- * Includes plain_text field that exists in Notion API response
+ * Notion APIのrich_text response型の緩い変形
+ * type: "text" に限定し annotations の各フィールドを optional として扱う
+ * 公式の RichTextItemResponse は discriminated union かつ全 annotation 必須のため、
+ * 内部のビルダー出力としては扱いづらく、ここで簡略形を提供する
  */
 export type RichTextItemResponse = {
   type: "text"
@@ -174,7 +176,7 @@ export type SelectPropertyConfig = {
 
 export type MultiSelectPropertyConfig = {
   type: "multi_select"
-  options: string[] | null
+  options: readonly string[] | string[] | null
 }
 
 export type StatusPropertyConfig = {
@@ -257,9 +259,11 @@ export type PropertyTypeMapping<T extends PropertyConfig> = T extends
       : T extends MultiSelectPropertyConfig
         ? T["options"] extends null
           ? string[]
-          : T["options"] extends string[]
-            ? T["options"][number][]
-            : string[]
+          : T["options"] extends readonly (infer U)[]
+            ? U[]
+            : T["options"] extends (infer U)[]
+              ? U[]
+              : string[]
         : T extends DatePropertyConfig
           ? DateRange
           : T extends PeoplePropertyConfig
@@ -268,20 +272,13 @@ export type PropertyTypeMapping<T extends PropertyConfig> = T extends
               ? NotionFile[]
               : T extends CheckboxPropertyConfig
                 ? boolean
-                : T extends
-                      | UrlPropertyConfig
-                      | EmailPropertyConfig
-                      | PhoneNumberPropertyConfig
+                : T extends UrlPropertyConfig | EmailPropertyConfig | PhoneNumberPropertyConfig
                   ? string
                   : T extends RelationPropertyConfig
                     ? string[]
-                    : T extends
-                          | CreatedTimePropertyConfig
-                          | LastEditedTimePropertyConfig
-                      ? Date
-                      : T extends
-                            | CreatedByPropertyConfig
-                            | LastEditedByPropertyConfig
+                    : T extends CreatedTimePropertyConfig | LastEditedTimePropertyConfig
+                      ? string
+                      : T extends CreatedByPropertyConfig | LastEditedByPropertyConfig
                         ? NotionUser
                         : T extends FormulaPropertyConfig
                           ? T["formulaType"] extends "string"
@@ -315,7 +312,6 @@ export type PageReferenceType<T> = {
   createdAt: string
   updatedAt: string
   isArchived: boolean
-  isDeleted: boolean
   properties(): T
   raw(): PageObjectResponse
   body(): Promise<string>
@@ -407,7 +403,7 @@ export type UpdateManyOptions<T extends NotionPropertySchema> = {
 
 export type UpsertOptions<T extends NotionPropertySchema> = {
   where: WhereCondition<T>
-  insert: CreateInput<T>
+  create: CreateInput<T>
   update: UpdateInput<T>
 }
 
@@ -427,35 +423,13 @@ export type BatchResult<T> = {
   }>
 }
 
-/* Cache entry */
-export type CacheEntry<T> = {
-  data: T
-  timestamp: number
-  ttl: number
-}
-
-/* Cache interface */
-export type NotionMemoeryCacheInterface = {
-  get<T>(key: string): T | undefined
-  set<T>(key: string, value: T, ttl?: number): void
-  delete(key: string): void
-  clear(): void
-}
-
-/* Validator interface */
-export type ValidatorInterface = {
-  validate(schema: NotionPropertySchema, data: unknown): Record<string, unknown>
-}
-
 /* Query builder interface */
 export type NotionQueryBuilderInterface = {
   buildFilter<T extends NotionPropertySchema>(
     schema: T,
     where: WhereCondition<T>,
   ): Record<string, unknown> | undefined
-  buildSort<T extends NotionPropertySchema>(
-    sorts: SortOption<T>[],
-  ): Array<Record<string, unknown>>
+  buildSort<T extends NotionPropertySchema>(sorts: SortOption<T>[]): Array<Record<string, unknown>>
 }
 
 /* Converter interface */
@@ -551,18 +525,16 @@ export type NotionBlock = BlockObjectResponse & {
 /**
  * Notion bulleted list item block type
  */
-export type NotionBulletedListItemBlock =
-  BulletedListItemBlockObjectResponse & {
-    children: NotionBlock[]
-  }
+export type NotionBulletedListItemBlock = BulletedListItemBlockObjectResponse & {
+  children: NotionBlock[]
+}
 
 /**
  * Notion numbered list item block type
  */
-export type NotionNumberedListItemBlock =
-  NumberedListItemBlockObjectResponse & {
-    children: NotionBlock[]
-  }
+export type NotionNumberedListItemBlock = NumberedListItemBlockObjectResponse & {
+  children: NotionBlock[]
+}
 
 /**
  * Notion quote block type
@@ -625,42 +597,27 @@ export type NotionPropertyRequest =
 /**
  * Notion APIのタイトルプロパティ型
  */
-export type NotionTitlePropertyRequest = Extract<
-  NotionPropertyRequest,
-  { title?: unknown }
->
+export type NotionTitlePropertyRequest = Extract<NotionPropertyRequest, { title?: unknown }>
 
 /**
  * Notion APIのリッチテキストプロパティ型
  */
-export type NotionRichTextPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { rich_text?: unknown }
->
+export type NotionRichTextPropertyRequest = Extract<NotionPropertyRequest, { rich_text?: unknown }>
 
 /**
  * Notion APIの数値プロパティ型
  */
-export type NotionNumberPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { number?: unknown }
->
+export type NotionNumberPropertyRequest = Extract<NotionPropertyRequest, { number?: unknown }>
 
 /**
  * Notion APIのチェックボックスプロパティ型
  */
-export type NotionCheckboxPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { checkbox?: unknown }
->
+export type NotionCheckboxPropertyRequest = Extract<NotionPropertyRequest, { checkbox?: unknown }>
 
 /**
  * Notion APIのセレクトプロパティ型
  */
-export type NotionSelectPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { select?: unknown }
->
+export type NotionSelectPropertyRequest = Extract<NotionPropertyRequest, { select?: unknown }>
 
 /**
  * Notion APIのマルチセレクトプロパティ型
@@ -673,26 +630,17 @@ export type NotionMultiSelectPropertyRequest = Extract<
 /**
  * Notion APIの日付プロパティ型
  */
-export type NotionDatePropertyRequest = Extract<
-  NotionPropertyRequest,
-  { date?: unknown }
->
+export type NotionDatePropertyRequest = Extract<NotionPropertyRequest, { date?: unknown }>
 
 /**
  * Notion APIのURLプロパティ型
  */
-export type NotionUrlPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { url?: unknown }
->
+export type NotionUrlPropertyRequest = Extract<NotionPropertyRequest, { url?: unknown }>
 
 /**
  * Notion APIのメールプロパティ型
  */
-export type NotionEmailPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { email?: unknown }
->
+export type NotionEmailPropertyRequest = Extract<NotionPropertyRequest, { email?: unknown }>
 
 /**
  * Notion APIの電話番号プロパティ型
@@ -705,15 +653,19 @@ export type NotionPhoneNumberPropertyRequest = Extract<
 /**
  * Notion APIのリレーションプロパティ型
  */
-export type NotionRelationPropertyRequest = Extract<
-  NotionPropertyRequest,
-  { relation?: unknown }
->
+export type NotionRelationPropertyRequest = Extract<NotionPropertyRequest, { relation?: unknown }>
 
 /**
  * Notion APIのピープルプロパティ型
  */
-export type NotionPeoplePropertyRequest = Extract<
-  NotionPropertyRequest,
-  { people?: unknown }
->
+export type NotionPeoplePropertyRequest = Extract<NotionPropertyRequest, { people?: unknown }>
+
+/**
+ * Notion APIのステータスプロパティ型
+ */
+export type NotionStatusPropertyRequest = Extract<NotionPropertyRequest, { status?: unknown }>
+
+/**
+ * Notion APIのファイルプロパティ型
+ */
+export type NotionFilesPropertyRequest = Extract<NotionPropertyRequest, { files?: unknown }>

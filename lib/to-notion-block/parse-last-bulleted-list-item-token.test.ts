@@ -81,8 +81,14 @@ test("太字を含む最後の箇条書きアイテムを変換", () => {
       rich_text: [
         {
           type: "text",
-          text: { content: "Bold last item" },
-          plain_text: "Bold last item",
+          text: { content: "Bold" },
+          plain_text: "Bold",
+          annotations: { bold: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " last item" },
+          plain_text: " last item",
           annotations: {},
         } as RichTextItemResponse,
       ],
@@ -90,7 +96,7 @@ test("太字を含む最後の箇条書きアイテムを変換", () => {
   })
 })
 
-test("テキストトークンがない場合エラーをスロー", () => {
+test("テキストトークンがない場合は空の項目を返す", () => {
   const item: Tokens.ListItem = {
     type: "list_item",
     raw: "- ",
@@ -101,9 +107,14 @@ test("テキストトークンがない場合エラーをスロー", () => {
     tokens: [],
   }
 
-  expect(() => parseLastBulletedListItem(item)).toThrow(
-    "Text token not found in list item",
-  )
+  const result = parseLastBulletedListItem(item)
+
+  expect(result).toEqual({
+    type: "bulleted_list_item",
+    bulleted_list_item: {
+      rich_text: [],
+    },
+  })
 })
 
 test("複数のインライン要素を含む最後のアイテムを変換", () => {
@@ -172,9 +183,33 @@ test("複数のインライン要素を含む最後のアイテムを変換", ()
       rich_text: [
         {
           type: "text",
-          text: { content: "Bold, italic and code" },
-          plain_text: "Bold, italic and code",
+          text: { content: "Bold" },
+          plain_text: "Bold",
+          annotations: { bold: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: ", " },
+          plain_text: ", ",
           annotations: {},
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: "italic" },
+          plain_text: "italic",
+          annotations: { italic: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " and " },
+          plain_text: " and ",
+          annotations: {},
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: "code" },
+          plain_text: "code",
+          annotations: { code: true },
         } as RichTextItemResponse,
       ],
     },

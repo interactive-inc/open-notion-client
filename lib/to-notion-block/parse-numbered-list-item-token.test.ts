@@ -240,9 +240,21 @@ test("複数のインライン要素を含むアイテムを変換", () => {
       rich_text: [
         {
           type: "text",
-          text: { content: "Bold and italic" },
-          plain_text: "Bold and italic",
+          text: { content: "Bold" },
+          plain_text: "Bold",
+          annotations: { bold: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " and " },
+          plain_text: " and ",
           annotations: {},
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: "italic" },
+          plain_text: "italic",
+          annotations: { italic: true },
         } as RichTextItemResponse,
       ],
       children: undefined,
@@ -250,7 +262,7 @@ test("複数のインライン要素を含むアイテムを変換", () => {
   })
 })
 
-test("テキストトークンがない場合エラーをスロー", () => {
+test("テキストトークンがない場合は空の項目を返す", () => {
   const item: Tokens.ListItem = {
     type: "list_item",
     raw: "1. ",
@@ -261,7 +273,13 @@ test("テキストトークンがない場合エラーをスロー", () => {
     tokens: [],
   }
 
-  expect(() => parseNumberedListItemToken(item)).toThrow(
-    "Text token not found in list item",
-  )
+  const result = parseNumberedListItemToken(item)
+
+  expect(result).toEqual({
+    type: "numbered_list_item",
+    numbered_list_item: {
+      rich_text: [],
+      children: undefined,
+    },
+  })
 })

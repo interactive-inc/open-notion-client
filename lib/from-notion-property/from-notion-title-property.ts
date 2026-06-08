@@ -1,9 +1,6 @@
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 
-type TitleProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "title" }
->
+type TitleProperty = Extract<PageObjectResponse["properties"][string], { type: "title" }>
 
 /**
  * Notionのtitleプロパティを文字列に変換

@@ -2,10 +2,7 @@ import { expect, test } from "bun:test"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionNumberProperty } from "./from-notion-number-property"
 
-type NumberProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "number" }
->
+type NumberProperty = Extract<PageObjectResponse["properties"][string], { type: "number" }>
 
 test("正の整数を変換", () => {
   const property: NumberProperty = {

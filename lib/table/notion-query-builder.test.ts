@@ -221,10 +221,7 @@ test("buildFilter: 複雑な条件の組み合わせ", () => {
     or: [
       { status: "todo" },
       {
-        and: [
-          { priority: { greater_than_or_equal_to: 5 } },
-          { title: { contains: "重要" } },
-        ],
+        and: [{ priority: { greater_than_or_equal_to: 5 } }, { title: { contains: "重要" } }],
       },
     ],
   })
@@ -293,12 +290,8 @@ test("buildSort: ソート条件の変換", () => {
   }
 
   // 単一ソート
-  const singleSort = queryBuilder.buildSort([
-    { field: "priority", direction: "desc" },
-  ])
-  expect(singleSort).toEqual([
-    { property: "priority", direction: "descending" },
-  ])
+  const singleSort = queryBuilder.buildSort([{ field: "priority", direction: "desc" }])
+  expect(singleSort).toEqual([{ property: "priority", direction: "descending" }])
 
   // 複数ソート
   const multiSort = queryBuilder.buildSort([
@@ -318,7 +311,7 @@ test("buildFilter: 日付型の様々な形式", () => {
 
   // DateRange型
   const dateRangeFilter = queryBuilder.buildFilter(schema, {
-    deadline: { start: "2024-01-01T00:00:00Z", end: null },
+    deadline: { start: "2024-01-01T00:00:00Z", end: null, timeZone: null },
   })
   expect(dateRangeFilter).toEqual({
     property: "deadline",
@@ -327,7 +320,7 @@ test("buildFilter: 日付型の様々な形式", () => {
 
   // Date型
   const dateFilter = queryBuilder.buildFilter(schema, {
-    deadline: { start: "2024-01-01T12:34:56Z", end: null },
+    deadline: { start: "2024-01-01T12:34:56Z", end: null, timeZone: null },
   })
   expect(dateFilter).toEqual({
     property: "deadline",
@@ -336,7 +329,7 @@ test("buildFilter: 日付型の様々な形式", () => {
 
   // 文字列型
   const stringDateFilter = queryBuilder.buildFilter(schema, {
-    deadline: { start: "2024-01-01T00:00:00Z", end: null },
+    deadline: { start: "2024-01-01T00:00:00Z", end: null, timeZone: null },
   })
   expect(stringDateFilter).toEqual({
     property: "deadline",
@@ -372,12 +365,12 @@ test("buildFilter: checkbox型", () => {
   })
 })
 
-test("toNotionQuery: シンプルな文字列条件", () => {
+test("buildFilter: シンプルな文字列条件", () => {
   const schema: NotionPropertySchema = {
     slug: { type: "rich_text" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, { slug: "test" })
+  const result = queryBuilder.buildFilter(schema, { slug: "test" })
 
   expect(result).toEqual({
     property: "slug",
@@ -385,12 +378,12 @@ test("toNotionQuery: シンプルな文字列条件", () => {
   })
 })
 
-test("toNotionQuery: 数値の等価条件", () => {
+test("buildFilter: 数値の等価条件", () => {
   const schema: NotionPropertySchema = {
     count: { type: "number" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, { count: 42 })
+  const result = queryBuilder.buildFilter(schema, { count: 42 })
 
   expect(result).toEqual({
     property: "count",
@@ -398,13 +391,13 @@ test("toNotionQuery: 数値の等価条件", () => {
   })
 })
 
-test("toNotionQuery: 複数フィールドは自動的に and になる", () => {
+test("buildFilter: 複数フィールドは自動的に and になる", () => {
   const schema: NotionPropertySchema = {
     status: { type: "select", options: ["todo"] },
     priority: { type: "number" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {
+  const result = queryBuilder.buildFilter(schema, {
     status: "todo",
     priority: 5,
   })
@@ -423,34 +416,34 @@ test("toNotionQuery: 複数フィールドは自動的に and になる", () => 
   })
 })
 
-test("toNotionQuery: 空の条件は undefined を返す", () => {
+test("buildFilter: 空の条件は undefined を返す", () => {
   const schema: NotionPropertySchema = {
     slug: { type: "rich_text" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {})
+  const result = queryBuilder.buildFilter(schema, {})
 
   expect(result).toBeUndefined()
 })
 
-test("toNotionQuery: 存在しないフィールドは無視される", () => {
+test("buildFilter: 存在しないフィールドは無視される", () => {
   const schema: NotionPropertySchema = {
     slug: { type: "rich_text" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {
+  const result = queryBuilder.buildFilter(schema, {
     nonexistent: "value",
   })
 
   expect(result).toBeUndefined()
 })
 
-test("toNotionQuery: Notion API filter format - equals", () => {
+test("buildFilter: Notion API filter format - equals", () => {
   const schema: NotionPropertySchema = {
     slug: { type: "rich_text" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {
+  const result = queryBuilder.buildFilter(schema, {
     slug: { equals: "test-1" },
   })
 
@@ -460,12 +453,12 @@ test("toNotionQuery: Notion API filter format - equals", () => {
   })
 })
 
-test("toNotionQuery: Notion API filter format - contains", () => {
+test("buildFilter: Notion API filter format - contains", () => {
   const schema: NotionPropertySchema = {
     title: { type: "title" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {
+  const result = queryBuilder.buildFilter(schema, {
     title: { contains: "hello" },
   })
 
@@ -475,12 +468,12 @@ test("toNotionQuery: Notion API filter format - contains", () => {
   })
 })
 
-test("toNotionQuery: Notion API filter format - number greater_than", () => {
+test("buildFilter: Notion API filter format - number greater_than", () => {
   const schema: NotionPropertySchema = {
     count: { type: "number" },
   }
 
-  const result = queryBuilder.toNotionQuery(schema, {
+  const result = queryBuilder.buildFilter(schema, {
     count: { greater_than: 10 },
   })
 

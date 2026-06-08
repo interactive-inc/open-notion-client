@@ -5,10 +5,7 @@ import type {
 } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionTitleProperty } from "./from-notion-title-property"
 
-type TitleProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "title" }
->
+type TitleProperty = Extract<PageObjectResponse["properties"][string], { type: "title" }>
 
 test("単一のタイトルテキストを変換", () => {
   const property: TitleProperty = {

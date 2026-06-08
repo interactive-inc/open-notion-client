@@ -58,8 +58,7 @@ test("multi_selectがnullの場合", () => {
 test("multi_selectが配列でない場合", () => {
   const property: MultiSelectProperty = {
     type: "multi_select",
-    multi_select:
-      "not an array" as unknown as MultiSelectProperty["multi_select"],
+    multi_select: "not an array" as unknown as MultiSelectProperty["multi_select"],
     id: "test",
   }
 

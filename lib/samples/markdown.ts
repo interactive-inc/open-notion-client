@@ -6,7 +6,7 @@ import type { MarkdownSample } from "./types"
 export const sampleMarkdown: MarkdownSample = {
   data: `# 見出し1
 あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。
-<!-- 未対応のブロックタイプ: image -->
+
 あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。
 \`\`\`json
 const a = 2
@@ -27,6 +27,5 @@ const a = 2
         1. リスト4
     1. リスト5
 `,
-  description:
-    "マークダウンからNotionブロックへの変換テスト用のサンプルマークダウンテキスト",
+  description: "マークダウンからNotionブロックへの変換テスト用のサンプルマークダウンテキスト",
 } as const

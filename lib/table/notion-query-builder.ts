@@ -1,34 +1,30 @@
+import type { QueryDataSourceParameters } from "@notionhq/client/build/src/api-endpoints"
 import type { NotionQueryWhere } from "@/notion-types"
-import type {
-  NotionPropertySchema,
-  PropertyConfig,
-  SortOption,
-  WhereCondition,
-} from "@/types"
+import type { NotionPropertySchema, PropertyConfig, SortOption, WhereCondition } from "@/types"
+
+type NotionSort = NonNullable<QueryDataSourceParameters["sorts"]>[number]
+type NotionFilter = NonNullable<QueryDataSourceParameters["filter"]>
 
 export class NotionQueryBuilder {
+  /**
+   * 単純なwhere条件オブジェクトをNotion APIのフィルター形式に変換する
+   * Notion公式の filter 型に正確に揃える
+   */
   buildFilter<T extends NotionPropertySchema>(
     schema: T,
     where: WhereCondition<T>,
-  ): Record<string, unknown> | undefined {
-    return this.toNotionQuery(schema, where) as
-      | Record<string, unknown>
-      | undefined
-  }
-
-  buildSort<T extends NotionPropertySchema>(
-    sorts: SortOption<T>[],
-  ): Array<Record<string, unknown>> {
-    return sorts.map((sort) => ({
-      property: String(sort.field),
-      direction: sort.direction === "asc" ? "ascending" : "descending",
-    }))
+  ): NotionFilter | undefined {
+    const built = this.buildInternal(schema, where)
+    if (!built) return undefined
+    // 内部 NotionQueryWhere と Notion 公式 filter は構造的に同一だが、
+    // 別宣言のため一度 unknown 経由で受け渡す
+    return built as unknown as NotionFilter
   }
 
   /**
-   * Convert simple where condition to Notion API filter format
+   * 内部用: 構築済みの NotionQueryWhere を返す
    */
-  toNotionQuery<T extends NotionPropertySchema>(
+  private buildInternal<T extends NotionPropertySchema>(
     schema: T,
     where: WhereCondition<T>,
   ): NotionQueryWhere | undefined {
@@ -46,12 +42,19 @@ export class NotionQueryBuilder {
     return this.buildFieldConditions(schema, where)
   }
 
+  buildSort<T extends NotionPropertySchema>(sorts: SortOption<T>[]): NotionSort[] {
+    return sorts.map((sort) => ({
+      property: String(sort.field),
+      direction: sort.direction === "asc" ? "ascending" : "descending",
+    }))
+  }
+
   private buildOrCondition<T extends NotionPropertySchema>(
     schema: T,
     conditions: WhereCondition<T>[],
   ): NotionQueryWhere | undefined {
     const orConditions = conditions
-      .map((condition) => this.toNotionQuery(schema, condition))
+      .map((condition) => this.buildInternal(schema, condition))
       .filter((filter): filter is NotionQueryWhere => filter !== undefined)
 
     if (orConditions.length === 0) {
@@ -70,7 +73,7 @@ export class NotionQueryBuilder {
     conditions: WhereCondition<T>[],
   ): NotionQueryWhere | undefined {
     const andConditions = conditions
-      .map((condition) => this.toNotionQuery(schema, condition))
+      .map((condition) => this.buildInternal(schema, condition))
       .filter((filter): filter is NotionQueryWhere => filter !== undefined)
 
     if (andConditions.length === 0) {
@@ -282,18 +285,7 @@ export class NotionQueryBuilder {
       return value.split("T")[0] || value
     }
 
-    return new Date().toISOString().split("T")[0] || new Date().toISOString()
+    const now = new Date().toISOString()
+    return now.split("T")[0] || now
   }
-}
-
-/**
- * Convert simple where condition to Notion API filter format
- * @deprecated Use NotionQueryBuilder.toNotionQuery() instead
- */
-export function toNotionQuery<T extends NotionPropertySchema>(
-  schema: T,
-  where: WhereCondition<T>,
-): NotionQueryWhere | undefined {
-  const builder = new NotionQueryBuilder()
-  return builder.toNotionQuery(schema, where)
 }

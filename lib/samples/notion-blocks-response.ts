@@ -95,8 +95,7 @@ export const sampleNotionBlocksResponse: NotionBlocksResponseSample = {
       },
     },
   ] as NotionBlockWithMeta[],
-  description:
-    "Notion APIから取得したブロックレスポンスのサンプルデータ（メタデータ付き）",
+  description: "Notion APIから取得したブロックレスポンスのサンプルデータ（メタデータ付き）",
 } as const
 
 /**

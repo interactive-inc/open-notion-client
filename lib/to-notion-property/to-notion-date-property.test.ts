@@ -76,3 +76,51 @@ test("startが無い場合エラーをthrow", () => {
 test("空オブジェクトを渡すとエラーをthrow", () => {
   expect(() => toNotionDateProperty({})).toThrow()
 })
+
+test("end: nullを許容してそのまま渡す", () => {
+  const result = toNotionDateProperty({
+    start: "2024-01-15",
+    end: null,
+    timeZone: null,
+  })
+
+  expect(result).toEqual({
+    date: {
+      start: "2024-01-15",
+      end: null,
+      time_zone: null,
+    },
+  })
+})
+
+test("timeZoneを保持する", () => {
+  const result = toNotionDateProperty({
+    start: "2024-01-15T09:00:00",
+    end: null,
+    timeZone: "Asia/Tokyo",
+  })
+
+  expect(result).toEqual({
+    date: {
+      start: "2024-01-15T09:00:00",
+      end: null,
+      time_zone: "Asia/Tokyo",
+    },
+  })
+})
+
+test("fromNotionDatePropertyの出力（end: null, timeZone: null）で往復", () => {
+  const result = toNotionDateProperty({
+    start: "2024-05-01",
+    end: null,
+    timeZone: null,
+  })
+
+  expect(result).toEqual({
+    date: {
+      start: "2024-05-01",
+      end: null,
+      time_zone: null,
+    },
+  })
+})

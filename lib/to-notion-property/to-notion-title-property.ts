@@ -6,9 +6,7 @@ const titlePropertySchema = z.string()
 /**
  * 値をNotionのtitleプロパティに変換
  */
-export function toNotionTitleProperty(
-  value: unknown,
-): NotionTitlePropertyRequest {
+export function toNotionTitleProperty(value: unknown): NotionTitlePropertyRequest {
   const data = titlePropertySchema.parse(value)
 
   return {

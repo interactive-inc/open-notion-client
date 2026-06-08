@@ -5,19 +5,15 @@ Recursively fetch child blocks for Notion blocks with nested content.
 ## Import
 
 ```typescript
-import { enhance } from '@interactive-inc/notion-client'
+import { enhance } from "@interactive-inc/notion-client"
 ```
 
 ## Function Signature
 
 ```typescript
-type Client = (
-  args: ListBlockChildrenParameters
-) => Promise<ListBlockChildrenResponse>
+type Client = (args: ListBlockChildrenParameters) => Promise<ListBlockChildrenResponse>
 
-function enhance(client: Client): (
-  args: ListBlockChildrenParameters
-) => Promise<NotionBlock[]>
+function enhance(client: Client): (args: ListBlockChildrenParameters) => Promise<NotionBlock[]>
 ```
 
 ## Purpose
@@ -27,8 +23,8 @@ The Notion API returns blocks without their children populated. The `enhance` fu
 ## Basic Usage
 
 ```typescript
-import { Client } from '@notionhq/client'
-import { enhance } from '@interactive-inc/notion-client'
+import { Client } from "@notionhq/client"
+import { enhance } from "@interactive-inc/notion-client"
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
@@ -36,7 +32,7 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const enhancedClient = enhance(notion.blocks.children.list.bind(notion.blocks.children))
 
 // Fetch blocks with all children recursively populated
-const blocks = await enhancedClient({ block_id: 'page-id' })
+const blocks = await enhancedClient({ block_id: "page-id" })
 
 // blocks now includes full tree structure with children
 ```
@@ -49,7 +45,7 @@ const blocks = await enhancedClient({ block_id: 'page-id' })
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
 // Get top-level blocks only
-const response = await notion.blocks.children.list({ block_id: 'page-id' })
+const response = await notion.blocks.children.list({ block_id: "page-id" })
 
 // response.results[0].has_children === true
 // But children are not populated - need manual recursive fetch
@@ -61,7 +57,7 @@ const response = await notion.blocks.children.list({ block_id: 'page-id' })
 const enhancedClient = enhance(notion.blocks.children.list.bind(notion.blocks.children))
 
 // Get blocks with all children recursively
-const blocks = await enhancedClient({ block_id: 'page-id' })
+const blocks = await enhancedClient({ block_id: "page-id" })
 
 // blocks[0].children is fully populated
 // blocks[0].children[0].children is also populated, and so on
@@ -73,7 +69,7 @@ Returns `NotionBlock[]` where each block has a `children` property:
 
 ```typescript
 type NotionBlock = BlockObjectResponse & {
-  children: NotionBlock[]  // Recursively populated
+  children: NotionBlock[] // Recursively populated
 }
 ```
 
@@ -84,7 +80,7 @@ type NotionBlock = BlockObjectResponse & {
 ```typescript
 const enhancedClient = enhance(notion.blocks.children.list.bind(notion.blocks.children))
 
-const blocks = await enhancedClient({ block_id: 'page-id' })
+const blocks = await enhancedClient({ block_id: "page-id" })
 
 // Example structure:
 // [
@@ -106,10 +102,10 @@ const blocks = await enhancedClient({ block_id: 'page-id' })
 
 ```typescript
 // Get complete page structure
-const blocks = await enhancedClient({ block_id: 'page-id' })
+const blocks = await enhancedClient({ block_id: "page-id" })
 
 // Convert to markdown with nested structure preserved
-import { fromNotionBlocks } from '@interactive-inc/notion-client'
+import { fromNotionBlocks } from "@interactive-inc/notion-client"
 const markdown = fromNotionBlocks(blocks)
 ```
 
@@ -118,7 +114,7 @@ const markdown = fromNotionBlocks(blocks)
 ```typescript
 function printBlockTree(blocks: NotionBlock[], indent = 0) {
   for (const block of blocks) {
-    console.log('  '.repeat(indent) + block.type)
+    console.log("  ".repeat(indent) + block.type)
 
     if (block.children.length > 0) {
       printBlockTree(block.children, indent + 1)
@@ -126,7 +122,7 @@ function printBlockTree(blocks: NotionBlock[], indent = 0) {
   }
 }
 
-const blocks = await enhancedClient({ block_id: 'page-id' })
+const blocks = await enhancedClient({ block_id: "page-id" })
 printBlockTree(blocks)
 // paragraph
 // heading_1
@@ -226,16 +222,16 @@ async function getCachedBlocks(blockId: string) {
 ## Integration with NotionTable
 
 ```typescript
-import { NotionTable, enhance } from '@interactive-inc/notion-client'
+import { NotionTable, enhance } from "@interactive-inc/notion-client"
 
 const table = new NotionTable({
   client: notion,
-  dataSourceId: 'db-id',
-  properties: { title: { type: 'title' } }
+  dataSourceId: "db-id",
+  properties: { title: { type: "title" } },
 })
 
 // Get page reference
-const page = await table.findById('page-id')
+const page = await table.findById("page-id")
 
 // Fetch enhanced blocks
 const enhancedClient = enhance(notion.blocks.children.list.bind(notion.blocks.children))
@@ -251,9 +247,7 @@ const markdown = fromNotionBlocks(blocks)
 
 ```typescript
 // ✅ Good: Bind context
-const enhancedClient = enhance(
-  notion.blocks.children.list.bind(notion.blocks.children)
-)
+const enhancedClient = enhance(notion.blocks.children.list.bind(notion.blocks.children))
 
 // ❌ Bad: Context lost
 const enhancedClient = enhance(notion.blocks.children.list)
@@ -263,9 +257,9 @@ const enhancedClient = enhance(notion.blocks.children.list)
 
 ```typescript
 try {
-  const blocks = await enhancedClient({ block_id: 'page-id' })
+  const blocks = await enhancedClient({ block_id: "page-id" })
 } catch (error) {
-  console.error('Failed to fetch blocks:', error)
+  console.error("Failed to fetch blocks:", error)
   // Handle API errors, rate limits, etc.
 }
 ```
@@ -273,11 +267,11 @@ try {
 ### Type Safety
 
 ```typescript
-import type { NotionBlock } from '@interactive-inc/notion-client'
+import type { NotionBlock } from "@interactive-inc/notion-client"
 
 function processBlocks(blocks: NotionBlock[]) {
   // TypeScript knows about children property
-  blocks.forEach(block => {
+  blocks.forEach((block) => {
     console.log(block.children) // ✅ Type-safe
   })
 }

@@ -128,7 +128,7 @@ test("複数タイプのプロパティを保持できる", () => {
       name: "カスタムページ",
       tags: ["TypeScript", "Notion"],
       isPublished: true,
-      publishedAt: { start: "2024-01-01", end: null },
+      publishedAt: { start: "2024-01-01", end: null, timeZone: null },
     }),
     toNotion: () => ({}),
   } as unknown as NotionPropertyConverter
@@ -144,5 +144,9 @@ test("複数タイプのプロパティを保持できる", () => {
   expect(properties.name).toBe("カスタムページ")
   expect(properties.tags).toEqual(["TypeScript", "Notion"])
   expect(properties.isPublished).toBe(true)
-  expect(properties.publishedAt).toEqual({ start: "2024-01-01", end: null })
+  expect(properties.publishedAt).toEqual({
+    start: "2024-01-01",
+    end: null,
+    timeZone: null,
+  })
 })

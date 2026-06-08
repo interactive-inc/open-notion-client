@@ -114,8 +114,6 @@ test("段落内の改行はそのまま保持される", () => {
     parent: { type: "page_id", page_id: "parent-id" },
   }
 
-  const result = fromNotionParagraphBlock(
-    blockWithNewline as ParagraphBlockObjectResponse,
-  )
+  const result = fromNotionParagraphBlock(blockWithNewline as ParagraphBlockObjectResponse)
   expect(result).toBe("段落1\n段落2")
 })

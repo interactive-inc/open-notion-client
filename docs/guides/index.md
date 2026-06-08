@@ -50,12 +50,12 @@ pnpm add @interactive-inc/notion-client @notionhq/client
 ### 3. Initialize Client
 
 ```typescript
-import { NotionTable } from '@interactive-inc/notion-client'
-import { Client } from '@notionhq/client'
+import { NotionTable } from "@interactive-inc/notion-client"
+import { Client } from "@notionhq/client"
 
 // Initialize Notion API client
 const notion = new Client({
-  auth: process.env.NOTION_TOKEN
+  auth: process.env.NOTION_TOKEN,
 })
 
 // Create type-safe table instance
@@ -63,10 +63,10 @@ const tasksTable = new NotionTable({
   client: notion,
   dataSourceId: process.env.NOTION_DATABASE_ID,
   properties: {
-    title: { type: 'title' },
-    status: { type: 'select', options: ['todo', 'done'] as const },
-    priority: { type: 'number' }
-  } as const
+    title: { type: "title" },
+    status: { type: "select", options: ["todo", "done"] as const },
+    priority: { type: "number" },
+  } as const,
 })
 ```
 
@@ -77,10 +77,10 @@ const tasksTable = new NotionTable({
 ```typescript
 const task = await tasksTable.create({
   properties: {
-    title: 'Learn notion-client',
-    status: 'todo',
-    priority: 1
-  }
+    title: "Learn notion-client",
+    status: "todo",
+    priority: 1,
+  },
 })
 
 console.log(task.id) // Notion page ID
@@ -94,16 +94,16 @@ const { records: tasks } = await tasksTable.findMany()
 
 // Find with filter
 const { records: todoTasks } = await tasksTable.findMany({
-  where: { status: 'todo' }
+  where: { status: "todo" },
 })
 
 // Find one
 const task = await tasksTable.findOne({
-  where: { title: 'Learn notion-client' }
+  where: { title: "Learn notion-client" },
 })
 
 // Find by ID
-const specific = await tasksTable.findById('page-id')
+const specific = await tasksTable.findById("page-id")
 
 // Access properties
 if (task) {
@@ -117,8 +117,8 @@ if (task) {
 ```typescript
 await tasksTable.update(task.id, {
   properties: {
-    status: 'done'
-  }
+    status: "done",
+  },
 })
 ```
 
@@ -141,7 +141,7 @@ Load in your app:
 
 ```typescript
 // Using dotenv
-import 'dotenv/config'
+import "dotenv/config"
 
 // Or using Bun
 // Bun automatically loads .env files
@@ -164,62 +164,62 @@ Ensure your `tsconfig.json` includes:
 ## Complete Example
 
 ```typescript
-import { NotionTable } from '@interactive-inc/notion-client'
-import { Client } from '@notionhq/client'
+import { NotionTable } from "@interactive-inc/notion-client"
+import { Client } from "@notionhq/client"
 
 // Setup
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
 // Define schema
 const schema = {
-  title: { type: 'title' },
-  description: { type: 'rich_text' },
-  status: { 
-    type: 'select', 
-    options: ['backlog', 'todo', 'in_progress', 'done'] as const 
+  title: { type: "title" },
+  description: { type: "rich_text" },
+  status: {
+    type: "select",
+    options: ["backlog", "todo", "in_progress", "done"] as const,
   },
-  priority: { type: 'number', min: 1, max: 5 },
-  assignee: { type: 'people' },
-  dueDate: { type: 'date' },
-  tags: { 
-    type: 'multi_select', 
-    options: ['bug', 'feature', 'enhancement'] as const 
-  }
+  priority: { type: "number", min: 1, max: 5 },
+  assignee: { type: "people" },
+  dueDate: { type: "date" },
+  tags: {
+    type: "multi_select",
+    options: ["bug", "feature", "enhancement"] as const,
+  },
 } as const
 
 // Create table instance
 const projectTable = new NotionTable({
   client: notion,
-  dataSourceId: 'your-database-id',
-  properties: schema
+  dataSourceId: "your-database-id",
+  properties: schema,
 })
 
 // Create task
 const task = await projectTable.create({
   properties: {
-    title: 'Fix login bug',
-    description: 'Users cannot login with email',
-    status: 'todo',
+    title: "Fix login bug",
+    description: "Users cannot login with email",
+    status: "todo",
     priority: 5,
-    tags: ['bug']
-  }
+    tags: ["bug"],
+  },
 })
 
 // Query tasks
 const { records: urgentBugs } = await projectTable.findMany({
   where: {
-    status: { does_not_equal: 'done' },
+    status: { does_not_equal: "done" },
     priority: { greater_than_or_equal_to: 4 },
-    tags: { contains: 'bug' }
+    tags: { contains: "bug" },
   },
-  sorts: [{ field: 'priority', direction: 'desc' }]
+  sorts: [{ field: "priority", direction: "desc" }],
 })
 
 // Update task
 await projectTable.update(task.id, {
   properties: {
-    status: 'in_progress'
-  }
+    status: "in_progress",
+  },
 })
 ```
 

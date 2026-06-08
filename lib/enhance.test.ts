@@ -288,7 +288,7 @@ test("typeが定義されていないブロックでエラーをthrow", async ()
   const enhancedClient = enhance(mockClient)
 
   await expect(enhancedClient({ block_id: "test-block" })).rejects.toThrow(
-    "Block type is not defined",
+    "Block invalid-block has no type field",
   )
 })
 

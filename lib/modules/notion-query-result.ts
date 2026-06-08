@@ -1,4 +1,4 @@
-import type { NotionPropertySchema } from "../types"
+import type { NotionPropertySchema } from "@/types"
 import type { NotionPageReference } from "./notion-page-reference"
 
 type Props<S extends NotionPropertySchema> = {
@@ -39,7 +39,7 @@ export class NotionQueryResult<S extends NotionPropertySchema> {
   /**
    * 取得したページ数
    */
-  length(): number {
+  get length(): number {
     return this.props.pageReferences.length
   }
 }

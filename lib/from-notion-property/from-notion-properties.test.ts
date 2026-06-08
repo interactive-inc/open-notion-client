@@ -192,7 +192,7 @@ test("複数のプロパティタイプを含むスキーマを変換", () => {
     deadline: {
       start: "2023-12-31",
       end: null,
-      timeZone: undefined,
+      timeZone: null,
     },
   })
 })

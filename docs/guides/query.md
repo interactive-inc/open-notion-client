@@ -7,20 +7,20 @@ Learn how to query and retrieve data from Notion databases.
 First, create a NotionTable instance with your schema:
 
 ```typescript
-import { NotionTable } from '@interactive-inc/notion-client'
-import { Client } from '@notionhq/client'
+import { NotionTable } from "@interactive-inc/notion-client"
+import { Client } from "@notionhq/client"
 
 const client = new Client({ auth: process.env.NOTION_TOKEN })
 
 const contactsTable = new NotionTable({
   client,
-  dataSourceId: 'your-database-id',
+  dataSourceId: "your-database-id",
   properties: {
-    name: { type: 'title' },
-    email: { type: 'email' },
-    company: { type: 'select', options: ['Apple', 'Google', 'Microsoft'] },
-    active: { type: 'checkbox' }
-  }
+    name: { type: "title" },
+    email: { type: "email" },
+    company: { type: "select", options: ["Apple", "Google", "Microsoft"] },
+    active: { type: "checkbox" },
+  },
 })
 ```
 
@@ -36,18 +36,22 @@ const { records } = await contactsTable.findMany()
 
 // With filtering
 const { records: activeContacts } = await contactsTable.findMany({
-  where: { active: { equals: true } }
+  where: { active: { equals: true } },
 })
 
 // With pagination
-const { records: first10, hasMore, nextCursor } = await contactsTable.findMany({
-  limit: 10
+const {
+  records: first10,
+  hasMore,
+  nextCursor,
+} = await contactsTable.findMany({
+  limit: 10,
 })
 
 // Next page
 const { records: nextPage } = await contactsTable.findMany({
   limit: 10,
-  cursor: nextCursor
+  cursor: nextCursor,
 })
 
 // Access properties
@@ -63,7 +67,7 @@ Get the first matching record:
 
 ```typescript
 const contact = await contactsTable.findOne({
-  where: { email: 'john@example.com' }
+  where: { email: "john@example.com" },
 })
 
 if (contact) {
@@ -77,7 +81,7 @@ if (contact) {
 Retrieve a specific record by Notion page ID:
 
 ```typescript
-const contact = await contactsTable.findById('page-id-here')
+const contact = await contactsTable.findById("page-id-here")
 ```
 
 ## Advanced Queries
@@ -87,12 +91,12 @@ const contact = await contactsTable.findById('page-id-here')
 ```typescript
 // Greater than or equal to
 const { records: highPriority } = await tasksTable.findMany({
-  where: { priority: { greater_than_or_equal_to: 8 } }
+  where: { priority: { greater_than_or_equal_to: 8 } },
 })
 
 // Does not equal
 const { records: activeTasks } = await tasksTable.findMany({
-  where: { status: { does_not_equal: 'completed' } }
+  where: { status: { does_not_equal: "completed" } },
 })
 
 // Range query using AND
@@ -100,9 +104,9 @@ const { records: mediumPriority } = await tasksTable.findMany({
   where: {
     and: [
       { priority: { greater_than_or_equal_to: 4 } },
-      { priority: { less_than_or_equal_to: 7 } }
-    ]
-  }
+      { priority: { less_than_or_equal_to: 7 } },
+    ],
+  },
 })
 ```
 
@@ -111,17 +115,17 @@ const { records: mediumPriority } = await tasksTable.findMany({
 ```typescript
 // Contains
 const { records: results } = await contactsTable.findMany({
-  where: { name: { contains: 'John' } }
+  where: { name: { contains: "John" } },
 })
 
 // Starts with
 const { records: results } = await contactsTable.findMany({
-  where: { email: { starts_with: 'admin@' } }
+  where: { email: { starts_with: "admin@" } },
 })
 
 // Ends with
 const { records: results } = await contactsTable.findMany({
-  where: { email: { ends_with: '@company.com' } }
+  where: { email: { ends_with: "@company.com" } },
 })
 ```
 
@@ -131,11 +135,8 @@ const { records: results } = await contactsTable.findMany({
 // OR query
 const { records: results } = await tasksTable.findMany({
   where: {
-    or: [
-      { status: { equals: 'urgent' } },
-      { priority: { greater_than_or_equal_to: 9 } }
-    ]
-  }
+    or: [{ status: { equals: "urgent" } }, { priority: { greater_than_or_equal_to: 9 } }],
+  },
 })
 
 // Complex AND/OR
@@ -144,13 +145,10 @@ const { records: results } = await tasksTable.findMany({
     and: [
       { active: { equals: true } },
       {
-        or: [
-          { priority: { greater_than_or_equal_to: 8 } },
-          { tags: { contains: 'important' } }
-        ]
-      }
-    ]
-  }
+        or: [{ priority: { greater_than_or_equal_to: 8 } }, { tags: { contains: "important" } }],
+      },
+    ],
+  },
 })
 ```
 
@@ -159,15 +157,15 @@ const { records: results } = await tasksTable.findMany({
 ```typescript
 // Single sort
 const { records: results } = await tasksTable.findMany({
-  sorts: [{ field: 'priority', direction: 'desc' }]
+  sorts: [{ field: "priority", direction: "desc" }],
 })
 
 // Multiple sorts
 const { records: results } = await contactsTable.findMany({
   sorts: [
-    { field: 'company', direction: 'asc' },
-    { field: 'name', direction: 'asc' }
-  ]
+    { field: "company", direction: "asc" },
+    { field: "name", direction: "asc" },
+  ],
 })
 ```
 
@@ -177,7 +175,7 @@ Transform and use query results:
 
 ```typescript
 const { records: contacts } = await contactsTable.findMany({
-  where: { active: { equals: true } }
+  where: { active: { equals: true } },
 })
 
 // Access properties
@@ -197,7 +195,7 @@ for (const contact of contacts) {
 }
 
 // Map to simple objects
-const simpleList = contacts.map(c => c.properties())
+const simpleList = contacts.map((c) => c.properties())
 ```
 
 ## Performance Tips
@@ -207,24 +205,33 @@ const simpleList = contacts.map(c => c.properties())
 ```typescript
 // Good: Specific query with filter
 const { records: active } = await table.findMany({
-  where: { status: { equals: 'active' } },
-  limit: 20
+  where: { status: { equals: "active" } },
+  limit: 20,
 })
 
 // Avoid: Fetching all then filtering in JavaScript
 const { records: all } = await table.findMany()
-const activeOnly = all.filter(r => r.properties().status === 'active')
+const activeOnly = all.filter((r) => r.properties().status === "active")
 ```
 
 ### Use Built-in Caching
 
-NotionTable has built-in caching for `findById`:
+NotionTable supports an injected `NotionMemoryCache`. When provided, all read/write operations transparently update the cache:
 
 ```typescript
-// Use cache option to enable caching
-const page = await table.findById('page-id', { cache: true })
+import { NotionMemoryCache, NotionTable } from "@interactive-inc/notion-client"
 
-// Cache stores pages and blocks automatically
+const cache = new NotionMemoryCache({ ttlMs: 60_000, maxEntries: 200 })
+
+const table = new NotionTable({
+  client,
+  dataSourceId: "database-id",
+  properties: { title: { type: "title" } } as const,
+  cache,
+})
+
+const page = await table.findById("page-id")
+
 // Clear cache when needed
 table.clearCache()
 ```
@@ -232,22 +239,22 @@ table.clearCache()
 You can also share a cache instance across multiple tables:
 
 ```typescript
-import { NotionMemoryCache, NotionTable } from '@interactive-inc/notion-client'
+import { NotionMemoryCache, NotionTable } from "@interactive-inc/notion-client"
 
 const cache = new NotionMemoryCache()
 
 const tasksTable = new NotionTable({
   client,
-  dataSourceId: 'tasks-db',
-  properties: { title: { type: 'title' } } as const,
-  cache
+  dataSourceId: "tasks-db",
+  properties: { title: { type: "title" } } as const,
+  cache,
 })
 
 const projectsTable = new NotionTable({
   client,
-  dataSourceId: 'projects-db',
-  properties: { name: { type: 'title' } } as const,
-  cache
+  dataSourceId: "projects-db",
+  properties: { name: { type: "title" } } as const,
+  cache,
 })
 ```
 
@@ -255,10 +262,10 @@ const projectsTable = new NotionTable({
 
 ```typescript
 try {
-  const contact = await contactsTable.findById('invalid-id')
+  const contact = await contactsTable.findById("invalid-id")
 } catch (error) {
-  if (error.message.includes('not found')) {
-    console.log('Contact does not exist')
+  if (error.message.includes("not found")) {
+    console.log("Contact does not exist")
   }
 }
 ```

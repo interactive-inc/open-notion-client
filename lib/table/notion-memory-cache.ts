@@ -1,20 +1,46 @@
 import type { NotionBlock, NotionPage } from "@/types"
 
-export class NotionMemoryCache {
-  private pages = new Map<string, NotionPage>()
+type Options = {
+  /**
+   * エントリの生存時間（ミリ秒）。未指定または0以下なら無期限
+   */
+  ttlMs?: number
+  /**
+   * 保持する最大エントリ数（pages / blocks 各別）。
+   * 超過した場合は最も古いものから捨てる（FIFO）
+   */
+  maxEntries?: number
+  /**
+   * 現在時刻を返すクロック関数（テスト用）
+   */
+  now?: () => number
+}
 
-  private blocks = new Map<string, NotionBlock[]>()
+type Entry<T> = {
+  value: T
+  expiresAt: number | null
+}
+
+export class NotionMemoryCache {
+  private readonly pages = new Map<string, Entry<NotionPage>>()
+  private readonly blocks = new Map<string, Entry<NotionBlock[]>>()
+  private readonly ttlMs: number | null
+  private readonly maxEntries: number | null
+  private readonly now: () => number
+
+  constructor(options: Options = {}) {
+    this.ttlMs = options.ttlMs !== undefined && options.ttlMs > 0 ? options.ttlMs : null
+    this.maxEntries =
+      options.maxEntries !== undefined && options.maxEntries > 0 ? options.maxEntries : null
+    this.now = options.now ?? (() => Date.now())
+  }
 
   getPage(id: string): NotionPage | null {
-    const value = this.pages.get(id)
-    if (value === undefined) {
-      return null
-    }
-    return value
+    return this.get(this.pages, id)
   }
 
   setPage(id: string, page: NotionPage): void {
-    this.pages.set(id, page)
+    this.set(this.pages, id, page)
   }
 
   deletePage(id: string): void {
@@ -22,15 +48,11 @@ export class NotionMemoryCache {
   }
 
   getBlocks(id: string): NotionBlock[] | null {
-    const value = this.blocks.get(id)
-    if (value === undefined) {
-      return null
-    }
-    return value
+    return this.get(this.blocks, id)
   }
 
   setBlocks(id: string, blocks: NotionBlock[]): void {
-    this.blocks.set(id, blocks)
+    this.set(this.blocks, id, blocks)
   }
 
   deleteBlocks(id: string): void {
@@ -40,5 +62,32 @@ export class NotionMemoryCache {
   clear(): void {
     this.pages.clear()
     this.blocks.clear()
+  }
+
+  private get<T>(store: Map<string, Entry<T>>, id: string): T | null {
+    const entry = store.get(id)
+    if (entry === undefined) {
+      return null
+    }
+    if (entry.expiresAt !== null && entry.expiresAt < this.now()) {
+      store.delete(id)
+      return null
+    }
+    return entry.value
+  }
+
+  private set<T>(store: Map<string, Entry<T>>, id: string, value: T): void {
+    const expiresAt = this.ttlMs !== null ? this.now() + this.ttlMs : null
+    // 既存キーの場合は順序を保つために一度削除してから追加する
+    store.delete(id)
+    store.set(id, { value: value, expiresAt: expiresAt })
+
+    if (this.maxEntries !== null) {
+      while (store.size > this.maxEntries) {
+        const oldest = store.keys().next().value
+        if (oldest === undefined) break
+        store.delete(oldest)
+      }
+    }
   }
 }

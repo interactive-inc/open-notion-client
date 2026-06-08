@@ -2,6 +2,7 @@ import type { NotionPropertyRequest, PropertyConfig } from "@/types"
 import { toNotionCheckboxProperty } from "./to-notion-checkbox-property"
 import { toNotionDateProperty } from "./to-notion-date-property"
 import { toNotionEmailProperty } from "./to-notion-email-property"
+import { toNotionFilesProperty } from "./to-notion-files-property"
 import { toNotionMultiSelectProperty } from "./to-notion-multi-select-property"
 import { toNotionNumberProperty } from "./to-notion-number-property"
 import { toNotionPeopleProperty } from "./to-notion-people-property"
@@ -9,16 +10,19 @@ import { toNotionPhoneNumberProperty } from "./to-notion-phone-number-property"
 import { toNotionRelationProperty } from "./to-notion-relation-property"
 import { toNotionRichTextProperty } from "./to-notion-rich-text-property"
 import { toNotionSelectProperty } from "./to-notion-select-property"
+import { toNotionStatusProperty } from "./to-notion-status-property"
 import { toNotionTitleProperty } from "./to-notion-title-property"
 import { toNotionUrlProperty } from "./to-notion-url-property"
 
 /**
  * 値をNotionプロパティ形式に変換
+ * 読み取り専用プロパティ（created_*, last_edited_*, formula）はNotion API側で
+ * 更新できないためnullを返し呼び出し元でスキップさせる
  */
 export function toNotionProperty<T extends PropertyConfig>(
   config: T,
   value: unknown,
-): NotionPropertyRequest {
+): NotionPropertyRequest | null {
   if (config.type === "title") {
     return toNotionTitleProperty(value)
   }
@@ -68,8 +72,22 @@ export function toNotionProperty<T extends PropertyConfig>(
   }
 
   if (config.type === "status") {
-    return toNotionSelectProperty(value)
+    return toNotionStatusProperty(value)
   }
+
+  if (config.type === "files") {
+    return toNotionFilesProperty(value)
+  }
+
+  if (config.type === "created_time") return null
+
+  if (config.type === "last_edited_time") return null
+
+  if (config.type === "created_by") return null
+
+  if (config.type === "last_edited_by") return null
+
+  if (config.type === "formula") return null
 
   throw new Error(`Unknown property type: ${(config as PropertyConfig).type}`)
 }

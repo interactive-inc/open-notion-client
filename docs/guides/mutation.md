@@ -11,10 +11,10 @@ Create a new record with required fields:
 ```typescript
 const task = await tasksTable.create({
   properties: {
-    title: 'Complete documentation',
-    status: 'in_progress',
-    priority: 5
-  }
+    title: "Complete documentation",
+    status: "in_progress",
+    priority: 5,
+  },
 })
 
 console.log(task.id) // Notion page ID
@@ -27,7 +27,7 @@ Add rich text content using markdown:
 ```typescript
 const blogPost = await blogTable.create({
   properties: {
-    title: 'Getting Started with notion-client'
+    title: "Getting Started with notion-client",
   },
   body: `# Introduction
 
@@ -42,7 +42,7 @@ This library makes working with Notion databases **simple** and *intuitive*.
 \`\`\`typescript
 const table = new NotionTable({ ... })
 \`\`\`
-`
+`,
 })
 ```
 
@@ -52,9 +52,9 @@ Create multiple records with `createMany`:
 
 ```typescript
 const tasks = [
-  { properties: { title: 'Task 1', priority: 5 } },
-  { properties: { title: 'Task 2', priority: 3 } },
-  { properties: { title: 'Task 3', priority: 8 } }
+  { properties: { title: "Task 1", priority: 5 } },
+  { properties: { title: "Task 2", priority: 3 } },
+  { properties: { title: "Task 3", priority: 8 } },
 ]
 
 const result = await tasksTable.createMany(tasks)
@@ -75,10 +75,10 @@ for (const failure of result.failed) {
 Update specific fields of a record:
 
 ```typescript
-const updated = await tasksTable.update('page-id', {
+const updated = await tasksTable.update("page-id", {
   properties: {
-    status: 'completed'
-  }
+    status: "completed",
+  },
 })
 ```
 
@@ -89,7 +89,7 @@ Update page body content:
 ```typescript
 const updated = await blogTable.update(postId, {
   properties: {
-    title: 'Updated Title'
+    title: "Updated Title",
   },
   body: `# Updated Content
 
@@ -97,7 +97,7 @@ New content with **bold** text.
 
 - Updated list item 1
 - Updated list item 2
-`
+`,
 })
 ```
 
@@ -111,9 +111,9 @@ const count = await tasksTable.updateMany({
   where: { priority: { greater_than_or_equal_to: 8 } },
   update: {
     properties: {
-      status: 'urgent'
-    }
-  }
+      status: "urgent",
+    },
+  },
 })
 
 console.log(`Updated ${count} tasks`)
@@ -125,19 +125,19 @@ Create or update based on conditions:
 
 ```typescript
 const contact = await contactsTable.upsert({
-  where: { email: 'john@example.com' },
-  insert: {
+  where: { email: "john@example.com" },
+  create: {
     properties: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      company: 'Acme Corp'
-    }
+      name: "John Doe",
+      email: "john@example.com",
+      company: "Acme Corp",
+    },
   },
   update: {
     properties: {
-      lastContacted: { start: new Date().toISOString(), end: null }
-    }
-  }
+      lastContacted: { start: new Date().toISOString(), end: null, timeZone: null },
+    },
+  },
 })
 ```
 
@@ -148,7 +148,7 @@ const contact = await contactsTable.upsert({
 Archive a record (soft delete):
 
 ```typescript
-await tasksTable.delete('page-id')
+await tasksTable.delete("page-id")
 ```
 
 ### Delete Many
@@ -157,7 +157,7 @@ Archive multiple records matching a condition:
 
 ```typescript
 const count = await tasksTable.deleteMany({
-  status: 'cancelled'
+  status: "cancelled",
 })
 
 console.log(`Deleted ${count} tasks`)
@@ -168,7 +168,7 @@ console.log(`Deleted ${count} tasks`)
 Restore an archived record:
 
 ```typescript
-const restored = await tasksTable.restore('page-id')
+const restored = await tasksTable.restore("page-id")
 ```
 
 ## Markdown Enhancement
@@ -176,31 +176,31 @@ const restored = await tasksTable.restore('page-id')
 Transform heading levels for consistency:
 
 ```typescript
-import { NotionMarkdown, NotionTable } from '@interactive-inc/notion-client'
+import { NotionMarkdown, NotionTable } from "@interactive-inc/notion-client"
 
 const markdown = new NotionMarkdown({
-  heading_1: 'heading_2', // Convert all H1 to H2
-  heading_2: 'heading_3'  // Convert all H2 to H3
+  heading_1: "heading_2", // Convert all H1 to H2
+  heading_2: "heading_3", // Convert all H2 to H3
 })
 
 const docsTable = new NotionTable({
   client,
-  dataSourceId: 'docs-db',
+  dataSourceId: "docs-db",
   properties: {
-    title: { type: 'title' }
+    title: { type: "title" },
   } as const,
-  markdown
+  markdown,
 })
 
 await docsTable.create({
   properties: {
-    title: 'API Guide'
+    title: "API Guide",
   },
   body: `# Main Title
 
 ## Subsection
 
-Content here.`
+Content here.`,
 })
 // In Notion: H1 becomes H2, H2 becomes H3
 ```
@@ -214,11 +214,11 @@ Always validate before database operations:
 ```typescript
 function validateTaskInput(data: { title?: string; priority?: number }) {
   if (!data.title || data.title.length < 3) {
-    throw new Error('Title must be at least 3 characters')
+    throw new Error("Title must be at least 3 characters")
   }
 
   if (data.priority !== undefined && (data.priority < 1 || data.priority > 10)) {
-    throw new Error('Priority must be between 1 and 10')
+    throw new Error("Priority must be between 1 and 10")
   }
 }
 
@@ -236,12 +236,12 @@ try {
   await tasksTable.create({
     properties: {
       // Missing required title
-      priority: 5
-    }
+      priority: 5,
+    },
   })
 } catch (error) {
   if (error instanceof Error) {
-    console.error('Failed to create task:', error.message)
+    console.error("Failed to create task:", error.message)
   }
 }
 ```

@@ -98,6 +98,5 @@ export const sampleMarkdownTokens: MarkdownTokensSample = {
       ],
     },
   ] as MarkdownToken[],
-  description:
-    "markedライブラリによって生成されたマークダウントークンのサンプルデータ",
+  description: "markedライブラリによって生成されたマークダウントークンのサンプルデータ",
 } as const

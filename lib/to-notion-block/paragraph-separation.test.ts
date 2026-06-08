@@ -34,9 +34,7 @@ Paragraph 3`
   // All blocks should be non-empty paragraphs
   for (const block of blocks) {
     expect(block.type).toBe("paragraph")
-    expect(
-      "paragraph" in block && block.paragraph.rich_text.length,
-    ).toBeGreaterThan(0)
+    expect("paragraph" in block && block.paragraph.rich_text.length).toBeGreaterThan(0)
   }
 })
 
@@ -99,9 +97,7 @@ Third paragraph`
   expect(
     blocks.every(
       (block) =>
-        block.type === "paragraph" &&
-        "paragraph" in block &&
-        block.paragraph.rich_text.length > 0,
+        block.type === "paragraph" && "paragraph" in block && block.paragraph.rich_text.length > 0,
     ),
   ).toBe(true)
 
@@ -110,10 +106,7 @@ Third paragraph`
     object: "block",
     id: `test-${index}`,
     type: block.type as "paragraph",
-    paragraph:
-      block.type === "paragraph"
-        ? block.paragraph
-        : { rich_text: [], color: "default" },
+    paragraph: block.type === "paragraph" ? block.paragraph : { rich_text: [], color: "default" },
     created_time: "2024-01-01T00:00:00.000Z",
     last_edited_time: "2024-01-01T00:00:00.000Z",
     created_by: { object: "user", id: "user-id" },
@@ -129,9 +122,7 @@ Third paragraph`
   const resultMarkdown = fromNotionBlocks(_mockNotionBlocks)
 
   // CRITICAL: Should have proper paragraph separation with blank lines
-  expect(resultMarkdown).toBe(
-    "First paragraph\n\nSecond paragraph\n\nThird paragraph",
-  )
+  expect(resultMarkdown).toBe("First paragraph\n\nSecond paragraph\n\nThird paragraph")
 })
 
 test("CRITICAL: Empty paragraph blocks should create appropriate spacing", () => {
@@ -242,9 +233,7 @@ test("CRITICAL: Kenji Miyazawa style paragraph separation", () => {
   expect(
     blocks.every(
       (block) =>
-        block.type === "paragraph" &&
-        "paragraph" in block &&
-        block.paragraph.rich_text.length > 0,
+        block.type === "paragraph" && "paragraph" in block && block.paragraph.rich_text.length > 0,
     ),
   ).toBe(true)
 
@@ -253,10 +242,7 @@ test("CRITICAL: Kenji Miyazawa style paragraph separation", () => {
     object: "block",
     id: `miyazawa-${index}`,
     type: block.type as "paragraph",
-    paragraph:
-      block.type === "paragraph"
-        ? block.paragraph
-        : { rich_text: [], color: "default" },
+    paragraph: block.type === "paragraph" ? block.paragraph : { rich_text: [], color: "default" },
     created_time: "2024-01-01T00:00:00.000Z",
     last_edited_time: "2024-01-01T00:00:00.000Z",
     created_by: { object: "user", id: "user-id" },

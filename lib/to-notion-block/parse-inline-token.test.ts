@@ -146,6 +146,7 @@ test("太字とイタリックの組み合わせを変換", () => {
     plain_text: "Bold Italic",
     annotations: {
       bold: true,
+      italic: true,
     },
   } as RichTextItemResponse)
 })
@@ -164,6 +165,57 @@ test("改行文字を含むテキストを変換", () => {
     text: { content: "Line 1\nLine 2" },
     plain_text: "Line 1\nLine 2",
     annotations: {},
+  } as RichTextItemResponse)
+})
+
+test("リンクトークンをlink付きrich_textに変換", () => {
+  const token: Tokens.Link = {
+    type: "link",
+    raw: "[label](https://example.com)",
+    href: "https://example.com",
+    text: "label",
+    tokens: [{ type: "text", raw: "label", text: "label" } as Tokens.Text],
+  }
+
+  const result = parseInlineToken(token)
+
+  expect(result).toEqual({
+    type: "text",
+    text: {
+      content: "label",
+      link: { url: "https://example.com" },
+    },
+    plain_text: "label",
+    annotations: {},
+  } as RichTextItemResponse)
+})
+
+test("リンク内の装飾を保持する", () => {
+  const token: Tokens.Link = {
+    type: "link",
+    raw: "[**bold**](https://example.com)",
+    href: "https://example.com",
+    text: "bold",
+    tokens: [
+      {
+        type: "strong",
+        raw: "**bold**",
+        text: "bold",
+        tokens: [{ type: "text", raw: "bold", text: "bold" } as Tokens.Text],
+      } as Tokens.Strong,
+    ],
+  }
+
+  const result = parseInlineToken(token)
+
+  expect(result).toEqual({
+    type: "text",
+    text: {
+      content: "bold",
+      link: { url: "https://example.com" },
+    },
+    plain_text: "bold",
+    annotations: { bold: true },
   } as RichTextItemResponse)
 })
 

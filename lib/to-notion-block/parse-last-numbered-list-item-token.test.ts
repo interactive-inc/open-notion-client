@@ -81,8 +81,14 @@ test("イタリックを含む最後の番号付きアイテムを変換", () =>
       rich_text: [
         {
           type: "text",
-          text: { content: "Italic last item" },
-          plain_text: "Italic last item",
+          text: { content: "Italic" },
+          plain_text: "Italic",
+          annotations: { italic: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " last item" },
+          plain_text: " last item",
           annotations: {},
         } as RichTextItemResponse,
       ],
@@ -90,7 +96,7 @@ test("イタリックを含む最後の番号付きアイテムを変換", () =>
   })
 })
 
-test("テキストトークンがない場合エラーをスロー", () => {
+test("テキストトークンがない場合は空の項目を返す", () => {
   const item: Tokens.ListItem = {
     type: "list_item",
     raw: "1. ",
@@ -101,9 +107,14 @@ test("テキストトークンがない場合エラーをスロー", () => {
     tokens: [],
   }
 
-  expect(() => parseLastNumberedListItem(item)).toThrow(
-    "Text token not found in list item",
-  )
+  const result = parseLastNumberedListItem(item)
+
+  expect(result).toEqual({
+    type: "numbered_list_item",
+    numbered_list_item: {
+      rich_text: [],
+    },
+  })
 })
 
 test("取り消し線を含む最後のアイテムを変換", () => {
@@ -150,8 +161,14 @@ test("取り消し線を含む最後のアイテムを変換", () => {
       rich_text: [
         {
           type: "text",
-          text: { content: "Strikethrough text" },
-          plain_text: "Strikethrough text",
+          text: { content: "Strikethrough" },
+          plain_text: "Strikethrough",
+          annotations: { strikethrough: true },
+        } as RichTextItemResponse,
+        {
+          type: "text",
+          text: { content: " text" },
+          plain_text: " text",
           annotations: {},
         } as RichTextItemResponse,
       ],

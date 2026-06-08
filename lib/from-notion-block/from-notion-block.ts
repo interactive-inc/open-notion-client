@@ -139,5 +139,7 @@ export function fromNotionBlock(block: NotionBlock): string {
     return fromNotionLinkToPageBlock(block)
   }
 
-  return `<!-- 未対応のブロックタイプ: ${block.type} -->`
+  // 未対応のブロック（synced_block, breadcrumb, table_of_contents, template, unsupported等）は
+  // 出力に何も残さず黙ってスキップする
+  return ""
 }

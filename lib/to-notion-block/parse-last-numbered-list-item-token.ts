@@ -1,6 +1,7 @@
 import type { BlockObjectRequestWithoutChildren } from "@notionhq/client/build/src/api-endpoints"
 import type { Tokens } from "marked"
-import { parseInlineToken } from "@/to-notion-block/parse-inline-token"
+import { extractListItemInline } from "@/to-notion-block/extract-list-item-inline"
+import { expandInlineTokens } from "@/to-notion-block/parse-inline-token"
 import { BlockType } from "@/types"
 
 /**
@@ -9,18 +10,10 @@ import { BlockType } from "@/types"
 export function parseLastNumberedListItem(
   item: Tokens.ListItem,
 ): BlockObjectRequestWithoutChildren {
-  const itemToken = item.tokens.find((t) => t.type === "text")
-
-  if (itemToken === undefined) {
-    throw new Error("Text token not found in list item")
-  }
-
-  const textToken = itemToken as Tokens.Text
-
   return {
     type: BlockType.NumberedListItem,
     numbered_list_item: {
-      rich_text: [parseInlineToken(textToken)],
+      rich_text: expandInlineTokens(extractListItemInline(item)),
     },
   }
 }

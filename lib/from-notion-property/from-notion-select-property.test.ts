@@ -2,10 +2,7 @@ import { expect, test } from "bun:test"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionSelectProperty } from "./from-notion-select-property"
 
-type SelectProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "select" }
->
+type SelectProperty = Extract<PageObjectResponse["properties"][string], { type: "select" }>
 
 test("選択肢を変換", () => {
   const property: SelectProperty = {

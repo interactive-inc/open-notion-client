@@ -338,9 +338,7 @@ type TimestampLastEditedTimeFilter = {
   type?: "last_edited_time"
 }
 
-type TimestampFilter =
-  | TimestampCreatedTimeFilter
-  | TimestampLastEditedTimeFilter
+type TimestampFilter = TimestampCreatedTimeFilter | TimestampLastEditedTimeFilter
 
 type PropertyOrTimestampFilter = PropertyFilter | TimestampFilter
 

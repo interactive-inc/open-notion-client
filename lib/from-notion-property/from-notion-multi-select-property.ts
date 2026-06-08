@@ -8,9 +8,7 @@ type MultiSelectProperty = Extract<
 /**
  * Notionのmulti_selectプロパティを文字列配列に変換
  */
-export function fromNotionMultiSelectProperty(
-  property: MultiSelectProperty,
-): string[] {
+export function fromNotionMultiSelectProperty(property: MultiSelectProperty): string[] {
   if (!property.multi_select || !Array.isArray(property.multi_select)) {
     return []
   }

@@ -61,7 +61,7 @@ export const zSelectPropertyConfig = z.object({
  */
 export const zMultiSelectPropertyConfig = z.object({
   type: z.literal("multi_select"),
-  options: z.array(z.string()).nullable(),
+  options: z.union([z.array(z.string()).readonly(), z.array(z.string())]).nullable(),
 })
 
 /**

@@ -59,8 +59,7 @@ export function fromNotionBlocks(blocks: NotionBlock[]): string {
         if (
           (currentBlockType === "bulleted_list_item" ||
             currentBlockType === "numbered_list_item") &&
-          (nextBlockType === "bulleted_list_item" ||
-            nextBlockType === "numbered_list_item")
+          (nextBlockType === "bulleted_list_item" || nextBlockType === "numbered_list_item")
         ) {
           result += "\n"
         } else if (

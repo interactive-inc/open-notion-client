@@ -138,7 +138,7 @@ test("toNotion: 日付プロパティを正しく変換", () => {
   }
 
   const data = {
-    deadline: { start: "2024-01-15", end: "2024-01-20" },
+    deadline: { start: "2024-01-15", end: "2024-01-20", timeZone: null },
   }
 
   const result = converter.toNotion(schema, data)
@@ -164,11 +164,7 @@ test("toNotion: 複数選択プロパティを正しく変換", () => {
   const result = converter.toNotion(schema, data)
 
   expect(result.tags).toEqual({
-    multi_select: [
-      { name: "TypeScript" },
-      { name: "Notion" },
-      { name: "テスト" },
-    ],
+    multi_select: [{ name: "TypeScript" }, { name: "Notion" }, { name: "テスト" }],
   })
 })
 
@@ -219,7 +215,7 @@ test("型安全性の確認", () => {
   expect(result.publishedDate).toEqual({
     start: "2024-01-01",
     end: null,
-    timeZone: undefined,
+    timeZone: null,
   })
 })
 

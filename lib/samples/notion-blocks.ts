@@ -110,11 +110,9 @@ export const sampleNotionBlocks: NotionBlocksSample = {
           {
             type: "text",
             text: {
-              content:
-                "のすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られた",
+              content: "のすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られた",
             },
-            plain_text:
-              "のすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られた",
+            plain_text: "のすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られた",
             annotations: {},
           },
           {

@@ -183,7 +183,7 @@ test("ネストされた番号付きリストを含むアイテムを変換", ()
   })
 })
 
-test("テキストトークンがない場合エラーをスロー", () => {
+test("テキストトークンがない場合は空の項目を返す", () => {
   const item: Tokens.ListItem = {
     type: "list_item",
     raw: "  - ",
@@ -194,7 +194,13 @@ test("テキストトークンがない場合エラーをスロー", () => {
     tokens: [],
   }
 
-  expect(() => parseNestedBulletedListItemToken(item)).toThrow(
-    "Text token not found in list item",
-  )
+  const result = parseNestedBulletedListItemToken(item)
+
+  expect(result).toEqual({
+    type: "bulleted_list_item",
+    bulleted_list_item: {
+      rich_text: [],
+      children: undefined,
+    },
+  })
 })

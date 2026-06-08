@@ -28,9 +28,9 @@ const block = {
   },
 } as const satisfies EquationBlockObjectResponse
 
-test("equationブロックをマークダウン数式に変換できる", () => {
+test("equationブロックをマークダウンのdisplay数式に変換できる", () => {
   const result = fromNotionEquationBlock(block)
-  expect(result).toBe("$E = mc^2$")
+  expect(result).toBe("$$E = mc^2$$")
 })
 
 test("複雑な数式も正しく変換できる", () => {
@@ -39,8 +39,8 @@ test("複雑な数式も正しく変換できる", () => {
     equation: {
       expression: "\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
     },
-  } as EquationBlockObjectResponse
+  } satisfies EquationBlockObjectResponse
 
   const result = fromNotionEquationBlock(complexBlock)
-  expect(result).toBe("$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$")
+  expect(result).toBe("$$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$")
 })

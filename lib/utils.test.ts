@@ -9,9 +9,7 @@ test("空の配列を処理", () => {
 })
 
 test("nullを処理", () => {
-  const result = fromNotionRichTextItem(
-    null as unknown as RichTextItemResponse[],
-  )
+  const result = fromNotionRichTextItem(null as unknown as RichTextItemResponse[])
   expect(result).toBe("")
 })
 
@@ -272,4 +270,25 @@ test("特殊文字を含むコードテキストを変換", () => {
   ]
   const result = fromNotionRichTextItem(richTexts)
   expect(result).toBe("`const str = `Hello $" + "{name}!``")
+})
+
+test("text.link.urlからリンクを抽出する（hrefがnullでも）", () => {
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "label", link: { url: "https://example.com" } },
+      plain_text: "label",
+      annotations: {
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        underline: false,
+        code: false,
+        color: "default",
+      },
+      href: null,
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("[label](https://example.com)")
 })

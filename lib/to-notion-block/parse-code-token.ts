@@ -1,6 +1,5 @@
 import type { BlockObjectRequest } from "@notionhq/client/build/src/api-endpoints"
 import type { Tokens } from "marked"
-import { parseInlineToken } from "@/to-notion-block/parse-inline-token"
 import { BlockType } from "@/types"
 
 type LanguageRequest =
@@ -200,11 +199,23 @@ function mapLanguage(lang: string | undefined): LanguageRequest {
  * Convert code token to Notion block
  */
 export function parseCodeToken(token: Tokens.Code): BlockObjectRequest {
+  const richText = [
+    {
+      type: "text" as const,
+      text: { content: token.text },
+      plain_text: token.text,
+      annotations: {},
+    },
+  ]
+
+  // Notion APIリクエストではplain_text/annotationsは無視されるが、テスト時の
+  // レスポンス形互換を保つため付与している。型レベルでは構造的に互換なので
+  // 通常のオブジェクトとして返せる
   return {
     type: BlockType.Code,
     code: {
-      rich_text: [parseInlineToken(token)],
+      rich_text: richText,
       language: mapLanguage(token.lang),
     },
-  } as const
+  }
 }

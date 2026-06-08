@@ -6,9 +6,7 @@ const richTextPropertySchema = z.string()
 /**
  * 値をNotionのrich_textプロパティに変換
  */
-export function toNotionRichTextProperty(
-  value: unknown,
-): NotionRichTextPropertyRequest {
+export function toNotionRichTextProperty(value: unknown): NotionRichTextPropertyRequest {
   const data = richTextPropertySchema.parse(value)
 
   return {

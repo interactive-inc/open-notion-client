@@ -5,7 +5,7 @@ The main class for database operations with type-safe schema support.
 ## Import
 
 ```typescript
-import { NotionTable } from '@interactive-inc/notion-client'
+import { NotionTable } from "@interactive-inc/notion-client"
 ```
 
 ## Constructor
@@ -35,19 +35,19 @@ new NotionTable<T extends Schema>({
 ## Basic Usage
 
 ```typescript
-import { Client } from '@notionhq/client'
-import { NotionTable } from '@interactive-inc/notion-client'
+import { Client } from "@notionhq/client"
+import { NotionTable } from "@interactive-inc/notion-client"
 
 const client = new Client({ auth: process.env.NOTION_TOKEN })
 
 const tasksTable = new NotionTable({
   client,
-  dataSourceId: 'your-database-id',
+  dataSourceId: "your-database-id",
   properties: {
-    title: { type: 'title' },
-    status: { type: 'select', options: ['todo', 'done'] as const },
-    priority: { type: 'number' }
-  } as const
+    title: { type: "title" },
+    status: { type: "select", options: ["todo", "done"] as const },
+    priority: { type: "number" },
+  } as const,
 })
 ```
 
@@ -58,18 +58,18 @@ const tasksTable = new NotionTable({
 ```typescript
 const task = await tasksTable.create({
   properties: {
-    title: 'New Task',
-    status: 'todo',
-    priority: 5
-  }
+    title: "New Task",
+    status: "todo",
+    priority: 5,
+  },
 })
 
 // With markdown body
 const page = await tasksTable.create({
   properties: {
-    title: 'Documentation'
+    title: "Documentation",
   },
-  body: `# Overview\n\nThis is **markdown** content.`
+  body: `# Overview\n\nThis is **markdown** content.`,
 })
 ```
 
@@ -77,55 +77,60 @@ const page = await tasksTable.create({
 
 ```typescript
 // Find many - returns { records, hasMore, nextCursor }
-const { records: tasks, hasMore, nextCursor } = await tasksTable.findMany({
-  where: { status: 'todo' },
-  sorts: [{ field: 'priority', direction: 'desc' }],
-  limit: 20
+const {
+  records: tasks,
+  hasMore,
+  nextCursor,
+} = await tasksTable.findMany({
+  where: { status: "todo" },
+  sorts: [{ field: "priority", direction: "desc" }],
+  limit: 20,
 })
 
 // Find one
 const task = await tasksTable.findOne({
-  where: { title: 'Important Task' }
+  where: { title: "Important Task" },
 })
 
-// Find by ID with cache option
-const specific = await tasksTable.findById('page-id', { cache: true })
+// Find by ID
+// cacheをコンストラクタに渡している場合は自動的に再利用される
+const specific = await tasksTable.findById("page-id")
 ```
 
 ### Update
 
 ```typescript
 // Update single
-const updated = await tasksTable.update('page-id', {
+const updated = await tasksTable.update("page-id", {
   properties: {
-    status: 'done'
-  }
+    status: "done",
+  },
 })
 
 // Update many
 const count = await tasksTable.updateMany({
-  where: { status: 'todo' },
+  where: { status: "todo" },
   update: {
     properties: {
-      status: 'in_progress'
-    }
-  }
+      status: "in_progress",
+    },
+  },
 })
 
 // Upsert
 const result = await tasksTable.upsert({
-  where: { email: 'user@example.com' },
-  insert: {
+  where: { email: "user@example.com" },
+  create: {
     properties: {
-      name: 'New User',
-      email: 'user@example.com'
-    }
+      name: "New User",
+      email: "user@example.com",
+    },
   },
   update: {
     properties: {
-      lastSeen: { start: new Date().toISOString(), end: null }
-    }
-  }
+      lastSeen: { start: new Date().toISOString(), end: null, timeZone: null },
+    },
+  },
 })
 ```
 
@@ -133,13 +138,13 @@ const result = await tasksTable.upsert({
 
 ```typescript
 // Soft delete (archive)
-await tasksTable.delete('page-id')
+await tasksTable.delete("page-id")
 
 // Delete many (pass where condition directly)
-const deletedCount = await tasksTable.deleteMany({ status: 'cancelled' })
+const deletedCount = await tasksTable.deleteMany({ status: "cancelled" })
 
 // Restore
-await tasksTable.restore('page-id')
+await tasksTable.restore("page-id")
 ```
 
 ## Advanced Features
@@ -147,18 +152,18 @@ await tasksTable.restore('page-id')
 ### With Markdown Enhancement
 
 ```typescript
-import { NotionMarkdown } from '@interactive-inc/notion-client'
+import { NotionMarkdown } from "@interactive-inc/notion-client"
 
 const enhancer = new NotionMarkdown({
-  heading_1: 'heading_2',  // H1 → H2
-  heading_2: 'heading_3'   // H2 → H3
+  heading_1: "heading_2", // H1 → H2
+  heading_2: "heading_3", // H2 → H3
 })
 
 const docsTable = new NotionTable({
   client,
-  dataSourceId: 'docs-db',
-  properties: { title: { type: 'title' } },
-  markdown: enhancer
+  dataSourceId: "docs-db",
+  properties: { title: { type: "title" } },
+  markdown: enhancer,
 })
 ```
 
@@ -166,30 +171,82 @@ const docsTable = new NotionTable({
 
 ```typescript
 // Comparison (number)
-{ price: { greater_than_or_equal_to: 100 } }
-{ quantity: { less_than: 10 } }
-{ count: { equals: 5 } }
+{
+  price: {
+    greater_than_or_equal_to: 100
+  }
+}
+{
+  quantity: {
+    less_than: 10
+  }
+}
+{
+  count: {
+    equals: 5
+  }
+}
 
 // String matching (text/title/rich_text)
-{ name: { contains: 'product' } }
-{ email: { ends_with: '@company.com' } }
-{ title: { starts_with: 'Project' } }
+{
+  name: {
+    contains: "product"
+  }
+}
+{
+  email: {
+    ends_with: "@company.com"
+  }
+}
+{
+  title: {
+    starts_with: "Project"
+  }
+}
 
 // Array operations (multi_select)
-{ tags: { contains: 'urgent' } }
+{
+  tags: {
+    contains: "urgent"
+  }
+}
 
 // Logical operators
-{ or: [{ status: 'active' }, { priority: { greater_than_or_equal_to: 8 } }] }
-{ and: [{ published: true }, { featured: true }] }
+{
+  or: [{ status: "active" }, { priority: { greater_than_or_equal_to: 8 } }]
+}
+{
+  and: [{ published: true }, { featured: true }]
+}
 
 // Empty checks
-{ description: { is_empty: true } }
-{ tags: { is_not_empty: true } }
+{
+  description: {
+    is_empty: true
+  }
+}
+{
+  tags: {
+    is_not_empty: true
+  }
+}
 
 // Date operations
-{ createdAt: { before: '2024-01-01' } }
-{ dueDate: { after: '2024-12-31' } }
-{ publishDate: { on_or_before: '2024-06-01' } }
+{
+  createdAt: {
+    before: "2024-01-01"
+  }
+}
+{
+  dueDate: {
+    after: "2024-12-31"
+  }
+}
+{
+  publishDate: {
+    on_or_before: "2024-06-01"
+  }
+}
 ```
 
 ## Type Safety
@@ -197,9 +254,9 @@ const docsTable = new NotionTable({
 ```typescript
 // Properties define types
 const properties = {
-  name: { type: 'title' },
-  age: { type: 'number' },
-  tags: { type: 'multi_select', options: ['a', 'b', 'c'] as const }
+  name: { type: "title" },
+  age: { type: "number" },
+  tags: { type: "multi_select", options: ["a", "b", "c"] as const },
 } as const
 
 // Type is inferred from properties
@@ -211,13 +268,13 @@ type User = SchemaType<typeof properties>
 // }
 
 // Full IDE support
-const table = new NotionTable({ client, dataSourceId: 'db-id', properties })
+const table = new NotionTable({ client, dataSourceId: "db-id", properties })
 const user = await table.create({
   properties: {
-    name: 'John',     // ✅ String
-    age: 30,          // ✅ Number
-    tags: ['a', 'b']  // ✅ Array of valid options
-  }
+    name: "John", // ✅ String
+    age: 30, // ✅ Number
+    tags: ["a", "b"], // ✅ Array of valid options
+  },
 })
 ```
 
@@ -228,19 +285,18 @@ const user = await table.create({
 All query methods return `NotionPageReference<T>` instances:
 
 ```typescript
-const page = await table.findById('page-id')
+const page = await table.findById("page-id")
 
 // Properties
-page.id           // string - Page ID
-page.url          // string - Page URL
-page.createdAt    // string - ISO date string
-page.updatedAt    // string - ISO date string
-page.isArchived   // boolean
-page.isDeleted    // boolean (same as isArchived)
+page.id // string - Page ID
+page.url // string - Page URL
+page.createdAt // string - ISO date string
+page.updatedAt // string - ISO date string
+page.isArchived // boolean
 
 // Methods
 page.properties() // SchemaType<T> - Typed properties
-page.raw()        // PageObjectResponse - Raw Notion response
+page.raw() // PageObjectResponse - Raw Notion response
 await page.body() // string - Page body as markdown
 ```
 
@@ -250,6 +306,7 @@ await page.body() // string - Page body as markdown
 // Clear all cached pages and blocks
 table.clearCache()
 
-// Use cache when finding by ID
-const cached = await table.findById('page-id', { cache: true })
+// Cache is transparent — pass NotionMemoryCache to the constructor and all
+// findById/update/restore operations will use it automatically.
+const cached = await table.findById("page-id")
 ```

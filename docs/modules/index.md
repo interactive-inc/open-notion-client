@@ -30,19 +30,22 @@ Block Enhancement
 // 1. Define properties → NotionTable validates and infers types
 const table = new NotionTable({
   client,
-  dataSourceId: 'db-id',
-  properties: { title: { type: 'title' }, status: { type: 'select', options: ['active', 'inactive'] } }
+  dataSourceId: "db-id",
+  properties: {
+    title: { type: "title" },
+    status: { type: "select", options: ["active", "inactive"] },
+  },
 })
 
 // 2. Create with markdown → toNotionBlocks converts content
 await table.create({
-  properties: { title: 'Page' },
-  body: '# Markdown content'
+  properties: { title: "Page" },
+  body: "# Markdown content",
 })
 
 // 3. Query with filters → Query builder uses Notion API format
 await table.findMany({
-  where: { status: { equals: 'active' } }
+  where: { status: { equals: "active" } },
 })
 
 // 4. Read with blocks → fromNotionBlocks converts to markdown
@@ -53,28 +56,28 @@ const content = fromNotionBlocks(blocks)
 
 ```typescript
 // Input: Markdown text
-const markdown = '# Title\n**Bold** text'
+const markdown = "# Title\n**Bold** text"
 
 // Process: Convert to Notion blocks
 const blocks = toNotionBlocks(markdown)
 
 // Store: Save to Notion database with optional transformation
-const markdownTransformer = new NotionMarkdown({ heading_1: 'heading_2' })
+const markdownTransformer = new NotionMarkdown({ heading_1: "heading_2" })
 const table = new NotionTable({
   client,
-  dataSourceId: 'db-id',
-  properties: { title: { type: 'title' } },
-  markdown: markdownTransformer
+  dataSourceId: "db-id",
+  properties: { title: { type: "title" } },
+  markdown: markdownTransformer,
 })
 
 await table.create({
-  properties: { title: 'Doc' },
-  body: markdown
+  properties: { title: "Doc" },
+  body: markdown,
 })
 
 // Retrieve: Fetch with nested blocks
 const enhancedClient = enhance(client.blocks.children.list.bind(client.blocks.children))
-const allBlocks = await enhancedClient({ block_id: 'page-id' })
+const allBlocks = await enhancedClient({ block_id: "page-id" })
 
 // Output: Convert back to markdown
 const result = fromNotionBlocks(allBlocks)
@@ -85,6 +88,7 @@ const result = fromNotionBlocks(allBlocks)
 ### NotionTable
 
 The main entry point for database operations:
+
 - Properties validation
 - Type-safe CRUD operations
 - Query building (Notion API filter format)
@@ -94,6 +98,7 @@ The main entry point for database operations:
 ### NotionMarkdown
 
 Transforms heading levels during markdown conversion:
+
 - Adjust heading hierarchy
 - Maintain document structure
 - Integrate with content pipeline
@@ -101,12 +106,14 @@ Transforms heading levels during markdown conversion:
 ### Conversion Functions
 
 **toNotionBlocks** - Markdown → Notion
+
 - Parse markdown syntax
 - Create block objects
 - Apply text annotations
 - Support code blocks and lists
 
 **fromNotionBlocks** - Notion → Markdown
+
 - Extract text content
 - Preserve formatting
 - Handle nested structures
@@ -115,6 +122,7 @@ Transforms heading levels during markdown conversion:
 ### enhance Function
 
 Recursively fetches all child blocks:
+
 - Overcome API limitations
 - Fetch complete page content
 - Maintain block relationships
@@ -124,13 +132,13 @@ Recursively fetches all child blocks:
 ### Complete Setup
 
 ```typescript
-import { 
-  NotionTable, 
+import {
+  NotionTable,
   NotionMarkdown,
   toNotionBlocks,
   fromNotionBlocks,
-  enhance
-} from '@interactive-inc/notion-client'
+  enhance,
+} from "@interactive-inc/notion-client"
 
 // Database operations
 const table = new NotionTable({ ...config })
@@ -145,11 +153,13 @@ const fetchAllBlocks = enhance(notionClient)
 ### Common Workflows
 
 1. **Database with Markdown**
+
    ```typescript
    NotionTable + toNotionBlocks + NotionMarkdown
    ```
 
 2. **Page Export**
+
    ```typescript
    enhance + fromNotionBlocks
    ```

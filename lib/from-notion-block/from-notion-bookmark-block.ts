@@ -3,8 +3,6 @@ import type { BookmarkBlockObjectResponse } from "@notionhq/client/build/src/api
 /**
  * Convert Notion bookmark block to markdown
  */
-export function fromNotionBookmarkBlock(
-  block: BookmarkBlockObjectResponse,
-): string {
+export function fromNotionBookmarkBlock(block: BookmarkBlockObjectResponse): string {
   return block.bookmark.url
 }

@@ -2,10 +2,7 @@ import { expect, test } from "bun:test"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionDateProperty } from "./from-notion-date-property"
 
-type DateProperty = Extract<
-  PageObjectResponse["properties"][string],
-  { type: "date" }
->
+type DateProperty = Extract<PageObjectResponse["properties"][string], { type: "date" }>
 
 test("日付範囲を変換", () => {
   const property: DateProperty = {
@@ -22,7 +19,7 @@ test("日付範囲を変換", () => {
   expect(result).toEqual({
     start: "2023-01-01",
     end: "2023-01-31",
-    timeZone: undefined,
+    timeZone: null,
   })
 })
 
@@ -41,7 +38,7 @@ test("開始日のみの日付を変換", () => {
   expect(result).toEqual({
     start: "2023-01-01",
     end: null,
-    timeZone: undefined,
+    timeZone: null,
   })
 })
 

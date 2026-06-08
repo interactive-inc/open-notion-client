@@ -1,7 +1,9 @@
 import type { BlockObjectRequest } from "@notionhq/client/build/src/api-endpoints"
 import { lexer, type Tokens } from "marked"
+import { parseBlockquoteToken } from "@/to-notion-block/parse-blockquote-token"
 import { parseCodeToken } from "@/to-notion-block/parse-code-token"
 import { parseHeadingToken } from "@/to-notion-block/parse-heading-token"
+import { parseHrToken } from "@/to-notion-block/parse-hr-token"
 import { parseListToken } from "@/to-notion-block/parse-list-token"
 import { parseParagraphToken } from "@/to-notion-block/parse-paragraph-token"
 
@@ -20,26 +22,35 @@ export function toNotionBlocks(markdown: string): BlockObjectRequest[] {
 
   for (const token of tokenList) {
     if (token.type === "heading") {
-      const t = token as Tokens.Heading
-      blocks.push(parseHeadingToken(t))
+      blocks.push(parseHeadingToken(token as Tokens.Heading))
+      continue
     }
 
     if (token.type === "list") {
-      const t = token as Tokens.List
-      const objects = parseListToken(t)
+      const objects = parseListToken(token as Tokens.List)
       for (const node of objects) {
         blocks.push(node)
       }
+      continue
     }
 
     if (token.type === "code") {
-      const t = token as Tokens.Code
-      blocks.push(parseCodeToken(t))
+      blocks.push(parseCodeToken(token as Tokens.Code))
+      continue
     }
 
     if (token.type === "paragraph") {
-      const t = token as Tokens.Paragraph
-      blocks.push(parseParagraphToken(t))
+      blocks.push(parseParagraphToken(token as Tokens.Paragraph))
+      continue
+    }
+
+    if (token.type === "blockquote") {
+      blocks.push(parseBlockquoteToken(token as Tokens.Blockquote))
+      continue
+    }
+
+    if (token.type === "hr") {
+      blocks.push(parseHrToken())
     }
 
     // CRITICAL: DO NOT process 'space' tokens here!

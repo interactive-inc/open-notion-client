@@ -6,8 +6,8 @@ Single choice from predefined options.
 
 ```typescript
 {
-  status: { 
-    type: 'select', 
+  status: {
+    type: 'select',
     options: ['todo', 'in_progress', 'done'] as const,
       // Optional
   }
@@ -19,7 +19,7 @@ Use `as const` to preserve literal types.
 ## TypeScript Type
 
 ```typescript
-'todo' | 'in_progress' | 'done' | undefined
+;"todo" | "in_progress" | "done" | undefined
 // or just 'todo' | 'in_progress' | 'done' if required
 ```
 
@@ -27,11 +27,11 @@ Use `as const` to preserve literal types.
 
 ```typescript
 await table.create({
-  properties: { status: 'todo' }  // Auto-completes options
+  properties: { status: "todo" }, // Auto-completes options
 })
 
-await table.update('page-id', {
-  properties: { status: 'done' }
+await table.update("page-id", {
+  properties: { status: "done" },
 })
 ```
 
@@ -40,24 +40,21 @@ await table.update('page-id', {
 ```typescript
 // Exact match
 await table.findMany({
-  where: { status: 'done' }
+  where: { status: "done" },
 })
 
 // Multiple values (use or)
 await table.findMany({
   where: {
-    or: [
-      { status: 'todo' },
-      { status: 'in_progress' }
-    ]
-  }
+    or: [{ status: "todo" }, { status: "in_progress" }],
+  },
 })
 
 // Available operators
-equals            // Equals (default)
-does_not_equal    // Not equals
-is_empty          // No selection
-is_not_empty      // Has selection
+equals // Equals (default)
+does_not_equal // Not equals
+is_empty // No selection
+is_not_empty // Has selection
 ```
 
 ## Examples
@@ -65,37 +62,36 @@ is_not_empty      // Has selection
 ```typescript
 const tasksTable = new NotionTable({
   client,
-  dataSourceId: 'tasks-db',
+  dataSourceId: "tasks-db",
   properties: {
-    title: { type: 'title' },
+    title: { type: "title" },
     status: {
-      type: 'select',
-      options: ['backlog', 'todo', 'in_progress', 'review', 'done'] as const
+      type: "select",
+      options: ["backlog", "todo", "in_progress", "review", "done"] as const,
     },
     priority: {
-      type: 'select',
-      options: ['low', 'medium', 'high', 'urgent'] as const,
-
-    }
-  }
+      type: "select",
+      options: ["low", "medium", "high", "urgent"] as const,
+    },
+  },
 })
 
 // Create with select values
 const task = await tasksTable.create({
   properties: {
-    title: 'Implement auth',
-    status: 'todo',
-    priority: 'high'
-  }
+    title: "Implement auth",
+    status: "todo",
+    priority: "high",
+  },
 })
 
 // Query by status
 const { records: activeTasks } = await tasksTable.findMany({
   where: {
     and: [
-      { or: [{ status: 'todo' }, { status: 'in_progress' }] },
-      { priority: { does_not_equal: 'low' } }
-    ]
-  }
+      { or: [{ status: "todo" }, { status: "in_progress" }] },
+      { priority: { does_not_equal: "low" } },
+    ],
+  },
 })
 ```

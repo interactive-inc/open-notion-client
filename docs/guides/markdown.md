@@ -9,14 +9,14 @@ When fetching blocks from Notion API, child blocks are not included by default. 
 ## Import
 
 ```typescript
-import { enhance } from '@interactive-inc/notion-client'
+import { enhance } from "@interactive-inc/notion-client"
 ```
 
 ## Function Signature
 
 ```typescript
 function enhance(
-  client: (args: ListBlockChildrenParameters) => Promise<ListBlockChildrenResponse>
+  client: (args: ListBlockChildrenParameters) => Promise<ListBlockChildrenResponse>,
 ): (args: ListBlockChildrenParameters) => Promise<NotionBlock[]>
 ```
 
@@ -29,56 +29,53 @@ function enhance(
 ## Basic Usage
 
 ```typescript
-import { Client } from '@notionhq/client'
-import { enhance } from '@interactive-inc/notion-client'
+import { Client } from "@notionhq/client"
+import { enhance } from "@interactive-inc/notion-client"
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
 // Wrap the blocks.children.list method
-const fetchAllBlocks = enhance(
-  (args) => notion.blocks.children.list(args)
-)
+const fetchAllBlocks = enhance((args) => notion.blocks.children.list(args))
 
 // Fetch all blocks including nested children
 const blocks = await fetchAllBlocks({
-  block_id: 'page-id'
+  block_id: "page-id",
 })
 ```
 
 ## Example: Fetching Complete Page Content
 
 ```typescript
-import { Client } from '@notionhq/client'
-import { enhance, fromNotionBlocks } from '@interactive-inc/notion-client'
+import { Client } from "@notionhq/client"
+import { enhance, fromNotionBlocks } from "@interactive-inc/notion-client"
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
 // Create enhanced client
-const fetchAllBlocks = enhance(
-  (args) => notion.blocks.children.list(args)
-)
+const fetchAllBlocks = enhance((args) => notion.blocks.children.list(args))
 
 // Fetch page with all nested content
 async function getPageContent(pageId: string) {
   // Get all blocks including children
   const blocks = await fetchAllBlocks({
-    block_id: pageId
+    block_id: pageId,
   })
-  
+
   // Convert to markdown
   const markdown = fromNotionBlocks(blocks)
-  
+
   return markdown
 }
 
 // Use it
-const content = await getPageContent('your-page-id')
+const content = await getPageContent("your-page-id")
 console.log(content)
 ```
 
 ## Nested Block Structure
 
 Without `enhance`:
+
 ```typescript
 // Standard API call only returns top-level blocks
 const response = await notion.blocks.children.list({
@@ -94,6 +91,7 @@ const response = await notion.blocks.children.list({
 ```
 
 With `enhance`:
+
 ```typescript
 // Enhanced call returns all blocks with children
 const blocks = await fetchAllBlocks({
@@ -103,9 +101,9 @@ const blocks = await fetchAllBlocks({
 // blocks:
 [
   { type: 'heading_1', has_children: false, children: [], ... },
-  { 
-    type: 'bulleted_list_item', 
-    has_children: true, 
+  {
+    type: 'bulleted_list_item',
+    has_children: true,
     children: [
       { type: 'bulleted_list_item', has_children: false, children: [], ... },
       { type: 'bulleted_list_item', has_children: false, children: [], ... }
@@ -121,14 +119,12 @@ const blocks = await fetchAllBlocks({
 ### Export Entire Pages
 
 ```typescript
-const fetchAllBlocks = enhance(
-  (args) => notion.blocks.children.list(args)
-)
+const fetchAllBlocks = enhance((args) => notion.blocks.children.list(args))
 
 async function exportPage(pageId: string) {
   const blocks = await fetchAllBlocks({ block_id: pageId })
   const markdown = fromNotionBlocks(blocks)
-  
+
   await fs.writeFile(`export/${pageId}.md`, markdown)
 }
 ```
@@ -138,7 +134,7 @@ async function exportPage(pageId: string) {
 ```typescript
 async function copyPageWithChildren(sourceId: string, targetId: string) {
   const blocks = await fetchAllBlocks({ block_id: sourceId })
-  
+
   // Recreate structure in target
   for (const block of blocks) {
     await createBlockWithChildren(targetId, block)
@@ -151,16 +147,16 @@ async function copyPageWithChildren(sourceId: string, targetId: string) {
 ```typescript
 async function analyzePageStructure(pageId: string) {
   const blocks = await fetchAllBlocks({ block_id: pageId })
-  
+
   const stats = {
     total: blocks.length,
     byType: {},
-    maxDepth: 0
+    maxDepth: 0,
   }
-  
+
   // Analyze block types and nesting
   analyzeBlocks(blocks, stats)
-  
+
   return stats
 }
 ```
@@ -174,7 +170,7 @@ The enhance function handles pagination automatically:
 ```typescript
 // No need to handle pagination manually
 const blocks = await fetchAllBlocks({
-  block_id: 'page-id'
+  block_id: "page-id",
   // page_size is handled internally
 })
 ```
@@ -192,8 +188,8 @@ const cachedFetch = enhance((args) => {
   if (cache.has(key)) {
     return Promise.resolve(cache.get(key))
   }
-  
-  return notion.blocks.children.list(args).then(result => {
+
+  return notion.blocks.children.list(args).then((result) => {
     cache.set(key, result)
     return result
   })
@@ -207,7 +203,7 @@ Be aware of Notion's rate limits when fetching deeply nested structures:
 ```typescript
 // Add delay for large operations
 const fetchWithDelay = enhance(async (args) => {
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   return notion.blocks.children.list(args)
 })
 ```
@@ -215,19 +211,17 @@ const fetchWithDelay = enhance(async (args) => {
 ## Error Handling
 
 ```typescript
-const fetchAllBlocks = enhance(
-  (args) => notion.blocks.children.list(args)
-)
+const fetchAllBlocks = enhance((args) => notion.blocks.children.list(args))
 
 try {
   const blocks = await fetchAllBlocks({
-    block_id: 'page-id'
+    block_id: "page-id",
   })
 } catch (error) {
-  if (error.code === 'object_not_found') {
-    console.error('Page not found')
-  } else if (error.code === 'rate_limited') {
-    console.error('Rate limited, retry later')
+  if (error.code === "object_not_found") {
+    console.error("Page not found")
+  } else if (error.code === "rate_limited") {
+    console.error("Rate limited, retry later")
   }
 }
 ```

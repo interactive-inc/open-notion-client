@@ -14,7 +14,7 @@ Computed values from other properties (read-only).
 ## TypeScript Type
 
 ```typescript
-string | number | boolean | undefined  // Depends on formula result
+;string | number | boolean | undefined // Depends on formula result
 ```
 
 ## Writing
@@ -24,16 +24,16 @@ Formula fields are computed automatically by Notion and cannot be written direct
 ```typescript
 // Cannot set formula values
 await table.create({
-  properties: { total: 100 }  // This will be ignored
+  properties: { total: 100 }, // This will be ignored
 })
 
 // Set the source fields instead
 await table.create({
   properties: {
     price: 50,
-    quantity: 2
+    quantity: 2,
     // total formula will compute to 100
-  }
+  },
 })
 ```
 
@@ -42,9 +42,9 @@ await table.create({
 ```typescript
 // Query computed values
 await table.findMany({
-  where: { 
-    total: { greater_than_or_equal_to: 100 }
-  }
+  where: {
+    total: { greater_than_or_equal_to: 100 },
+  },
 })
 
 // Available operators depend on formula type
@@ -58,49 +58,49 @@ await table.findMany({
 ```typescript
 const ordersTable = new NotionTable({
   client,
-  dataSourceId: 'orders-db',
+  dataSourceId: "orders-db",
   properties: {
-    product: { type: 'title' },
-    price: { type: 'number' },
-    quantity: { type: 'number' },
-    total: { type: 'formula' },  // price * quantity
-    taxAmount: { type: 'formula' },  // total * 0.1
-    grandTotal: { type: 'formula' }  // total + taxAmount
-  }
+    product: { type: "title" },
+    price: { type: "number" },
+    quantity: { type: "number" },
+    total: { type: "formula" }, // price * quantity
+    taxAmount: { type: "formula" }, // total * 0.1
+    grandTotal: { type: "formula" }, // total + taxAmount
+  },
 })
 
 // Create order - formulas calculate automatically
 const order = await ordersTable.create({
   properties: {
-    product: 'Widget',
+    product: "Widget",
     price: 29.99,
-    quantity: 3
+    quantity: 3,
     // total: 89.97 (calculated)
     // taxAmount: 8.997 (calculated)
     // grandTotal: 98.967 (calculated)
-  }
+  },
 })
 
 // Query by formula values
 const { records: largeOrders } = await ordersTable.findMany({
   where: {
-    grandTotal: { greater_than_or_equal_to: 1000 }
-  }
+    grandTotal: { greater_than_or_equal_to: 1000 },
+  },
 })
 
 // String formula example
 const contactsTable = new NotionTable({
   properties: {
-    firstName: { type: 'rich_text' },
-    lastName: { type: 'rich_text' },
-    fullName: { type: 'formula' }  // Concatenates names
-  }
+    firstName: { type: "rich_text" },
+    lastName: { type: "rich_text" },
+    fullName: { type: "formula" }, // Concatenates names
+  },
 })
 
 // Find by computed full name
 const { records: john } = await contactsTable.findMany({
   where: {
-    fullName: { contains: 'John Smith' }
-  }
+    fullName: { contains: "John Smith" },
+  },
 })
 ```

@@ -96,6 +96,50 @@ test("全削除", () => {
   expect(cache.getBlocks("page-1")).toBeNull()
 })
 
+test("TTLが切れたエントリはnullを返す", () => {
+  const clock = { now: 1000 }
+  const cache = new NotionMemoryCache({
+    ttlMs: 100,
+    now: () => clock.now,
+  })
+
+  const page = createMockPage("page-1")
+  cache.setPage("page-1", page)
+
+  expect(cache.getPage("page-1")).toEqual(page)
+
+  clock.now = 1099
+  expect(cache.getPage("page-1")).toEqual(page)
+
+  clock.now = 1101
+  expect(cache.getPage("page-1")).toBeNull()
+})
+
+test("maxEntriesを超えると古いものから消える（pages）", () => {
+  const cache = new NotionMemoryCache({ maxEntries: 2 })
+
+  cache.setPage("a", createMockPage("a"))
+  cache.setPage("b", createMockPage("b"))
+  cache.setPage("c", createMockPage("c"))
+
+  expect(cache.getPage("a")).toBeNull()
+  expect(cache.getPage("b")?.id).toBe("b")
+  expect(cache.getPage("c")?.id).toBe("c")
+})
+
+test("同じキーで再登録すると最新扱いになりFIFOから外れる", () => {
+  const cache = new NotionMemoryCache({ maxEntries: 2 })
+
+  cache.setPage("a", createMockPage("a"))
+  cache.setPage("b", createMockPage("b"))
+  cache.setPage("a", createMockPage("a-new"))
+  cache.setPage("c", createMockPage("c"))
+
+  expect(cache.getPage("a")?.id).toBe("a-new")
+  expect(cache.getPage("b")).toBeNull()
+  expect(cache.getPage("c")?.id).toBe("c")
+})
+
 test("同じキーで上書き", () => {
   const cache = new NotionMemoryCache()
   const page1 = createMockPage("page-1")

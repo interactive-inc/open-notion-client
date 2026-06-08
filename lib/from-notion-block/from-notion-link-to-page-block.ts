@@ -3,9 +3,7 @@ import type { LinkToPageBlockObjectResponse } from "@notionhq/client/build/src/a
 /**
  * Convert Notion link_to_page block to markdown
  */
-export function fromNotionLinkToPageBlock(
-  block: LinkToPageBlockObjectResponse,
-): string {
+export function fromNotionLinkToPageBlock(block: LinkToPageBlockObjectResponse): string {
   const linkToPage = block.link_to_page
 
   if (linkToPage.type === "page_id") {

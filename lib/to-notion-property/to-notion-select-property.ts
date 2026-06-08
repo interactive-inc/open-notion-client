@@ -7,9 +7,7 @@ const selectPropertySchema = z.string().nullable()
  * unknownをNotionのselectプロパティに変換
  * nullは許可、それ以外でstringでない場合はエラー
  */
-export function toNotionSelectProperty(
-  value: unknown,
-): NotionSelectPropertyRequest {
+export function toNotionSelectProperty(value: unknown): NotionSelectPropertyRequest {
   const data = selectPropertySchema.parse(value)
 
   return {

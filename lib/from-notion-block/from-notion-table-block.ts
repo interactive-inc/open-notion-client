@@ -15,9 +15,7 @@ export function fromNotionTableBlock(block: NotionTableBlock): string {
     if (child.type !== "table_row") {
       continue
     }
-    const cells = child.table_row.cells.map((cell) =>
-      fromNotionRichTextItem(cell),
-    )
+    const cells = child.table_row.cells.map((cell) => fromNotionRichTextItem(cell))
     rows.push(cells)
   }
 
