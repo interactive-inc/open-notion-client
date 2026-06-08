@@ -1,0 +1,11 @@
+import { defineConfig } from "vite-plus"
+
+export default defineConfig({
+  fmt: {
+    semi: false,
+    ignorePatterns: ["dist/**"],
+  },
+  lint: {
+    ignorePatterns: ["dist/**"],
+  },
+})
