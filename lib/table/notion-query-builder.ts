@@ -3,22 +3,13 @@ import type { NotionQueryWhere } from "@/notion-types"
 import type { NotionPropertySchema, PropertyConfig, SortOption, WhereCondition } from "@/types"
 
 type NotionSort = NonNullable<QueryDataSourceParameters["sorts"]>[number]
-type NotionFilter = NonNullable<QueryDataSourceParameters["filter"]>
 
 export class NotionQueryBuilder {
-  /**
-   * 単純なwhere条件オブジェクトをNotion APIのフィルター形式に変換する
-   * Notion公式の filter 型に正確に揃える
-   */
   buildFilter<T extends NotionPropertySchema>(
     schema: T,
     where: WhereCondition<T>,
-  ): NotionFilter | undefined {
-    const built = this.buildInternal(schema, where)
-    if (!built) return undefined
-    // 内部 NotionQueryWhere と Notion 公式 filter は構造的に同一だが、
-    // 別宣言のため一度 unknown 経由で受け渡す
-    return built as unknown as NotionFilter
+  ): NotionQueryWhere | undefined {
+    return this.buildInternal(schema, where)
   }
 
   /**
@@ -93,7 +84,9 @@ export class NotionQueryBuilder {
   ): NotionQueryWhere | undefined {
     const conditions: NotionQueryWhere[] = []
 
-    for (const [key, value] of Object.entries(where)) {
+    for (const entry of Object.entries(where)) {
+      const key = entry[0]
+      const value = entry[1]
       const config = schema[key]
       if (!config) {
         continue
@@ -207,10 +200,18 @@ export class NotionQueryBuilder {
         } satisfies NotionQueryWhere
       }
       if (Array.isArray(value) && value.length > 0) {
+        if (value.length === 1) {
+          return {
+            property: key,
+            multi_select: { contains: String(value[0]) },
+          } satisfies NotionQueryWhere
+        }
         return {
-          property: key,
-          multi_select: { contains: String(value[0]) },
-        } satisfies NotionQueryWhere
+          and: value.map((v) => ({
+            property: key,
+            multi_select: { contains: String(v) },
+          })),
+        } as NotionQueryWhere
       }
     }
 
@@ -285,7 +286,6 @@ export class NotionQueryBuilder {
       return value.split("T")[0] || value
     }
 
-    const now = new Date().toISOString()
-    return now.split("T")[0] || now
+    throw new Error(`Invalid date value: ${JSON.stringify(value)}`)
   }
 }

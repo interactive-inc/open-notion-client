@@ -145,5 +145,5 @@ export function parseInlineToken(token: Tokens.Generic): RichTextItemResponse {
   if (items.length === 0) {
     return buildItem("", baseAnnotations)
   }
-  return items[0] as RichTextItemResponse
+  return items[0] ?? buildItem("", baseAnnotations)
 }

@@ -24,10 +24,11 @@ function isHeadingBlock(block: BlockObjectRequest): block is HeadingBlock {
 }
 
 export class NotionMarkdown {
-  private blockTypeMapping: BlockTypeMapping
+  private readonly blockTypeMapping: BlockTypeMapping
 
   constructor(blockTypeMapping: BlockTypeMapping = {}) {
     this.blockTypeMapping = blockTypeMapping
+    Object.freeze(this)
   }
 
   /**
@@ -54,8 +55,8 @@ export class NotionMarkdown {
     } as BlockObjectRequest
   }
 
-  setMapping(blockTypeMapping: BlockTypeMapping): void {
-    this.blockTypeMapping = blockTypeMapping
+  withMapping(blockTypeMapping: BlockTypeMapping): NotionMarkdown {
+    return new NotionMarkdown(blockTypeMapping)
   }
 
   getMapping(): BlockTypeMapping {

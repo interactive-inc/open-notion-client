@@ -1,60 +1,92 @@
 # Property Types
 
-Notion databases support various property types, each with specific behaviors and constraints.
-
-## Overview
-
-This section documents all supported Notion property types and how to use them with notion-client:
-
-- **Basic Types** - Text, numbers, checkboxes, and dates
-- **Selection Types** - Single and multi-select options
-- **Reference Types** - People, files, and relations
-- **Computed Types** - Formulas and rollups
-
-## Quick Reference
-
-| Property Type  | TypeScript Type      | Example                           |
-| -------------- | -------------------- | --------------------------------- |
-| `title`        | `string`             | `"Project Name"`                  |
-| `rich_text`    | `string`             | `"Description text"`              |
-| `number`       | `number`             | `42`                              |
-| `select`       | `string`             | `"in_progress"`                   |
-| `multi_select` | `string[]`           | `["bug", "urgent"]`               |
-| `checkbox`     | `boolean`            | `true`                            |
-| `date`         | `string`             | `"2024-01-15"`                    |
-| `email`        | `string`             | `"user@example.com"`              |
-| `url`          | `string`             | `"https://example.com"`           |
-| `phone_number` | `string`             | `"+1-555-0123"`                   |
-| `people`       | `string[]`           | `["user-id-1", "user-id-2"]`      |
-| `files`        | `Array<{name, url}>` | `[{name: "doc.pdf", url: "..."}]` |
-| `relation`     | `string[]`           | `["page-id-1", "page-id-2"]`      |
-| `formula`      | `any`                | Read-only computed value          |
-| `rollup`       | `any`                | Read-only aggregated value        |
-
-## Usage Pattern
-
-Each property type follows the same pattern:
+Define your schema with property types that map Notion properties to simple TypeScript values.
 
 ```typescript
-// Schema definition
-{
-  propertyName: {
-    type: 'property_type',
-    // Type-specific options
-  }
-}
-
-// Writing
-await table.create({
-  properties: { propertyName: value }
-})
-
-// Querying
-await table.findMany({
-  where: {
-    propertyName: filterValue
-  }
+const table = new NotionTable({
+  client,
+  dataSourceId: "db-id",
+  properties: {
+    title: { type: "title" },
+    status: { type: "select", options: ["todo", "done"] as const },
+    priority: { type: "number" },
+  } as const,
 })
 ```
 
-Browse the individual pages for detailed documentation on each type.
+Use `as const` to preserve literal types for auto-completion.
+
+## Text
+
+- `title` -- `string` -- Page title. Every database must have one.
+- `rich_text` -- `string | null` -- Text content.
+- `url` -- `string | null` -- URL string.
+- `email` -- `string | null` -- Email address.
+- `phone_number` -- `string | null` -- Phone number.
+
+## Numbers
+
+- `number` -- `number | null`
+
+## Selection
+
+- `select` -- `string | null` -- Single choice from options.
+- `multi_select` -- `string[]` -- Multiple choices from options.
+- `status` -- `string | null` -- Status field (special select).
+
+```typescript
+{
+  category: { type: "select", options: ["bug", "feature"] as const },
+  tags: { type: "multi_select", options: ["urgent", "blocked"] as const },
+}
+```
+
+## Boolean
+
+- `checkbox` -- `boolean`
+
+## Date
+
+- `date` -- `{ start: string, end: string | null } | null` -- ISO date strings.
+
+```typescript
+await table.create({
+  properties: {
+    deadline: { start: "2024-12-31", end: null },
+  },
+})
+```
+
+## References
+
+- `people` -- User objects. Write with user IDs, read as `{ id, name, email, avatarUrl }`.
+- `files` -- File objects with `name` and `url`.
+- `relation` -- Array of related page IDs.
+
+## Read-only
+
+These are computed by Notion and cannot be written:
+
+- `formula` -- Computed value (string, number, boolean, or date).
+- `rollup` -- Aggregated value from relations.
+- `created_time` -- ISO timestamp.
+- `last_edited_time` -- ISO timestamp.
+- `created_by` -- User object.
+- `last_edited_by` -- User object.
+
+## Type Inference
+
+Extract TypeScript types from your schema with `SchemaType`:
+
+```typescript
+import type { SchemaType } from "@interactive-inc/notion-client"
+
+const properties = {
+  title: { type: "title" },
+  status: { type: "select", options: ["active", "inactive"] as const },
+  count: { type: "number" },
+} as const
+
+type MyRecord = SchemaType<typeof properties>
+// { title: string, status: string | null, count: number | null }
+```

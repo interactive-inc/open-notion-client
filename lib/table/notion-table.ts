@@ -4,6 +4,7 @@ import type {
   PageObjectResponse,
   QueryDataSourceParameters,
 } from "@notionhq/client/build/src/api-endpoints"
+import type { NotionQueryWhere } from "@/notion-types"
 import { NotionPageReference } from "@/modules/notion-page-reference"
 import { NotionQueryResult } from "@/modules/notion-query-result"
 import { NotionMarkdown } from "@/table/notion-markdown"
@@ -22,11 +23,18 @@ import type {
   UpsertOptions,
   WhereCondition,
 } from "@/types"
+import { withRetry } from "@/retry"
+import { type SafeNotionTable, createSafeNotionTable } from "@/table/safe-notion-table"
 import { toNotionPage } from "@/utils"
 import { withConcurrency } from "@/with-concurrency"
 
 const MAX_FIND_LIMIT = 1024
 const NOTION_PAGE_SIZE = 100
+
+type RetryOptions = {
+  maxRetries?: number
+  baseDelayMs?: number
+}
 
 type Props<T extends NotionPropertySchema> = {
   client: Client
@@ -36,6 +44,7 @@ type Props<T extends NotionPropertySchema> = {
   queryBuilder?: NotionQueryBuilder
   propertyConverter?: NotionPropertyConverter
   markdown?: NotionMarkdown
+  retry?: RetryOptions
 }
 
 function isObjectNotFound(error: unknown): boolean {
@@ -56,6 +65,7 @@ export class NotionTable<T extends NotionPropertySchema> {
   private readonly queryBuilder: NotionQueryBuilder
   private readonly propertyConverter: NotionPropertyConverter
   private readonly markdown: NotionMarkdown
+  private readonly retryOptions: { maxRetries: number; baseDelayMs: number }
 
   constructor(props: Props<T>) {
     this.client = props.client
@@ -65,6 +75,14 @@ export class NotionTable<T extends NotionPropertySchema> {
     this.queryBuilder = props.queryBuilder || new NotionQueryBuilder()
     this.propertyConverter = props.propertyConverter || new NotionPropertyConverter()
     this.markdown = props.markdown || new NotionMarkdown()
+    this.retryOptions = {
+      maxRetries: props.retry?.maxRetries ?? 3,
+      baseDelayMs: props.retry?.baseDelayMs ?? 400,
+    }
+  }
+
+  private withRetry<R>(fn: () => Promise<R>): Promise<R> {
+    return withRetry(fn, this.retryOptions)
   }
 
   async findMany(options: FindOptions<T> = {}): Promise<{
@@ -118,7 +136,7 @@ export class NotionTable<T extends NotionPropertySchema> {
     }
 
     try {
-      const response = await this.client.pages.retrieve({ page_id: id })
+      const response = await this.withRetry(() => this.client.pages.retrieve({ page_id: id }))
       const notionPage = toNotionPage(response)
 
       this.cache?.setPage(id, notionPage)
@@ -142,11 +160,13 @@ export class NotionTable<T extends NotionPropertySchema> {
       children = blocks.map((block) => this.markdown.enhanceBlock(block))
     }
 
-    const response = await this.client.pages.create({
-      parent: { data_source_id: this.dataSourceId },
-      properties: properties,
-      children: children,
-    })
+    const response = await this.withRetry(() =>
+      this.client.pages.create({
+        parent: { data_source_id: this.dataSourceId },
+        properties: properties,
+        children: children,
+      }),
+    )
 
     const record = await this.findById(response.id)
 
@@ -184,12 +204,14 @@ export class NotionTable<T extends NotionPropertySchema> {
   async update(id: string, input: UpdateInput<T>): Promise<NotionPageReference<T>> {
     const properties = this.propertyConverter.toNotion(this.properties, input.properties)
 
-    const result = await this.client.pages.update({
-      page_id: id,
-      properties: properties,
-    })
+    const result = await this.withRetry(() =>
+      this.client.pages.update({
+        page_id: id,
+        properties: properties,
+      }),
+    )
 
-    if (input.body) {
+    if (input.body !== undefined) {
       await this.updatePageContent(id, input.body)
       this.cache?.deleteBlocks(id)
     }
@@ -201,20 +223,26 @@ export class NotionTable<T extends NotionPropertySchema> {
     return this.buildReference(notionPage)
   }
 
-  async updateMany(options: UpdateManyOptions<T>): Promise<number> {
+  async updateMany(options: UpdateManyOptions<T>): Promise<BatchResult<NotionPageReference<T>>> {
     const result = await this.findMany({
       where: options.where || {},
       limit: options.limit || MAX_FIND_LIMIT,
     })
 
-    let updated = 0
+    const succeeded: NotionPageReference<T>[] = []
+    const failed: Array<{ data: NotionPageReference<T>; error: Error }> = []
 
     for (const record of result.records) {
-      await this.update(record.id, options.update)
-      updated++
+      try {
+        const updated = await this.update(record.id, options.update)
+        succeeded.push(updated)
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e))
+        failed.push({ data: record, error: error })
+      }
     }
 
-    return updated
+    return { succeeded, failed }
   }
 
   async upsert(options: UpsertOptions<T>): Promise<NotionPageReference<T>> {
@@ -227,33 +255,44 @@ export class NotionTable<T extends NotionPropertySchema> {
     return await this.create(options.create)
   }
 
-  async deleteMany(where: WhereCondition<T> = {}): Promise<number> {
+  async deleteMany(where: WhereCondition<T> = {}): Promise<BatchResult<string>> {
     const result = await this.findMany({ where, limit: MAX_FIND_LIMIT })
 
-    let deleted = 0
+    const succeeded: string[] = []
+    const failed: Array<{ data: string; error: Error }> = []
+
     for (const record of result.records) {
-      await this.delete(record.id)
-      deleted++
+      try {
+        await this.delete(record.id)
+        succeeded.push(record.id)
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e))
+        failed.push({ data: record.id, error: error })
+      }
     }
 
-    return deleted
+    return { succeeded, failed }
   }
 
   async delete(id: string): Promise<void> {
-    await this.client.pages.update({
-      page_id: id,
-      archived: true,
-    })
+    await this.withRetry(() =>
+      this.client.pages.update({
+        page_id: id,
+        archived: true,
+      }),
+    )
 
     this.cache?.deletePage(id)
     this.cache?.deleteBlocks(id)
   }
 
   async restore(id: string): Promise<NotionPageReference<T>> {
-    const result = await this.client.pages.update({
-      page_id: id,
-      archived: false,
-    })
+    const result = await this.withRetry(() =>
+      this.client.pages.update({
+        page_id: id,
+        archived: false,
+      }),
+    )
 
     const notionPage = toNotionPage(result)
 
@@ -261,6 +300,10 @@ export class NotionTable<T extends NotionPropertySchema> {
     this.cache?.deleteBlocks(id)
 
     return this.buildReference(notionPage)
+  }
+
+  get safe(): SafeNotionTable<T> {
+    return createSafeNotionTable(this)
   }
 
   clearCache(): void {
@@ -290,7 +333,7 @@ export class NotionTable<T extends NotionPropertySchema> {
   private async fetchPages(
     maxCount: number,
     pageSize: number,
-    notionFilter: QueryDataSourceParameters["filter"],
+    notionFilter: NotionQueryWhere | undefined,
     notionSort: NonNullable<QueryDataSourceParameters["sorts"]>,
     startCursor?: string,
   ): Promise<NotionQueryResult<T>> {
@@ -299,14 +342,20 @@ export class NotionTable<T extends NotionPropertySchema> {
     let nextCursor: string | null = startCursor || null
     let hasMore = true
 
+    // NotionQueryWhere と QueryDataSourceParameters["filter"] は
+    // 構造的に同一だが独立宣言のため互換性がない
+    const apiFilter = notionFilter as QueryDataSourceParameters["filter"]
+
     while (hasMore && references.length < maxCount) {
-      const response = await this.client.dataSources.query({
-        data_source_id: this.dataSourceId,
-        filter: notionFilter,
-        sorts: notionSort.length > 0 ? notionSort : undefined,
-        start_cursor: nextCursor || undefined,
-        page_size: pageSize,
-      })
+      const response = await this.withRetry(() =>
+        this.client.dataSources.query({
+          data_source_id: this.dataSourceId,
+          filter: apiFilter,
+          sorts: notionSort.length > 0 ? notionSort : undefined,
+          start_cursor: nextCursor || undefined,
+          page_size: pageSize,
+        }),
+      )
       const refs: NotionPageReference<T>[] = []
       for (const result of response.results) {
         if (!("properties" in result)) {
@@ -337,16 +386,18 @@ export class NotionTable<T extends NotionPropertySchema> {
     })
   }
 
-  private async updatePageContent(id: string, content: string): Promise<void> {
+  private async updatePageContent(id: string, content: string | null): Promise<void> {
     let cursor: string | undefined
 
     const existing: { id: string }[] = []
 
     while (true) {
-      const response = await this.client.blocks.children.list({
-        block_id: id,
-        start_cursor: cursor,
-      })
+      const response = await this.withRetry(() =>
+        this.client.blocks.children.list({
+          block_id: id,
+          start_cursor: cursor,
+        }),
+      )
       for (const block of response.results) {
         existing.push({ id: block.id })
       }
@@ -356,15 +407,19 @@ export class NotionTable<T extends NotionPropertySchema> {
 
     // 並列で削除するとNotionのレート制限に直撃するため逐次で実行する
     for (const block of existing) {
-      await this.client.blocks.delete({ block_id: block.id })
+      await this.withRetry(() => this.client.blocks.delete({ block_id: block.id }))
     }
+
+    if (content === null) return
 
     const blocks = toNotionBlocks(content)
     const enhancedBlocks = blocks.map((block) => this.markdown.enhanceBlock(block))
 
-    await this.client.blocks.children.append({
-      block_id: id,
-      children: enhancedBlocks,
-    })
+    await this.withRetry(() =>
+      this.client.blocks.children.append({
+        block_id: id,
+        children: enhancedBlocks,
+      }),
+    )
   }
 }

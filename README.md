@@ -1,6 +1,6 @@
 # notion-client
 
-A TypeScript ORM for Notion databases. Query, create, update, and delete records with type safety—no more wrestling with deeply nested API responses.
+A TypeScript ORM for Notion databases. Query, create, update, and delete records with type safety -- no more wrestling with deeply nested API responses.
 
 https://interactive-inc.github.io/open-notion-client/
 
@@ -34,7 +34,9 @@ notion-client flattens this to `{ name: "Hello World" }` and gives you a clean, 
 - Automatic conversion between Notion's complex JSON and simple values
 - Markdown support for page content with bidirectional conversion
 - Built-in memory cache to reduce API calls
-- Support for all Notion property types
+- Safe mode (`.safe`) that returns `T | Error` instead of throwing
+- Automatic retry with exponential backoff for rate-limited requests
+- Batch operations with partial failure handling
 
 ## Installation
 
@@ -104,11 +106,24 @@ await tasks.update(task.id, {
   properties: { status: "done" },
 })
 
-// Update many
-await tasks.updateMany({
+// Update with markdown body
+await tasks.update(task.id, {
+  properties: { status: "done" },
+  body: "# Done\n\nCompleted this task.",
+})
+
+// Clear page body
+await tasks.update(task.id, {
+  properties: {},
+  body: null,
+})
+
+// Update many (returns BatchResult)
+const result = await tasks.updateMany({
   where: { status: "todo" },
   update: { properties: { status: "doing" } },
 })
+console.log(result.succeeded.length, result.failed.length)
 ```
 
 ### Delete
@@ -117,8 +132,8 @@ await tasks.updateMany({
 // Archive one
 await tasks.delete(task.id)
 
-// Archive many
-await tasks.deleteMany({ status: "done" })
+// Archive many (returns BatchResult)
+const result = await tasks.deleteMany({ status: "done" })
 
 // Restore archived
 await tasks.restore(task.id)
@@ -171,25 +186,25 @@ const results = await tasks.findMany({
 
 ## Property Types
 
-| Type               | Description           | Example Value             |
-| ------------------ | --------------------- | ------------------------- |
-| `title`            | Page title (required) | `"Task name"`             |
-| `rich_text`        | Text content          | `"Description"`           |
-| `number`           | Numeric value         | `42`                      |
-| `select`           | Single select         | `"option1"`               |
-| `multi_select`     | Multiple select       | `["tag1", "tag2"]`        |
-| `status`           | Status field          | `"In Progress"`           |
-| `checkbox`         | Boolean               | `true`                    |
-| `url`              | URL string            | `"https://..."`           |
-| `email`            | Email address         | `"user@example.com"`      |
-| `phone_number`     | Phone number          | `"555-123-4567"`          |
-| `date`             | Date value            | `{ start: "2024-01-01" }` |
-| `files`            | File attachments      | `[{ url: "..." }]`        |
-| `people`           | User references       | `[{ id: "user-id" }]`     |
-| `relation`         | Relations             | `["page-id"]`             |
-| `formula`          | Computed value        | Read-only                 |
-| `created_time`     | Creation timestamp    | Read-only                 |
-| `last_edited_time` | Last edit timestamp   | Read-only                 |
+Supported Notion property types and their TypeScript mappings:
+
+- `title` -- `string` -- Page title (required)
+- `rich_text` -- `string` -- Text content
+- `number` -- `number | null` -- Numeric value
+- `select` -- `string | null` -- Single select
+- `multi_select` -- `string[]` -- Multiple select
+- `status` -- `string | null` -- Status field
+- `checkbox` -- `boolean` -- Boolean
+- `url` -- `string | null` -- URL string
+- `email` -- `string | null` -- Email address
+- `phone_number` -- `string | null` -- Phone number
+- `date` -- `{ start, end } | null` -- Date value
+- `files` -- `Array<{ url }>` -- File attachments
+- `people` -- `Array<{ id }>` -- User references
+- `relation` -- `string[]` -- Relations
+- `formula` -- Read-only computed value
+- `created_time` / `last_edited_time` -- Read-only timestamps
+- `created_by` / `last_edited_by` -- Read-only user references
 
 ## Markdown Support
 
@@ -221,8 +236,13 @@ const hello = "world"
 import { NotionMarkdown } from "@interactive-inc/notion-client"
 
 const markdown = new NotionMarkdown({
-  heading_1: "heading_2", // Convert H1 to H2
-  heading_2: "heading_3", // Convert H2 to H3
+  heading_1: "heading_2",
+  heading_2: "heading_3",
+})
+
+// Create a new instance with different mapping
+const updated = markdown.withMapping({
+  heading_1: "heading_3",
 })
 
 const posts = new NotionTable({
@@ -232,6 +252,40 @@ const posts = new NotionTable({
   markdown,
 })
 ```
+
+## Safe Mode
+
+Use `.safe` to get `T | Error` instead of exceptions:
+
+```typescript
+const result = await tasks.safe.findById("page-id")
+
+if (result instanceof Error) {
+  console.error("Failed:", result.message)
+} else {
+  console.log(result.properties())
+}
+```
+
+All methods are available on `.safe`: `findMany`, `findOne`, `findById`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `delete`, `deleteMany`, `restore`.
+
+## Retry
+
+API calls automatically retry on rate limits (429) and server errors (5xx) with exponential backoff:
+
+```typescript
+const tasks = new NotionTable({
+  client,
+  dataSourceId: "database-id",
+  properties: { title: { type: "title" } } as const,
+  retry: {
+    maxRetries: 5,
+    baseDelayMs: 500,
+  },
+})
+```
+
+Default: 3 retries, 400ms base delay.
 
 ## Caching
 
@@ -249,10 +303,6 @@ const tasks = new NotionTable({
   cache,
 })
 
-// All operations transparently use the provided cache
-const task = await tasks.findById("page-id")
-
-// Clear cache when needed
 tasks.clearCache()
 ```
 

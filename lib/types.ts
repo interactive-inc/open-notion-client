@@ -5,7 +5,7 @@ import type {
   UpdatePageParameters,
 } from "@notionhq/client/build/src/api-endpoints"
 import type { z } from "zod"
-import type { zNotionPropertyConfig, zPropertyConfig } from "./models"
+import type { zNotionPropertyConfig, zPropertyConfig } from "@/models"
 
 /* Notion page object type */
 export type NotionPage = PageObjectResponse
@@ -341,7 +341,7 @@ import type {
   SelectPropertyFilter,
   StatusPropertyFilter,
   TextPropertyFilter,
-} from "./notion-types"
+} from "@/notion-types"
 
 type PropertyFilterForType<Config> = Config extends { type: "title" }
   ? TextPropertyFilter

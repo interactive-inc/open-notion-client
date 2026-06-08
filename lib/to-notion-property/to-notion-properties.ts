@@ -1,5 +1,5 @@
 import type { NotionPropertyRequest, NotionPropertySchema, SchemaType } from "@/types"
-import { toNotionProperty } from "./to-notion-property"
+import { toNotionProperty } from "@/to-notion-property/to-notion-property"
 
 /**
  * スキーマに基づいてオブジェクトをNotionプロパティに変換
@@ -11,7 +11,9 @@ export function toNotionProperties<
 >(schema: T, data: D): Record<string, NotionPropertyRequest> {
   const properties: Record<string, NotionPropertyRequest> = {}
 
-  for (const [key, config] of Object.entries(schema)) {
+  for (const entry of Object.entries(schema)) {
+    const key = entry[0]
+    const config = entry[1]
     const value = data[key as keyof SchemaType<T>]
 
     if (value === undefined) {

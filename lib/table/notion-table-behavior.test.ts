@@ -244,6 +244,142 @@ test("statusプロパティのcreateはstatusキーで送られる", async () =>
   expect(observedProperties?.state).toEqual({ status: { name: "todo" } })
 })
 
+test("updateManyは部分失敗を集計する", async () => {
+  let updateCalls = 0
+
+  const mockClient = {
+    dataSources: {
+      query: async () => ({
+        results: [
+          makePage("page-1", {
+            title: { type: "title", title: [{ plain_text: "A" }] },
+          }),
+          makePage("page-2", {
+            title: { type: "title", title: [{ plain_text: "B" }] },
+          }),
+          makePage("page-3", {
+            title: { type: "title", title: [{ plain_text: "C" }] },
+          }),
+        ],
+        next_cursor: null,
+        has_more: false,
+      }),
+    },
+    pages: {
+      update: async (params: { page_id: string }) => {
+        updateCalls++
+        if (params.page_id === "page-2") {
+          throw new Error("update failed")
+        }
+        return makePage(params.page_id, {
+          title: { type: "title", title: [{ plain_text: "Updated" }] },
+        })
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.updateMany({
+    update: { properties: { title: "Updated" } },
+  })
+
+  expect(result.succeeded).toHaveLength(2)
+  expect(result.failed).toHaveLength(1)
+  expect(result.failed[0]?.error.message).toBe("update failed")
+  expect(updateCalls).toBe(3)
+})
+
+test("deleteManyは部分失敗を集計する", async () => {
+  let deleteCalls = 0
+
+  const mockClient = {
+    dataSources: {
+      query: async () => ({
+        results: [makePage("page-1", {}), makePage("page-2", {}), makePage("page-3", {})],
+        next_cursor: null,
+        has_more: false,
+      }),
+    },
+    pages: {
+      update: async (params: { page_id: string; archived: boolean }) => {
+        deleteCalls++
+        if (params.page_id === "page-2") {
+          throw new Error("delete failed")
+        }
+        return makePage(params.page_id, {})
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.deleteMany()
+
+  expect(result.succeeded).toHaveLength(2)
+  expect(result.succeeded).toContain("page-1")
+  expect(result.succeeded).toContain("page-3")
+  expect(result.failed).toHaveLength(1)
+  expect(result.failed[0]?.data).toBe("page-2")
+  expect(result.failed[0]?.error.message).toBe("delete failed")
+  expect(deleteCalls).toBe(3)
+})
+
+test("updateManyは全成功時にfailedが空", async () => {
+  const mockClient = {
+    dataSources: {
+      query: async () => ({
+        results: [
+          makePage("page-1", {
+            title: { type: "title", title: [{ plain_text: "A" }] },
+          }),
+        ],
+        next_cursor: null,
+        has_more: false,
+      }),
+    },
+    pages: {
+      update: async (params: { page_id: string }) =>
+        makePage(params.page_id, {
+          title: { type: "title", title: [{ plain_text: "Updated" }] },
+        }),
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.updateMany({
+    update: { properties: { title: "Updated" } },
+  })
+
+  expect(result.succeeded).toHaveLength(1)
+  expect(result.failed).toHaveLength(0)
+})
+
 test("created_time等の読み取り専用プロパティはNotionに送られない", async () => {
   let observedProperties: Record<string, unknown> | undefined
 

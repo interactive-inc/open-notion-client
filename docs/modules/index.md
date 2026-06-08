@@ -1,172 +1,123 @@
 # API
 
-Core modules that power notion-client's functionality.
+## NotionTable
 
-## Overview
-
-notion-client consists of several modules that work together to provide a seamless experience:
-
-```
-NotionTable (Main Interface)
-    ├── Properties validation & Type inference
-    ├── Property conversion (Notion ↔ Simple values)
-    ├── Query building (Notion API filter format)
-    └── Cache management (NotionMemoryCache)
-
-Markdown Processing
-    ├── toNotionBlocks (Markdown → Notion blocks)
-    ├── fromNotionBlocks (Notion blocks → Markdown)
-    └── NotionMarkdown (Block type transformation)
-
-Block Enhancement
-    └── enhance (Recursive child block fetching)
-```
-
-## Module Relationships
-
-### Database Operations Flow
+The main class for database operations.
 
 ```typescript
-// 1. Define properties → NotionTable validates and infers types
+import { NotionTable } from "@interactive-inc/notion-client"
+
 const table = new NotionTable({
-  client,
-  dataSourceId: "db-id",
-  properties: {
-    title: { type: "title" },
-    status: { type: "select", options: ["active", "inactive"] },
-  },
+  client,                    // Notion API client
+  dataSourceId: "db-id",     // Database ID
+  properties: { ... },       // Schema definition
+  cache: new NotionMemoryCache(),  // Optional
+  markdown: new NotionMarkdown(),  // Optional
+  retry: { maxRetries: 3, baseDelayMs: 400 },  // Optional
 })
-
-// 2. Create with markdown → toNotionBlocks converts content
-await table.create({
-  properties: { title: "Page" },
-  body: "# Markdown content",
-})
-
-// 3. Query with filters → Query builder uses Notion API format
-await table.findMany({
-  where: { status: { equals: "active" } },
-})
-
-// 4. Read with blocks → fromNotionBlocks converts to markdown
-const content = fromNotionBlocks(blocks)
 ```
 
-### Content Processing Pipeline
+### Methods
+
+- `create(input)` -- Create a record
+- `createMany(records, options?)` -- Bulk create, returns `BatchResult`
+- `findMany(options?)` -- Query records, returns `{ records, hasMore, nextCursor }`
+- `findOne(options?)` -- Find first matching record
+- `findById(id)` -- Get record by page ID
+- `update(id, input)` -- Update a record. Pass `body: null` to clear content
+- `updateMany(options)` -- Bulk update, returns `BatchResult`
+- `upsert(options)` -- Create or update
+- `delete(id)` -- Archive a record
+- `deleteMany(where?)` -- Bulk archive, returns `BatchResult`
+- `restore(id)` -- Restore archived record
+- `clearCache()` -- Clear the memory cache
+
+### Safe mode
+
+`table.safe.*` wraps every method to return `T | Error` instead of throwing.
 
 ```typescript
-// Input: Markdown text
-const markdown = "# Title\n**Bold** text"
-
-// Process: Convert to Notion blocks
-const blocks = toNotionBlocks(markdown)
-
-// Store: Save to Notion database with optional transformation
-const markdownTransformer = new NotionMarkdown({ heading_1: "heading_2" })
-const table = new NotionTable({
-  client,
-  dataSourceId: "db-id",
-  properties: { title: { type: "title" } },
-  markdown: markdownTransformer,
-})
-
-await table.create({
-  properties: { title: "Doc" },
-  body: markdown,
-})
-
-// Retrieve: Fetch with nested blocks
-const enhancedClient = enhance(client.blocks.children.list.bind(client.blocks.children))
-const allBlocks = await enhancedClient({ block_id: "page-id" })
-
-// Output: Convert back to markdown
-const result = fromNotionBlocks(allBlocks)
+const result = await table.safe.findById("page-id")
+if (result instanceof Error) { /* handle */ }
 ```
 
-## Core Modules
+## NotionPageReference
 
-### NotionTable
+Returned by query and mutation methods.
 
-The main entry point for database operations:
+- `id` -- Page ID
+- `url` -- Page URL
+- `createdAt` -- ISO date string
+- `updatedAt` -- ISO date string
+- `isArchived` -- boolean
+- `properties()` -- Typed property values
+- `raw()` -- Raw Notion API response
+- `body()` -- Page body as markdown (async)
 
-- Properties validation
-- Type-safe CRUD operations
-- Query building (Notion API filter format)
-- Property conversion (Notion ↔ JavaScript types)
-- Cache management
+## BatchResult
 
-### NotionMarkdown
-
-Transforms heading levels during markdown conversion:
-
-- Adjust heading hierarchy
-- Maintain document structure
-- Integrate with content pipeline
-
-### Conversion Functions
-
-**toNotionBlocks** - Markdown → Notion
-
-- Parse markdown syntax
-- Create block objects
-- Apply text annotations
-- Support code blocks and lists
-
-**fromNotionBlocks** - Notion → Markdown
-
-- Extract text content
-- Preserve formatting
-- Handle nested structures
-- Generate clean markdown
-
-### enhance Function
-
-Recursively fetches all child blocks:
-
-- Overcome API limitations
-- Fetch complete page content
-- Maintain block relationships
-
-## Usage Patterns
-
-### Complete Setup
+Returned by `createMany`, `updateMany`, `deleteMany`.
 
 ```typescript
-import {
-  NotionTable,
-  NotionMarkdown,
-  toNotionBlocks,
-  fromNotionBlocks,
-  enhance,
-} from "@interactive-inc/notion-client"
-
-// Database operations
-const table = new NotionTable({ ...config })
-
-// Content transformation
-const enhancer = new NotionMarkdown({ ...options })
-
-// Block processing
-const fetchAllBlocks = enhance(notionClient)
+type BatchResult<T> = {
+  succeeded: T[]
+  failed: Array<{ data: unknown, error: Error }>
+}
 ```
 
-### Common Workflows
+## NotionMemoryCache
 
-1. **Database with Markdown**
+In-memory cache for pages and blocks.
 
-   ```typescript
-   NotionTable + toNotionBlocks + NotionMarkdown
-   ```
+```typescript
+import { NotionMemoryCache } from "@interactive-inc/notion-client"
 
-2. **Page Export**
+const cache = new NotionMemoryCache()
+```
 
-   ```typescript
-   enhance + fromNotionBlocks
-   ```
+## NotionMarkdown
 
-3. **Content Migration**
-   ```typescript
-   toNotionBlocks + NotionTable + fromNotionBlocks
-   ```
+Heading level transformation for markdown-to-Notion conversion.
 
-Each module is designed to work independently or together, providing flexibility for different use cases.
+```typescript
+import { NotionMarkdown } from "@interactive-inc/notion-client"
+
+const md = new NotionMarkdown({
+  heading_1: "heading_2",
+  heading_2: "heading_3",
+})
+
+// Immutable: withMapping returns a new instance
+const updated = md.withMapping({ heading_1: "heading_3" })
+```
+
+## Conversion Functions
+
+### toNotionBlocks
+
+```typescript
+import { toNotionBlocks } from "@interactive-inc/notion-client"
+
+const blocks = toNotionBlocks("# Hello\n\nParagraph text")
+```
+
+### fromNotionBlocks
+
+```typescript
+import { fromNotionBlocks } from "@interactive-inc/notion-client"
+
+const markdown = fromNotionBlocks(notionBlocks, {
+  onUnsupportedBlock: (type, id) => console.warn(type),
+})
+```
+
+### enhance
+
+Recursively fetch child blocks from the Notion API.
+
+```typescript
+import { enhance } from "@interactive-inc/notion-client"
+
+const fetchAll = enhance((args) => notion.blocks.children.list(args))
+const blocks = await fetchAll({ block_id: "page-id" })
+```

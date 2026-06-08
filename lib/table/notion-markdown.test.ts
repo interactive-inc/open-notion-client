@@ -72,12 +72,12 @@ test("マッピング取得は防御コピー", () => {
   expect(enhancer.getMapping().heading_1).toBe("heading_2")
 })
 
-test("setMappingで差し替えが反映される", () => {
-  const enhancer = new NotionMarkdown()
+test("withMappingで差し替え済みの新インスタンスが返る", () => {
+  const original = new NotionMarkdown()
 
-  enhancer.setMapping({ heading_1: "heading_3" })
+  const updated = original.withMapping({ heading_1: "heading_3" })
 
-  const result = enhancer.enhanceBlock(headingBlock("heading_1", "x"))
+  const result = updated.enhanceBlock(headingBlock("heading_1", "x"))
 
   expect(result).toEqual({
     type: "heading_3",

@@ -30,7 +30,7 @@ import type { NotionBlock } from "@/types"
 /**
  * 単一のNotionブロックをマークダウンテキストに変換する
  */
-export function fromNotionBlock(block: NotionBlock): string {
+export function fromNotionBlock(block: NotionBlock): string | null {
   if (block.type === "paragraph") {
     return fromNotionParagraphBlock(block)
   }
@@ -139,7 +139,5 @@ export function fromNotionBlock(block: NotionBlock): string {
     return fromNotionLinkToPageBlock(block)
   }
 
-  // 未対応のブロック（synced_block, breadcrumb, table_of_contents, template, unsupported等）は
-  // 出力に何も残さず黙ってスキップする
-  return ""
+  return null
 }

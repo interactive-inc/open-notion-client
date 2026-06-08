@@ -482,3 +482,119 @@ test("buildFilter: Notion API filter format - number greater_than", () => {
     number: { greater_than: 10 },
   })
 })
+
+test("buildFilter: multi_selectに配列を渡すとAND条件になる", () => {
+  const schema: NotionPropertySchema = {
+    tags: { type: "multi_select", options: ["js", "ts", "react"] },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    tags: ["js", "ts"],
+  })
+
+  expect(result).toEqual({
+    and: [
+      { property: "tags", multi_select: { contains: "js" } },
+      { property: "tags", multi_select: { contains: "ts" } },
+    ],
+  })
+})
+
+test("buildFilter: multi_selectに単一要素の配列を渡すと単一条件になる", () => {
+  const schema: NotionPropertySchema = {
+    tags: { type: "multi_select", options: ["js", "ts"] },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    tags: ["js"],
+  })
+
+  expect(result).toEqual({
+    property: "tags",
+    multi_select: { contains: "js" },
+  })
+})
+
+test("buildFilter: multi_selectに空配列を渡すとundefined", () => {
+  const schema: NotionPropertySchema = {
+    tags: { type: "multi_select", options: ["js"] },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    tags: [],
+  })
+
+  expect(result).toBeUndefined()
+})
+
+test("getDateString: 不正な値でエラーを投げる", () => {
+  const schema: NotionPropertySchema = {
+    deadline: { type: "date" },
+  }
+
+  expect(() => queryBuilder.buildFilter(schema, { deadline: 12345 })).toThrow("Invalid date value")
+})
+
+test("buildFilter: nullやundefinedの値はスキップされる", () => {
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+    count: { type: "number" },
+  }
+
+  const resultNull = queryBuilder.buildFilter(schema, {
+    title: null,
+    count: 5,
+  })
+
+  expect(resultNull).toEqual({
+    property: "count",
+    number: { equals: 5 },
+  })
+
+  const resultUndefined = queryBuilder.buildFilter(schema, {
+    title: undefined,
+    count: 5,
+  })
+
+  expect(resultUndefined).toEqual({
+    property: "count",
+    number: { equals: 5 },
+  })
+})
+
+test("buildFilter: ネストしたor/and条件", () => {
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+    status: { type: "select", options: ["a", "b", "c"] },
+    priority: { type: "number" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    and: [{ or: [{ status: "a" }, { status: "b" }] }, { priority: { greater_than: 3 } }],
+  })
+
+  expect(result).toEqual({
+    and: [
+      {
+        or: [
+          { property: "status", select: { equals: "a" } },
+          { property: "status", select: { equals: "b" } },
+        ],
+      },
+      { property: "priority", number: { greater_than: 3 } },
+    ],
+  })
+})
+
+test("buildFilter: status型の単純な値", () => {
+  const schema: NotionPropertySchema = {
+    state: { type: "status", options: ["todo", "done"] },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { state: "todo" })
+
+  expect(result).toEqual({
+    property: "state",
+    status: { equals: "todo" },
+  })
+})

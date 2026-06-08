@@ -10,13 +10,14 @@ export function fromNotionNumberedListItemBlock(block: NotionNumberedListItemBlo
   }
 
   const childrenText = block.children
-    .map((childBlock) => {
-      const childMarkdown = fromNotionBlock(childBlock)
-      return childMarkdown
+    .map((childBlock) => fromNotionBlock(childBlock))
+    .filter((md): md is string => md !== null && md !== "")
+    .map((md) =>
+      md
         .split("\n")
         .map((line) => `    ${line}`)
-        .join("\n")
-    })
+        .join("\n"),
+    )
     .join("\n")
 
   return `${itemText}\n${childrenText}`

@@ -15,7 +15,7 @@ export function fromNotionQuoteBlock(block: NotionQuoteBlock): string {
 
   const childLines = block.children
     .map((child) => fromNotionBlock(child))
-    .filter((md) => md !== "")
+    .filter((md): md is string => md !== null && md !== "")
     .map((md) =>
       md
         .split("\n")

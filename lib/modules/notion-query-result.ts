@@ -1,5 +1,5 @@
 import type { NotionPropertySchema } from "@/types"
-import type { NotionPageReference } from "./notion-page-reference"
+import type { NotionPageReference } from "@/modules/notion-page-reference"
 
 type Props<S extends NotionPropertySchema> = {
   readonly pageReferences: NotionPageReference<S>[]
