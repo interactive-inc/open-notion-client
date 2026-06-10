@@ -8,7 +8,7 @@ import type { NotionPage, NotionPropertySchema, SchemaType } from "@/types"
 
 type Props<T extends NotionPropertySchema> = {
   readonly schema: T
-  readonly notion: Client
+  readonly client: Client
   readonly notionPage: NotionPage
   readonly converter: NotionPropertyConverter
   readonly cache?: NotionMemoryCache
@@ -66,7 +66,7 @@ export class NotionPageReference<T extends NotionPropertySchema> {
       return fromNotionBlocks(cachedBlocks)
     }
 
-    const blocks = await enhance(this.props.notion.blocks.children.list)({
+    const blocks = await enhance(this.props.client.blocks.children.list)({
       block_id: this.props.notionPage.id,
     })
 

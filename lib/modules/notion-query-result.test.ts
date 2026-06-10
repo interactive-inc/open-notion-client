@@ -20,7 +20,7 @@ test("ページ参照の配列を取得できる", () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef1 = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: {
@@ -29,7 +29,7 @@ test("ページ参照の配列を取得できる", () => {
     } as unknown as PageObjectResponse,
   })
   const pageRef2 = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: {
@@ -104,7 +104,7 @@ test("ページ数を取得できる", () => {
     { length: 5 },
     (_, i) =>
       new NotionPageReference({
-        notion: mockClient,
+        client: mockClient,
         schema: mockSchema,
         converter: mockConverter,
         notionPage: {
@@ -166,7 +166,7 @@ test("型安全なプロパティを持つページ参照を扱える", () => {
   } as unknown as NotionPropertyConverter
 
   const articleRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: { id: "article-1", properties: {} } as PageObjectResponse,

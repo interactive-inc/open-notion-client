@@ -33,6 +33,7 @@ export class NotionMemoryCache {
     this.maxEntries =
       options.maxEntries !== undefined && options.maxEntries > 0 ? options.maxEntries : null
     this.now = options.now ?? (() => Date.now())
+    Object.freeze(this)
   }
 
   getPage(id: string): NotionPage | null {

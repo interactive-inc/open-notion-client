@@ -61,10 +61,7 @@ await tasks.findMany({
     or: [
       { status: "urgent" },
       {
-        and: [
-          { priority: { greater_than_or_equal_to: 8 } },
-          { tags: { contains: "important" } },
-        ],
+        and: [{ priority: { greater_than_or_equal_to: 8 } }, { tags: { contains: "important" } }],
       },
     ],
   },

@@ -26,7 +26,7 @@ test("プロパティを取得できる", () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: mockPageData,
@@ -55,7 +55,7 @@ test("元のNotionページデータを取得できる", () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: mockPageData,
@@ -78,7 +78,7 @@ test("イミュータブルなオブジェクトである", () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: mockPageData,
@@ -103,7 +103,7 @@ test("本文をマークダウン形式で取得できる", async () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: mockPageData,
@@ -134,7 +134,7 @@ test("複数タイプのプロパティを保持できる", () => {
   } as unknown as NotionPropertyConverter
 
   const pageRef = new NotionPageReference({
-    notion: mockClient,
+    client: mockClient,
     schema: mockSchema,
     converter: mockConverter,
     notionPage: mockPageData,

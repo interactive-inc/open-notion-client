@@ -79,6 +79,7 @@ export class NotionTable<T extends NotionPropertySchema> {
       maxRetries: props.retry?.maxRetries ?? 3,
       baseDelayMs: props.retry?.baseDelayMs ?? 400,
     }
+    Object.freeze(this)
   }
 
   private withRetry<R>(fn: () => Promise<R>): Promise<R> {
@@ -312,7 +313,7 @@ export class NotionTable<T extends NotionPropertySchema> {
 
   private buildReference(notionPage: PageObjectResponse): NotionPageReference<T> {
     return new NotionPageReference({
-      notion: this.client,
+      client: this.client,
       schema: this.properties,
       converter: this.propertyConverter,
       notionPage: notionPage,
@@ -368,8 +369,7 @@ export class NotionTable<T extends NotionPropertySchema> {
       hasMore = response.has_more
     }
 
-    const pageReferences =
-      references.length > maxCount ? references.slice(0, maxCount) : references
+    const pageReferences = references.length > maxCount ? references.slice(0, maxCount) : references
 
     // limit分取得してもNotion側にデータが残っている場合はhasMore=trueを保持する
     const resultHasMore = hasMore || references.length > maxCount

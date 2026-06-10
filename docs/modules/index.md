@@ -38,7 +38,9 @@ const table = new NotionTable({
 
 ```typescript
 const result = await table.safe.findById("page-id")
-if (result instanceof Error) { /* handle */ }
+if (result instanceof Error) {
+  /* handle */
+}
 ```
 
 ## NotionPageReference
@@ -61,7 +63,7 @@ Returned by `createMany`, `updateMany`, `deleteMany`.
 ```typescript
 type BatchResult<T> = {
   succeeded: T[]
-  failed: Array<{ data: unknown, error: Error }>
+  failed: Array<{ data: unknown; error: Error }>
 }
 ```
 
@@ -72,7 +74,10 @@ In-memory cache for pages and blocks.
 ```typescript
 import { NotionMemoryCache } from "@interactive-inc/notion-client"
 
-const cache = new NotionMemoryCache()
+const cache = new NotionMemoryCache({
+  ttlMs: 60_000, // エントリの生存時間（省略時は無期限）
+  maxEntries: 1000, // 最大エントリ数。超過時は古いものから破棄（省略時は無制限）
+})
 ```
 
 ## NotionMarkdown

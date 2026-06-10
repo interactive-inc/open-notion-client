@@ -47,12 +47,12 @@ Use `as const` to preserve literal types for auto-completion.
 
 ## Date
 
-- `date` -- `{ start: string, end: string | null } | null` -- ISO date strings.
+- `date` -- `{ start: string, end: string | null, timeZone: string | null } | null` -- ISO date strings.
 
 ```typescript
 await table.create({
   properties: {
-    deadline: { start: "2024-12-31", end: null },
+    deadline: { start: "2024-12-31", end: null, timeZone: null },
   },
 })
 ```
@@ -68,7 +68,6 @@ await table.create({
 These are computed by Notion and cannot be written:
 
 - `formula` -- Computed value (string, number, boolean, or date).
-- `rollup` -- Aggregated value from relations.
 - `created_time` -- ISO timestamp.
 - `last_edited_time` -- ISO timestamp.
 - `created_by` -- User object.

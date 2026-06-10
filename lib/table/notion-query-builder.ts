@@ -19,12 +19,12 @@ export class NotionQueryBuilder {
     schema: T,
     where: WhereCondition<T>,
   ): NotionQueryWhere | undefined {
-    // Handle or conditions
+    // スキーマ側に or / and という名前のフィールドが定義できるため
+    // in 演算子だけでは WhereCondition<T>[] に絞り込めずキャストが必要になる
     if ("or" in where) {
       return this.buildOrCondition(schema, where.or as WhereCondition<T>[])
     }
 
-    // Handle and conditions
     if ("and" in where) {
       return this.buildAndCondition(schema, where.and as WhereCondition<T>[])
     }
@@ -211,7 +211,7 @@ export class NotionQueryBuilder {
             property: key,
             multi_select: { contains: String(v) },
           })),
-        } as NotionQueryWhere
+        } satisfies NotionQueryWhere
       }
     }
 
@@ -245,25 +245,25 @@ export class NotionQueryBuilder {
         return {
           property: key,
           formula: { string: { equals: value } },
-        } as NotionQueryWhere
+        } satisfies NotionQueryWhere
       }
       if (config.formulaType === "number" && typeof value === "number") {
         return {
           property: key,
           formula: { number: { equals: value } },
-        } as NotionQueryWhere
+        } satisfies NotionQueryWhere
       }
       if (config.formulaType === "boolean" && typeof value === "boolean") {
         return {
           property: key,
           formula: { checkbox: { equals: value } },
-        } as NotionQueryWhere
+        } satisfies NotionQueryWhere
       }
       if (config.formulaType === "date") {
         return {
           property: key,
           formula: { date: { equals: this.getDateString(value) } },
-        } as NotionQueryWhere
+        } satisfies NotionQueryWhere
       }
     }
 

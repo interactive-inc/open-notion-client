@@ -167,7 +167,7 @@ const results = await tasks.findMany({
 })
 ```
 
-Supported operators: `equals`, `does_not_equal`, `contains`, `does_not_contain`, `greater_than`, `less_than`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `before`, `after`, `is_empty`, `is_not_empty`
+Supported operators: `equals`, `does_not_equal`, `contains`, `does_not_contain`, `starts_with`, `ends_with`, `greater_than`, `less_than`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `before`, `after`, `on_or_before`, `on_or_after`, `is_empty`, `is_not_empty`
 
 ### Logical Operators
 
@@ -198,7 +198,7 @@ Supported Notion property types and their TypeScript mappings:
 - `url` -- `string | null` -- URL string
 - `email` -- `string | null` -- Email address
 - `phone_number` -- `string | null` -- Phone number
-- `date` -- `{ start, end } | null` -- Date value
+- `date` -- `{ start, end, timeZone } | null` -- Date value
 - `files` -- `Array<{ url }>` -- File attachments
 - `people` -- `Array<{ id }>` -- User references
 - `relation` -- `string[]` -- Relations
@@ -294,7 +294,10 @@ Reduce API calls with the built-in memory cache:
 ```typescript
 import { NotionMemoryCache } from "@interactive-inc/notion-client"
 
-const cache = new NotionMemoryCache()
+const cache = new NotionMemoryCache({
+  ttlMs: 60_000, // Expire entries after 60s (default: no expiration)
+  maxEntries: 1000, // Evict oldest entries beyond this count (default: unlimited)
+})
 
 const tasks = new NotionTable({
   client,
