@@ -11,7 +11,8 @@
   "module": "build/index.js",
   "types": "build/index.d.ts",
   "exports": {
-    ".": "./build/index.js"
+    ".": "./build/index.js",
+    "./models": "./build/models.js"
   },
   "publishConfig": {
     "access": "public"

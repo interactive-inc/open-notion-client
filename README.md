@@ -41,7 +41,7 @@ notion-client flattens this to `{ name: "Hello World" }` and gives you a clean, 
 ## Installation
 
 ```bash
-bun add @interactive-inc/notion-client
+bun add @interactive-inc/notion-client @notionhq/client
 ```
 
 ## Quick Start
@@ -304,6 +304,16 @@ const tasks = new NotionTable({
 })
 
 tasks.clearCache()
+```
+
+## Zod Schemas
+
+Validate schema definitions at runtime using the separate models entry point:
+
+```typescript
+import { zNotionPropertyConfig } from "@interactive-inc/notion-client/models"
+
+const result = zNotionPropertyConfig.safeParse(untrusted)
 ```
 
 ## License

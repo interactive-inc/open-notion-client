@@ -14,7 +14,7 @@ export async function withConcurrency<T, R>(
     return []
   }
 
-  const results: R[] = new Array(items.length)
+  const results: R[] = Array.from({ length: items.length })
   let nextIndex = 0
 
   const workers: Promise<void>[] = []

@@ -111,6 +111,16 @@ const markdown = fromNotionBlocks(notionBlocks, {
 })
 ```
 
+### fromNotionBlock
+
+単一ブロックをMarkdownに変換する。`fromNotionBlocks`が内部で使用している関数で、個別のブロック変換が必要な場合に使う。
+
+```typescript
+import { fromNotionBlock } from "@interactive-inc/notion-client"
+
+const markdown = fromNotionBlock(notionBlock)
+```
+
 ### enhance
 
 Recursively fetch child blocks from the Notion API.
@@ -120,4 +130,14 @@ import { enhance } from "@interactive-inc/notion-client"
 
 const fetchAll = enhance((args) => notion.blocks.children.list(args))
 const blocks = await fetchAll({ block_id: "page-id" })
+```
+
+## Zod Schemas
+
+スキーマ定義のランタイムバリデーション用。`@interactive-inc/notion-client/models` から個別にインポートできる。
+
+```typescript
+import { zNotionPropertyConfig } from "@interactive-inc/notion-client/models"
+
+const result = zNotionPropertyConfig.safeParse(untrusted)
 ```

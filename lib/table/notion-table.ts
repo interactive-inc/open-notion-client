@@ -232,7 +232,7 @@ export class NotionTable<T extends NotionPropertySchema> {
     const succeeded: NotionPageReference<T>[] = []
     const failed: Array<{ data: NotionPageReference<T>; error: Error }> = []
 
-    for (const record of result.records) {
+    await withConcurrency(result.records, 3, async (record) => {
       try {
         const updated = await this.update(record.id, options.update)
         succeeded.push(updated)
@@ -240,7 +240,7 @@ export class NotionTable<T extends NotionPropertySchema> {
         const error = e instanceof Error ? e : new Error(String(e))
         failed.push({ data: record, error: error })
       }
-    }
+    })
 
     return { succeeded, failed }
   }
@@ -261,7 +261,7 @@ export class NotionTable<T extends NotionPropertySchema> {
     const succeeded: string[] = []
     const failed: Array<{ data: string; error: Error }> = []
 
-    for (const record of result.records) {
+    await withConcurrency(result.records, 3, async (record) => {
       try {
         await this.delete(record.id)
         succeeded.push(record.id)
@@ -269,7 +269,7 @@ export class NotionTable<T extends NotionPropertySchema> {
         const error = e instanceof Error ? e : new Error(String(e))
         failed.push({ data: record.id, error: error })
       }
-    }
+    })
 
     return { succeeded, failed }
   }
@@ -356,33 +356,28 @@ export class NotionTable<T extends NotionPropertySchema> {
           page_size: pageSize,
         }),
       )
-      const refs: NotionPageReference<T>[] = []
+
       for (const result of response.results) {
         if (!("properties" in result)) {
-          // PartialPageObjectResponseなど、propertiesを持たない結果は捨てる
           continue
         }
-        // result_type を data_source に切り替えていないため、ここに到達する場合は
-        // 必ずPageObjectResponseと見なせる
-        refs.push(this.buildReference(result as PageObjectResponse))
+        references.push(this.buildReference(result as PageObjectResponse))
       }
-      references.push(...refs)
+
       nextCursor = response.next_cursor
-      hasMore = response.has_more && references.length < maxCount
+      hasMore = response.has_more
     }
 
-    if (references.length > maxCount) {
-      return new NotionQueryResult({
-        pageReferences: references.slice(0, maxCount),
-        cursor: nextCursor,
-        hasMore,
-      })
-    }
+    const pageReferences =
+      references.length > maxCount ? references.slice(0, maxCount) : references
+
+    // limit分取得してもNotion側にデータが残っている場合はhasMore=trueを保持する
+    const resultHasMore = hasMore || references.length > maxCount
 
     return new NotionQueryResult({
-      pageReferences: references,
+      pageReferences,
       cursor: nextCursor,
-      hasMore,
+      hasMore: resultHasMore,
     })
   }
 

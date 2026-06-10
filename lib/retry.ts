@@ -9,12 +9,13 @@ const DEFAULT_IS_RETRYABLE = (error: unknown): boolean => {
     return false
   }
 
-  if ("status" in error && typeof (error as { status: unknown }).status === "number") {
-    const status = (error as { status: number }).status
-    return status === 429 || status >= 500
+  const record = error as Record<string, unknown>
+
+  if ("status" in error && typeof record.status === "number") {
+    return record.status === 429 || record.status >= 500
   }
 
-  if ("code" in error && (error as { code: unknown }).code === "rate_limited") {
+  if ("code" in error && record.code === "rate_limited") {
     return true
   }
 

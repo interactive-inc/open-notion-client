@@ -1,4 +1,3 @@
-import type { Client } from "@notionhq/client"
 import type {
   CreatePageParameters,
   PageObjectResponse,
@@ -297,37 +296,10 @@ export type SchemaType<T extends NotionPropertySchema> = {
   [K in keyof T]: PropertyTypeMapping<T[K]> | null
 }
 
-/* Record type definition */
-export type TableRecord<T> = T & {
-  id: string
-  createdAt: string
-  updatedAt: string
-  isDeleted: boolean
-}
-
-/* Page reference type */
-export type PageReferenceType<T> = {
-  id: string
-  url: string
-  createdAt: string
-  updatedAt: string
-  isArchived: boolean
-  properties(): T
-  raw(): PageObjectResponse
-  body(): Promise<string>
-}
-
 /* Sort option type */
 export type SortOption<T extends NotionPropertySchema> = {
   field: keyof SchemaType<T>
   direction: "asc" | "desc"
-}
-
-/* Table creation options */
-export type TableOptions<T extends NotionPropertySchema> = {
-  notion: Client
-  tableId: string
-  schema: T
 }
 
 /* Advanced query operators */
@@ -407,13 +379,6 @@ export type UpsertOptions<T extends NotionPropertySchema> = {
   update: UpdateInput<T>
 }
 
-/* Query result type */
-export type QueryResult<T> = {
-  records: TableRecord<T>[]
-  cursor: string | null
-  hasMore: boolean
-}
-
 /* Batch operation result */
 export type BatchResult<T> = {
   succeeded: T[]
@@ -421,27 +386,6 @@ export type BatchResult<T> = {
     data: unknown
     error: Error
   }>
-}
-
-/* Query builder interface */
-export type NotionQueryBuilderInterface = {
-  buildFilter<T extends NotionPropertySchema>(
-    schema: T,
-    where: WhereCondition<T>,
-  ): Record<string, unknown> | undefined
-  buildSort<T extends NotionPropertySchema>(sorts: SortOption<T>[]): Array<Record<string, unknown>>
-}
-
-/* Converter interface */
-export type NotionConverterInterface = {
-  fromNotion<T extends NotionPropertySchema>(
-    schema: T,
-    properties: Record<string, unknown>,
-  ): SchemaType<T>
-  toNotion<T extends NotionPropertySchema, D extends Partial<SchemaType<T>>>(
-    schema: T,
-    data: D,
-  ): Record<string, unknown>
 }
 
 /* Block types */

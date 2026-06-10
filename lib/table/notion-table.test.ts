@@ -299,7 +299,7 @@ test("findMany がページネーション情報を返す", async () => {
 
   const result = await table.findMany({ limit: 1 })
   expect(result.records).toHaveLength(1)
-  expect(result.hasMore).toBe(false)
+  expect(result.hasMore).toBe(true)
   expect(result.nextCursor).toBe("cursor-next-page")
 })
 

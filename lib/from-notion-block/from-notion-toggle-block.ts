@@ -14,7 +14,7 @@ export function fromNotionToggleBlock(block: NotionToggleBlock): string {
 
   const childMarkdown = block.children
     .map((child) => fromNotionBlock(child))
-    .filter((md) => md !== "")
+    .filter((md): md is string => md !== null && md !== "")
     .join("\n\n")
 
   return `**${text}**\n\n${childMarkdown}`

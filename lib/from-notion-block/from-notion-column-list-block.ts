@@ -7,6 +7,6 @@ import type { NotionBlock } from "@/types"
 export function fromNotionColumnListBlock(block: NotionBlock): string {
   return block.children
     .map((child) => fromNotionBlock(child))
-    .filter((md) => md !== "")
+    .filter((md): md is string => md !== null && md !== "")
     .join("\n\n")
 }

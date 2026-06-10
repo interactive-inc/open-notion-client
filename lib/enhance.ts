@@ -52,7 +52,7 @@ export function enhance(client: Client, options: Options = {}) {
 
       return {
         ...block,
-        children: [] as NotionBlock[],
+        children: [] satisfies NotionBlock[],
       }
     })
 
