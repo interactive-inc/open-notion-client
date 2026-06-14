@@ -59,6 +59,8 @@ RyukyuInteractive/inta#open-libraries:
   - .claude/skills/docs/references/integrations.md
   - .claude/skills/docs/references/manual.md
   - .claude/skills/docs/references/milestones.md
+  - .claude/skills/docs/references/page-capabilities.md
+  - .claude/skills/docs/references/pages.md
   - .claude/skills/docs/references/roles-and-permissions.md
   - .claude/skills/docs/references/signals.md
   - .claude/skills/docs/references/sitemap.md

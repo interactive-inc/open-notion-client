@@ -28,15 +28,19 @@ metadata:
   features/                   機能ファイル分割（中〜大規模）
     index.md
     {slug}.md   または NNN_{日本語名}.md
+  pages.md                    画面一覧（画面数30以上、必要なら）
+  pages/                      画面ファイル分割（ルートファイル単位、必要なら）
   user-flows.md               ユーザー導線
   stories/                    業務ストーリー（ロール横断のユースケース、必要なら）
   sitemap.md                  URL一覧
   architecture.md             システム構成
   integrations.md             外部システム連携（必要なら）
   domain.md                   ドメインモデル（必要なら）
+  models/                     ドメインモデル分割（テーブル数40以上、必要なら）
   roles-and-permissions.md    ロール権限（必要なら）
   milestones.md               リリース計画（必要なら）
-  capabilities.md             ロール別できること（必要なら）
+  capabilities.md             ロール別できることサマリ（必要なら）
+  page-capabilities.md        ロール × 画面の詳細できること（必要なら）
   manual/                     エンドユーザーマニュアル（必要なら）
   backlogs/                   プロダクトバックログ
   decisions/                  ADR（意思決定記録）
@@ -113,6 +117,7 @@ metadata:
 - [glossary.md](references/glossary.md)
 - [milestones.md](references/milestones.md)
 - [capabilities.md](references/capabilities.md)
+- [page-capabilities.md](references/page-capabilities.md)
 - [stories.md](references/stories.md)
 - [manual.md](references/manual.md)
 - [backlogs.md](references/backlogs.md)
@@ -123,6 +128,7 @@ metadata:
 コードから生成する。
 
 - [features.md](references/features.md)
+- [pages.md](references/pages.md)
 - [sitemap.md](references/sitemap.md)
 - [architecture.md](references/architecture.md)
 - [integrations.md](references/integrations.md)

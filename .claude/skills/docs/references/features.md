@@ -48,12 +48,25 @@ frontmatter。
 
 ```yaml
 ---
+aliases: [{機能名の別表記}]
+id: F{NNN}
 name: 日本語の機能名
 slug: english-with-hyphens
+milestone: YYYY-MM-DD
+models: [{domain}, {domain}]
+pages: [{route}, {route}]
+stories: [{ストーリー名}]
 ---
 ```
 
-リリース計画と連動させたいときは `milestone: YYYY-MM-DD` を追加し、`milestones.md` の日付と揃える（詳細は [milestones.md](milestones.md)）。優先度フィールド `priority: must/nice` は使わない。優先度はマイルストーン日付だけで線を引く。
+フィールド。
+
+- `name` / `slug`: 必須
+- `aliases`: wikiリンクの別表記用（`[[エイリアス]]` で解決させる）
+- `id`: 全機能で一意の ID（`F010` 形式）。番号プレフィックス規則を採るなら NNN と揃える
+- `milestone`: リリース計画と連動させたいとき。`milestones.md` の日付と揃える（詳細は [milestones.md](milestones.md)）
+- `models` / `pages` / `stories`: クロスリンク。それぞれ `models/{name}.md` / `pages/{route}.md` / `stories/{name}.md` の識別子を配列で持つ。features → 関連リソースの逆引きを支える
+- 優先度フィールド `priority: must/nice` は使わない。優先度はマイルストーン日付だけで線を引く
 
 本文。
 
@@ -96,6 +109,21 @@ slug 規則（小規模・中規模向け）。
 - 例: `010_経営者向けダッシュボード.md`、`020_月次損益分析.md`、`170_サービスシフト管理.md`
 
 どちらの規則でも、frontmatter の `slug` は英字キーとして必須にしておく。`features/index.md` のエントリは `[[ファイル名|表示名]] ({slug}) — 説明` 形式で書き、ファイル名と slug を両方見せる。
+
+ディレクトリ化（NNN_{日本語名}/）。
+
+機能ごとに `stories/` や図版・補足資料を併置したい場合は、機能をディレクトリにする。
+
+```
+features/
+  NNN_{日本語名}/
+    {日本語名}.md         本体（frontmatter + 本文）
+    stories/              この機能に紐づくストーリー
+      {story 名}.md
+    assets/               図版・スクショ（必要なら）
+```
+
+ディレクトリ化した場合の wikiリンク解決は `[[NNN_{日本語名}]]` で本体ファイルに飛ぶよう、本体ファイル名はディレクトリ名と揃える（または `index.md` を使う）。stories は機能直下に置くと、機能とユースケースの結びつきが構造上明示できる。横断的なストーリーは `stories/`（リポジトリ直下）に残し、機能固有のストーリーだけ features 配下に置く運用も可。
 
 ## features/index.md
 

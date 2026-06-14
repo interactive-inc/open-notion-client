@@ -9,6 +9,7 @@ metadata:
   description: GitHub Issue / PR を書き込む際のテンプレート・必須セクション・Title 規則・Assignment ルール・Issue Type の規約。
   dev: false
   tools: gh
+  tags: [tools]
 ---
 
 GitHub Issue と Pull Request を書き込む時のテンプレートと運用ルールをまとめたスキル。Issue / PR の本文を作る前に必ず参照する。

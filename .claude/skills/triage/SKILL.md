@@ -9,6 +9,7 @@ metadata:
   description: 入力の粒度と当事者性を判定し、signal / backlog / issue / 既存 issue or PR の続き作業へルーティングする入口スキル。実装フェーズ（Branch / Code / Verification / Debug / PR 作成）も内包する。書式は docs と gh-issue-template に委ねる。
   dev: true
   tools: gh, playwright, agent-browser
+  tags: [tools]
 ---
 
 何かしたい時に投げる単一の入口。入力を読み、行き先を決めて記録し、必要なら実装まで進める。書式は `gh-issue-template` と `docs` が正本なのでここには書かない。
