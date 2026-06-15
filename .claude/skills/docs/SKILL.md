@@ -143,6 +143,25 @@ metadata:
 - [human-claude-zone.md](references/human-claude-zone.md): signals/backlogs の人間ゾーンと Claude ゾーンの境界
 - [validation.md](references/validation.md): 検証基準
 
+## サブコマンド
+
+`/docs {sub}` でドキュメント運用のタスクを呼び分ける。各サブコマンドは `commands/{sub}.md` に詳細を書く。
+
+- [next](commands/next.md): コードベース全体を多レンズで探索し、未捕捉タスクを `tasks.md` に追記する。Workflow ファンアウトで網羅性を担保する。重い処理（300+ agent 規模）。
+- [drift](commands/drift.md): 仕様書／README と実装の乖離を検出する。「実装済」記述と実コードの突合、テーブル数・画面数・ロール権限の食い違い。
+- [links](commands/links.md): `[[wikilink]]` を解決して未定義リンク・孤児ページ・循環参照を検出する。
+
+将来候補（必要になったら追加）。
+
+- lint — 書式チェック（Markdown ルール・frontmatter 必須項目・命名規則）
+- index — features/signals/backlogs の index.md 再生成
+- orphan — どこからも参照されていない .md の検出
+- status — 実装ステータス記号と実装の自動突合
+- sync — backlog/signal を tasks.md へ昇格、tasks.md の判断済を docs 本文へ吸収
+- glossary — 用語の整合（定義漏れ・揺れ）
+- publish — docs→HTML 同期
+- review — 6 読者導線・3 クリック到達・説明の薄さの読み物検査
+
 ## 開発サイクルでの使い方
 
 software-design スキルを参照。

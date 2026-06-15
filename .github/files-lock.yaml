@@ -45,6 +45,9 @@ RyukyuInteractive/inta#open-libraries:
   - .claude/rules/md.md
   - .claude/rules/ts.md
   - .claude/skills/docs/SKILL.md
+  - .claude/skills/docs/commands/drift.md
+  - .claude/skills/docs/commands/links.md
+  - .claude/skills/docs/commands/next.md
   - .claude/skills/docs/references/api-schema.md
   - .claude/skills/docs/references/architecture.md
   - .claude/skills/docs/references/backlogs.md
