@@ -75,7 +75,9 @@ RyukyuInteractive/inta#open-libraries:
   - .claude/skills/gh-issue-template/SKILL.md
   - .claude/skills/software-design/README.md
   - .claude/skills/software-design/SKILL.md
+  - .claude/skills/software-design/references/api.md
   - .claude/skills/software-design/references/architecture.md
+  - .claude/skills/software-design/references/database.md
   - .claude/skills/software-design/references/error-handling.md
   - .claude/skills/software-design/references/fluent-api.md
   - .claude/skills/software-design/references/fsm.md

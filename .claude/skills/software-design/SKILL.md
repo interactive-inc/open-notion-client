@@ -124,3 +124,11 @@ Beck's Implementation Patterns ⇒ TS:
 ## React
 
 詳細 ⇒ [react.md](references/react.md)
+
+# API Design
+
+詳細 ⇒ [api.md](references/api.md)
+
+# Database Design
+
+詳細 ⇒ [database.md](references/database.md)

@@ -1,6 +1,7 @@
 ---
 name: docs
 description: .docs/ documentation management.
+argument-hint: "[drift|links|next] [scope]"
 when_to_use: Writing or maintaining product docs under .docs/.
 user-invocable: true
 disable-model-invocation: false
