@@ -35,6 +35,10 @@ OOUI + UX 5 planes (Structure, Skeleton, Surface). Ref: [ux-five-planes.md](refe
 
 操作順でなく、不安を解消する順に並べる。
 
+## Page Routing
+
+URL はレイアウトの入れ子を反映し、リソース指向にする。パラメータ名は `:id` でなく単数リソース名（`/users/:user/posts/:post`）。詳細 ⇒ [page-routing.md](references/page-routing.md)
+
 # Domain Design
 
 Eric Evans's DDD (Strategic): aggregate, invariant, boundary. 概念モデルのみ、実装は Code Design。
