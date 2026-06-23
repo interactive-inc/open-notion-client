@@ -3,6 +3,7 @@ name: software-design
 description: "?"
 user-invocable: false
 disable-model-invocation: false
+model: claude-opus-4-6[1m]
 metadata:
   author: shigurenimo
   description: 製品設計・UI 設計・ドメイン設計・コード設計をカバーする設計指針スキル。

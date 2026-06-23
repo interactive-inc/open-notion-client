@@ -4,6 +4,7 @@ description: Canonical templates and operating rules for writing GitHub Issues a
 when_to_use: When writing or updating the body of a GitHub Issue or Pull Request.
 user-invocable: false
 disable-model-invocation: false
+model: claude-opus-4-6[1m]
 metadata:
   author: shigurenimo
   description: GitHub Issue / PR を書き込む際のテンプレート・必須セクション・Title 規則・Assignment ルール・Issue Type の規約。

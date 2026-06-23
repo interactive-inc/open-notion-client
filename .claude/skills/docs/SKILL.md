@@ -5,6 +5,7 @@ argument-hint: "[drift|links|next|features-sync] [scope]"
 when_to_use: Writing or maintaining product docs under .docs/.
 user-invocable: true
 disable-model-invocation: false
+model: claude-opus-4-6[1m]
 metadata:
   description: .docs/ 配下の製品ドキュメント（仕様・意思決定・バックログ・顧客の声）を管理し、コードと矛盾がない状態を保つ。
   author: shigurenimo
