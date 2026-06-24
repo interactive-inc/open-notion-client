@@ -11,7 +11,7 @@ metadata:
   tags: [docs]
 ---
 
-> このスキルを更新するときは [README.md](README.md) の方針に従う。
+> このスキルを更新するときは [CLAUDE.md](CLAUDE.md) の方針に従う。
 
 # Product Design
 

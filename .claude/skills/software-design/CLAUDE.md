@@ -1,6 +1,8 @@
-# software-design
+# software-design スキルの編集ルール
 
-Adopted design methods.
+このスキル（SKILL.md / references）を作成・更新するときの方針。採用した設計手法だけを記す。
+
+## Adopted design methods
 
 ## Foundation
 

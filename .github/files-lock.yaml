@@ -75,7 +75,7 @@ RyukyuInteractive/inta#open-libraries:
   - .claude/skills/docs/references/value.md
   - .claude/skills/docs/references/writing-rules.md
   - .claude/skills/gh-issue-template/SKILL.md
-  - .claude/skills/software-design/README.md
+  - .claude/skills/software-design/CLAUDE.md
   - .claude/skills/software-design/SKILL.md
   - .claude/skills/software-design/references/api.md
   - .claude/skills/software-design/references/architecture.md
