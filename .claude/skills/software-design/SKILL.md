@@ -3,10 +3,11 @@ name: software-design
 description: "?"
 user-invocable: false
 disable-model-invocation: false
-model: claude-opus-4-6[1m]
 metadata:
   author: shigurenimo
+  type: reference
   description: 製品設計・UI 設計・ドメイン設計・コード設計をカバーする設計指針スキル。
+  design: 製品からコードまでの設計手法を採用済みの線路として束ね設計判断に適用する指針スキル。コード設計やドメイン設計の判断を左右する土台となる。
   dev: true
   tags: [docs]
 ---
