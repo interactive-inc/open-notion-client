@@ -8,7 +8,7 @@
 
 - `/docs drift` — 全 docs と全実装の突合
 - `/docs drift features` — 機能仕様だけ
-- `/docs drift schema` — データモデル（DATA セクション）だけ
+- `/docs drift schema` — データモデル（DATA セクション、または `models/` 配下の分割ファイル）だけ
 - `/docs drift roles` — ロール権限だけ
 
 ## コスト
@@ -31,7 +31,7 @@ docs から「主張」を抽出する。
 
 - index.md の実装ステータス記号（実装済・モック・スタブ・未着手）
 - features/ の機能仕様（ロール・URL・できること）
-- DATA セクションのテーブル数・カラム名・FK
+- DATA セクションのテーブル数・カラム名・FK（テーブル40+で `models/` に分割されている場合は `models/index.md` のテーブル一覧と各 `models/*.md` を対象に含める）
 - roles-and-permissions の宣言
 - milestones の Phase 振り分け
 - pages.md の画面一覧と URL
@@ -42,7 +42,7 @@ docs から「主張」を抽出する。
 
 - ルート／エントリポイント一覧（実装画面）
 - requireRole 宣言（実 API のロール）
-- スキーマ定義（実テーブル・実カラム）
+- スキーマ定義（実テーブル・実カラム）。マイグレーション履歴も見て、DROP 済みテーブル・撤去カラムが docs に残っていないか突合する（docs はリネーム前・廃止前の旧定義を引きずりやすい）
 - 機能の動作（モックかライブデータか）
 
 ### Step 3 突合と分類
