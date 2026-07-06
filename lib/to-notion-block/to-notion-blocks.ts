@@ -6,6 +6,7 @@ import { parseHeadingToken } from "@/to-notion-block/parse-heading-token"
 import { parseHrToken } from "@/to-notion-block/parse-hr-token"
 import { parseListToken } from "@/to-notion-block/parse-list-token"
 import { parseParagraphToken } from "@/to-notion-block/parse-paragraph-token"
+import { parseTableToken } from "@/to-notion-block/parse-table-token"
 
 /**
  * Convert markdown string to Notion blocks
@@ -46,6 +47,11 @@ export function toNotionBlocks(markdown: string): BlockObjectRequest[] {
 
     if (token.type === "blockquote") {
       blocks.push(parseBlockquoteToken(token as Tokens.Blockquote))
+      continue
+    }
+
+    if (token.type === "table") {
+      blocks.push(parseTableToken(token as Tokens.Table))
       continue
     }
 

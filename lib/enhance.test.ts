@@ -26,6 +26,7 @@ test("子ブロックを持たないブロックを正しく処理", async () =>
           in_trash: false,
           type: "paragraph",
           paragraph: {
+            icon: null,
             rich_text: [
               {
                 type: "text",
@@ -127,6 +128,7 @@ test("子ブロックを持つブロックを再帰的に処理", async () => {
             in_trash: false,
             type: "paragraph",
             paragraph: {
+              icon: null,
               rich_text: [
                 {
                   type: "text",
@@ -229,6 +231,7 @@ test("複数のブロックを正しく処理", async () => {
           in_trash: false,
           type: "paragraph",
           paragraph: {
+            icon: null,
             rich_text: [
               {
                 type: "text",
@@ -290,6 +293,82 @@ test("typeが定義されていないブロックでエラーをthrow", async ()
   await expect(enhancedClient({ block_id: "test-block" })).rejects.toThrow(
     "Block invalid-block has no type field",
   )
+})
+
+test("同時リクエスト数が木全体でconcurrencyを超えない", async () => {
+  const makeBlock = (id: string, hasChildren: boolean): BlockObjectResponse => {
+    return {
+      object: "block",
+      id: id,
+      parent: { type: "page_id", page_id: "page-1" },
+      created_time: "2024-01-01T00:00:00.000Z",
+      last_edited_time: "2024-01-01T00:00:00.000Z",
+      created_by: { object: "user", id: "user-1" },
+      last_edited_by: { object: "user", id: "user-1" },
+      has_children: hasChildren,
+      archived: false,
+      in_trash: false,
+      type: "paragraph",
+      paragraph: { rich_text: [], color: "default" },
+    } as unknown as BlockObjectResponse
+  }
+
+  const emptyResponse = {
+    object: "list",
+    results: [],
+    next_cursor: null,
+    has_more: false,
+    type: "block",
+    block: {},
+  } as unknown as ListBlockChildrenResponse
+
+  const childIds = ["c1", "c2", "c3", "c4", "c5", "c6"]
+
+  let inflight = 0
+  let maxInflight = 0
+
+  const mockClient = async (
+    args: ListBlockChildrenParameters,
+  ): Promise<ListBlockChildrenResponse> => {
+    inflight++
+    maxInflight = Math.max(maxInflight, inflight)
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    inflight--
+
+    if (args.block_id === "root") {
+      return {
+        object: "list",
+        results: childIds.map((id) => makeBlock(id, true)),
+        next_cursor: null,
+        has_more: false,
+        type: "block",
+        block: {},
+      } as unknown as ListBlockChildrenResponse
+    }
+
+    if (childIds.includes(String(args.block_id))) {
+      return {
+        object: "list",
+        results: [makeBlock(`${args.block_id}-grandchild`, true)],
+        next_cursor: null,
+        has_more: false,
+        type: "block",
+        block: {},
+      } as unknown as ListBlockChildrenResponse
+    }
+
+    return emptyResponse
+  }
+
+  const result = await enhance(mockClient, { concurrency: 2 })({ block_id: "root" })
+
+  // 深さ3の木でも同時リクエスト数はconcurrency=2を超えない
+  // (旧実装は階層ごとに独立して並列化するため2を超えていた)
+  expect(maxInflight).toBeLessThanOrEqual(2)
+  expect(result).toHaveLength(6)
+  expect(result[0]?.children).toHaveLength(1)
+  expect(result[0]?.children[0]?.id).toBe("c1-grandchild")
+  expect(result[0]?.children[0]?.children).toEqual([])
 })
 
 test("空のレスポンスを正しく処理", async () => {

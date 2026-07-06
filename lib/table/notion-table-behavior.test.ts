@@ -380,6 +380,262 @@ test("updateManyは全成功時にfailedが空", async () => {
   expect(result.failed).toHaveLength(0)
 })
 
+function makeTitlePage(id: string, text: string) {
+  return makePage(id, {
+    title: { type: "title", title: [{ plain_text: text }] },
+  })
+}
+
+// page_sizeを尊重してオフセットベースのcursorでページ送りするモックを作る
+function makePagingQuery(allPages: ReturnType<typeof makePage>[]) {
+  const capturedPageSizes: number[] = []
+
+  const query = async (params: { start_cursor?: string; page_size?: number }) => {
+    const offset = params.start_cursor ? Number(params.start_cursor) : 0
+    const pageSize = params.page_size ?? 100
+
+    capturedPageSizes.push(pageSize)
+
+    const results = allPages.slice(offset, offset + pageSize)
+    const nextOffset = offset + results.length
+
+    return {
+      results: results,
+      next_cursor: nextOffset < allPages.length ? String(nextOffset) : null,
+      has_more: nextOffset < allPages.length,
+    }
+  }
+
+  return { query, capturedPageSizes }
+}
+
+test("findManyはlimit到達時に超過取得せずnextCursorが欠落なく続きを指す", async () => {
+  // DBちょうど200件でlimit:150の境界ケース
+  const allPages = Array.from({ length: 200 }, (_, i) => makeTitlePage(`page-${i}`, `T${i}`))
+  const paging = makePagingQuery(allPages)
+
+  const mockClient = {
+    dataSources: { query: paging.query },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const firstResult = await table.findMany({ limit: 150 })
+
+  expect(firstResult.records).toHaveLength(150)
+  expect(firstResult.records[149]?.id).toBe("page-149")
+  // 最終フェッチは残り必要件数の50件だけ要求する
+  expect(paging.capturedPageSizes).toEqual([100, 50])
+  // hasMore: true なのに nextCursor: null にならない
+  expect(firstResult.hasMore).toBe(true)
+  expect(firstResult.nextCursor).not.toBeNull()
+
+  // 続きをcursorで取得しても中間レコードがスキップされない
+  const cursor = firstResult.nextCursor ?? undefined
+  const secondResult = await table.findMany({ cursor })
+
+  expect(secondResult.records).toHaveLength(50)
+  expect(secondResult.records[0]?.id).toBe("page-150")
+  expect(secondResult.records[49]?.id).toBe("page-199")
+  expect(secondResult.hasMore).toBe(false)
+  expect(secondResult.nextCursor).toBeNull()
+})
+
+test("updateManyは1024件を超えるマッチも全件処理する", async () => {
+  const allPages = Array.from({ length: 1100 }, (_, i) => makeTitlePage(`page-${i}`, `T${i}`))
+  const paging = makePagingQuery(allPages)
+
+  const updatedIds = new Set<string>()
+
+  const mockClient = {
+    dataSources: { query: paging.query },
+    pages: {
+      update: async (params: { page_id: string }) => {
+        updatedIds.add(params.page_id)
+        return makeTitlePage(params.page_id, "Updated")
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.updateMany({
+    update: { properties: { title: "Updated" } },
+  })
+
+  expect(result.succeeded).toHaveLength(1100)
+  expect(result.failed).toHaveLength(0)
+  expect(updatedIds.size).toBe(1100)
+  expect(updatedIds.has("page-1099")).toBe(true)
+})
+
+test("deleteManyは1024件を超えるマッチも全件アーカイブする", async () => {
+  const allPages = Array.from({ length: 1100 }, (_, i) => makeTitlePage(`page-${i}`, `T${i}`))
+  const paging = makePagingQuery(allPages)
+
+  const archivedIds = new Set<string>()
+
+  const mockClient = {
+    dataSources: { query: paging.query },
+    pages: {
+      update: async (params: { page_id: string; archived: boolean }) => {
+        archivedIds.add(params.page_id)
+        return makePage(params.page_id, {})
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.deleteMany()
+
+  expect(result.succeeded).toHaveLength(1100)
+  expect(result.failed).toHaveLength(0)
+  expect(archivedIds.has("page-1099")).toBe(true)
+})
+
+test("updateManyはlimit指定時にその件数までしか処理しない", async () => {
+  const allPages = Array.from({ length: 10 }, (_, i) => makeTitlePage(`page-${i}`, `T${i}`))
+  const paging = makePagingQuery(allPages)
+
+  let updateCalls = 0
+
+  const mockClient = {
+    dataSources: { query: paging.query },
+    pages: {
+      update: async (params: { page_id: string }) => {
+        updateCalls++
+        return makeTitlePage(params.page_id, "Updated")
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const result = await table.updateMany({
+    update: { properties: { title: "Updated" } },
+    limit: 4,
+  })
+
+  expect(result.succeeded).toHaveLength(4)
+  expect(updateCalls).toBe(4)
+})
+
+test("createは100個超のchildrenを分割して追加する", async () => {
+  let createChildrenCount = 0
+  const appendedChunkSizes: number[] = []
+
+  const mockClient = {
+    pages: {
+      create: async (params: { properties: Record<string, unknown>; children: unknown[] }) => {
+        createChildrenCount = params.children.length
+        return makeTitlePage("page-1", "T")
+      },
+      retrieve: async () => makeTitlePage("page-1", "T"),
+    },
+    blocks: {
+      children: {
+        append: async (params: { block_id: string; children: unknown[] }) => {
+          appendedChunkSizes.push(params.children.length)
+          return {}
+        },
+      },
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const body = Array.from({ length: 250 }, (_, i) => `paragraph ${i}`).join("\n\n")
+
+  await table.create({
+    properties: { title: "T" },
+    body: body,
+  })
+
+  // 作成時は最初の100個、残りは100個ずつappendされる
+  expect(createChildrenCount).toBe(100)
+  expect(appendedChunkSizes).toEqual([100, 50])
+})
+
+test("updateは100個超の本文ブロックを分割して追加する", async () => {
+  const appendedChunkSizes: number[] = []
+
+  const mockClient = {
+    pages: {
+      update: async (params: { page_id: string }) => makeTitlePage(params.page_id, "T"),
+    },
+    blocks: {
+      children: {
+        list: async () => ({ results: [], next_cursor: null, has_more: false }),
+        append: async (params: { block_id: string; children: unknown[] }) => {
+          appendedChunkSizes.push(params.children.length)
+          return {}
+        },
+      },
+      delete: async () => ({}),
+    },
+  } as unknown as Client
+
+  const schema = {
+    title: { type: "title" as const },
+  } satisfies NotionPropertySchema
+
+  const table = new NotionTable({
+    client: mockClient,
+    dataSourceId: "ds",
+    properties: schema,
+  })
+
+  const body = Array.from({ length: 250 }, (_, i) => `paragraph ${i}`).join("\n\n")
+
+  await table.update("page-1", {
+    properties: {},
+    body: body,
+  })
+
+  expect(appendedChunkSizes).toEqual([100, 100, 50])
+})
+
 test("created_time等の読み取り専用プロパティはNotionに送られない", async () => {
   let observedProperties: Record<string, unknown> | undefined
 

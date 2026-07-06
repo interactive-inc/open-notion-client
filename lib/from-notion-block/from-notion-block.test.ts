@@ -49,6 +49,7 @@ test("段落ブロックを変換できる", () => {
   const block = createMockNotionBlock({
     type: "paragraph",
     paragraph: {
+      icon: null,
       rich_text: [createMockRichText("これは段落です。")],
       color: "default",
     },
@@ -146,6 +147,7 @@ test("太字の段落を変換できる", () => {
   const block = createMockNotionBlock({
     type: "paragraph",
     paragraph: {
+      icon: null,
       rich_text: [createMockRichText("太字のテキスト", { bold: true })],
       color: "default",
     },

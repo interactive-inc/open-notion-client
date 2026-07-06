@@ -20,6 +20,18 @@ export function parseNumberedListItemToken(item: Tokens.ListItem): BlockObjectRe
       : parseNestedBulletedListItemToken(child)
   })
 
+  // GFMではタスクリストは番号付きリストでも有効。checked情報を落とさずto_doにする
+  if (item.task) {
+    return {
+      type: BlockType.ToDo,
+      to_do: {
+        rich_text: expandInlineTokens(inline),
+        checked: item.checked === true,
+        children: children && children.length > 0 ? children : undefined,
+      },
+    }
+  }
+
   return {
     type: BlockType.NumberedListItem,
     numbered_list_item: {

@@ -139,19 +139,8 @@ export type RichTextItemRequest = {
   }
 }
 
-/* Number format type */
-type NumberFormat =
-  | "number"
-  | "number_with_commas"
-  | "percent"
-  | "dollar"
-  | "euro"
-  | "pound"
-  | "yen"
-  | "ruble"
-  | "rupee"
-  | "won"
-  | "yuan"
+/* Number format type - zodスキーマから導出して同期ずれを防ぐ */
+type NumberFormat = NonNullable<Extract<PropertyConfig, { type: "number" }>["format"]>
 
 export type TitlePropertyConfig = {
   type: "title"

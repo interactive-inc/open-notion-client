@@ -118,7 +118,7 @@ await tasks.update(task.id, {
   body: null,
 })
 
-// Update many (returns BatchResult)
+// Update many (processes all matching records, returns BatchResult)
 const result = await tasks.updateMany({
   where: { status: "todo" },
   update: { properties: { status: "doing" } },
@@ -132,7 +132,7 @@ console.log(result.succeeded.length, result.failed.length)
 // Archive one
 await tasks.delete(task.id)
 
-// Archive many (returns BatchResult)
+// Archive many (processes all matching records, returns BatchResult)
 const result = await tasks.deleteMany({ status: "done" })
 
 // Restore archived
@@ -169,6 +169,8 @@ const results = await tasks.findMany({
 
 Supported operators: `equals`, `does_not_equal`, `contains`, `does_not_contain`, `starts_with`, `ends_with`, `greater_than`, `less_than`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `before`, `after`, `on_or_before`, `on_or_after`, `is_empty`, `is_not_empty`
 
+If a `where` value cannot be converted to a Notion filter, an `Error` is thrown instead of silently matching all records.
+
 ### Logical Operators
 
 ```typescript
@@ -199,12 +201,20 @@ Supported Notion property types and their TypeScript mappings:
 - `email` -- `string | null` -- Email address
 - `phone_number` -- `string | null` -- Phone number
 - `date` -- `{ start, end, timeZone } | null` -- Date value
-- `files` -- `Array<{ url }>` -- File attachments
+- `files` -- `Array<{ name, url, type }>` -- File attachments (`type` is `"file"` or `"external"`)
 - `people` -- `Array<{ id }>` -- User references
 - `relation` -- `string[]` -- Relations
 - `formula` -- Read-only computed value
 - `created_time` / `last_edited_time` -- Read-only timestamps
 - `created_by` / `last_edited_by` -- Read-only user references
+
+Notes on writing values:
+
+- `title` / `rich_text` -- Pass `null` to clear the value. Strings over 2,000 characters are split automatically to fit Notion's limit.
+- `checkbox` -- `null` is written as `false`.
+- `number` -- Values outside the configured `min` / `max` throw an error.
+- `select` / `multi_select` / `status` -- Values outside the configured `options` throw an error.
+- `files` -- Notion-hosted files (`type: "file"`) are preserved when written back.
 
 ## Markdown Support
 
@@ -229,6 +239,8 @@ const hello = "world"
 `,
 })
 ```
+
+Supported when writing: headings, paragraphs, bulleted/numbered lists, to-do items (`- [x]`), tables, images, equations (`$$`), code blocks, blockquotes, dividers, and inline formatting. Bodies longer than 100 blocks are appended in chunks automatically.
 
 ### Heading Level Transformation
 
@@ -271,7 +283,7 @@ All methods are available on `.safe`: `findMany`, `findOne`, `findById`, `create
 
 ## Retry
 
-API calls automatically retry on rate limits (429) and server errors (5xx) with exponential backoff:
+API calls automatically retry on rate limits (429) and server errors (5xx). The `Retry-After` header is respected when present; otherwise delays use exponential backoff with full jitter:
 
 ```typescript
 const tasks = new NotionTable({

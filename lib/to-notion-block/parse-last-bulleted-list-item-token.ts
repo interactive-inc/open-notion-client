@@ -10,10 +10,22 @@ import { BlockType } from "@/types"
 export function parseLastBulletedListItem(
   item: Tokens.ListItem,
 ): BlockObjectRequestWithoutChildren {
+  const richText = expandInlineTokens(extractListItemInline(item))
+
+  if (item.task) {
+    return {
+      type: BlockType.ToDo,
+      to_do: {
+        rich_text: richText,
+        checked: item.checked === true,
+      },
+    }
+  }
+
   return {
     type: BlockType.BulletedListItem,
     bulleted_list_item: {
-      rich_text: expandInlineTokens(extractListItemInline(item)),
+      rich_text: richText,
     },
   }
 }

@@ -102,7 +102,7 @@ const tasks = new NotionTable({
 
 ### Retry
 
-API calls retry automatically on rate limits (429) and server errors (5xx).
+API calls retry automatically on rate limits (429) and server errors (5xx). The `Retry-After` header is respected when present; otherwise delays use exponential backoff with full jitter.
 
 ```typescript
 const tasks = new NotionTable({

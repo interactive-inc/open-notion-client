@@ -20,6 +20,17 @@ export function parseBulletedListItemToken(item: Tokens.ListItem): BlockObjectRe
       : parseNestedBulletedListItemToken(child)
   })
 
+  if (item.task) {
+    return {
+      type: BlockType.ToDo,
+      to_do: {
+        rich_text: expandInlineTokens(inline),
+        checked: item.checked === true,
+        children: children && children.length > 0 ? children : undefined,
+      },
+    }
+  }
+
   return {
     type: BlockType.BulletedListItem,
     bulleted_list_item: {

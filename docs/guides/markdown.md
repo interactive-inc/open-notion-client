@@ -27,7 +27,9 @@ const x = 1
 })
 ```
 
-Supported: headings, paragraphs, bulleted/numbered lists, code blocks, blockquotes, dividers, to-do items, callouts, inline formatting (bold, italic, strikethrough, code, links).
+Supported: headings, paragraphs, bulleted/numbered lists, to-do items (`- [x]`), tables, images, equations (`$$`), code blocks, blockquotes, dividers, inline formatting (bold, italic, strikethrough, code, links).
+
+Bodies longer than 100 blocks are split into multiple append requests automatically to stay within Notion's per-request limit.
 
 ### Heading level transformation
 

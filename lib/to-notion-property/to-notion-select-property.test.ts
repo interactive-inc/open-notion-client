@@ -46,3 +46,22 @@ test("配列を渡すとエラーをthrow", () => {
 test("真偽値を渡すとエラーをthrow", () => {
   expect(() => toNotionSelectProperty(true)).toThrow()
 })
+
+test("optionsに含まれる値は変換される", () => {
+  const result = toNotionSelectProperty("A", { options: ["A", "B"] })
+
+  expect(result).toEqual({ select: { name: "A" } })
+})
+
+test("options外の値はエラーをthrow", () => {
+  expect(() => toNotionSelectProperty("C", { options: ["A", "B"] })).toThrow()
+})
+
+test("optionsがあってもnullと空文字列は解除として許可される", () => {
+  expect(toNotionSelectProperty(null, { options: ["A"] })).toEqual({ select: null })
+  expect(toNotionSelectProperty("", { options: ["A"] })).toEqual({ select: null })
+})
+
+test("空のoptionsは検証をスキップして値を通す", () => {
+  expect(toNotionSelectProperty("X", { options: [] })).toEqual({ select: { name: "X" } })
+})

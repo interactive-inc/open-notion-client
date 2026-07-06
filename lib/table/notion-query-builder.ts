@@ -20,12 +20,13 @@ export class NotionQueryBuilder {
     where: WhereCondition<T>,
   ): NotionQueryWhere | undefined {
     // スキーマ側に or / and という名前のフィールドが定義できるため
+    // 配列であることも確認してから論理結合子として扱う
     // in 演算子だけでは WhereCondition<T>[] に絞り込めずキャストが必要になる
-    if ("or" in where) {
+    if ("or" in where && Array.isArray(where.or)) {
       return this.buildOrCondition(schema, where.or as WhereCondition<T>[])
     }
 
-    if ("and" in where) {
+    if ("and" in where && Array.isArray(where.and)) {
       return this.buildAndCondition(schema, where.and as WhereCondition<T>[])
     }
 
@@ -199,7 +200,10 @@ export class NotionQueryBuilder {
           multi_select: { contains: value },
         } satisfies NotionQueryWhere
       }
-      if (Array.isArray(value) && value.length > 0) {
+      if (Array.isArray(value)) {
+        if (value.length === 0) {
+          return null
+        }
         if (value.length === 1) {
           return {
             property: key,
@@ -231,12 +235,77 @@ export class NotionQueryBuilder {
       } satisfies NotionQueryWhere
     }
 
-    // Relation type
-    if (config.type === "relation" && typeof value === "string") {
+    // URL / Email / Phone number type
+    if (config.type === "url" && typeof value === "string") {
       return {
         property: key,
-        relation: { contains: value },
+        url: { equals: value },
       } satisfies NotionQueryWhere
+    }
+
+    if (config.type === "email" && typeof value === "string") {
+      return {
+        property: key,
+        email: { equals: value },
+      } satisfies NotionQueryWhere
+    }
+
+    if (config.type === "phone_number" && typeof value === "string") {
+      return {
+        property: key,
+        phone_number: { equals: value },
+      } satisfies NotionQueryWhere
+    }
+
+    // Relation type
+    if (config.type === "relation") {
+      const relationCondition = this.buildRelationCondition(key, value)
+      if (relationCondition !== undefined) {
+        return relationCondition
+      }
+    }
+
+    // People type
+    if (config.type === "people") {
+      const peopleCondition = this.buildPeopleCondition(key, value)
+      if (peopleCondition !== undefined) {
+        return peopleCondition
+      }
+    }
+
+    // Created time / Last edited time type
+    if (config.type === "created_time" || config.type === "last_edited_time") {
+      const timestampString =
+        value instanceof Date ? value.toISOString() : typeof value === "string" ? value : null
+      if (timestampString !== null) {
+        if (config.type === "created_time") {
+          return {
+            property: key,
+            created_time: { equals: timestampString },
+          } satisfies NotionQueryWhere
+        }
+        return {
+          property: key,
+          last_edited_time: { equals: timestampString },
+        } satisfies NotionQueryWhere
+      }
+    }
+
+    // Created by / Last edited by type
+    if (config.type === "created_by" || config.type === "last_edited_by") {
+      const userId = this.extractUserId(value)
+      if (userId !== null) {
+        if (config.type === "created_by") {
+          return {
+            property: key,
+            created_by: { contains: userId },
+          } satisfies NotionQueryWhere
+        }
+        return {
+          property: key,
+          last_edited_by: { contains: userId },
+        } satisfies NotionQueryWhere
+      }
     }
 
     // Formula type
@@ -267,7 +336,95 @@ export class NotionQueryBuilder {
       }
     }
 
+    // 変換できない値を黙って捨てるとフィルターなし（全件マッチ）のクエリになり
+    // deleteMany などで意図しない全件操作を引き起こすため、明示的にエラーにする
+    throw new Error(
+      `Cannot convert value for property "${key}" (type: ${config.type}) to a Notion filter: ${JSON.stringify(value)}`,
+    )
+  }
+
+  /**
+   * undefined は「変換不能」を意味し、呼び出し側でエラーになる
+   * null は「条件なし（空配列）」としてスキップされる
+   */
+  private buildRelationCondition(key: string, value: unknown): NotionQueryWhere | null | undefined {
+    if (typeof value === "string") {
+      return {
+        property: key,
+        relation: { contains: value },
+      } satisfies NotionQueryWhere
+    }
+
+    if (!Array.isArray(value)) {
+      return undefined
+    }
+
+    if (value.length === 0) {
+      return null
+    }
+
+    const relationConditions = value.map((pageId) => ({
+      property: key,
+      relation: { contains: String(pageId) },
+    }))
+
+    if (relationConditions.length === 1 && relationConditions[0]) {
+      return relationConditions[0]
+    }
+
+    return { and: relationConditions } satisfies NotionQueryWhere
+  }
+
+  private buildPeopleCondition(key: string, value: unknown): NotionQueryWhere | null | undefined {
+    if (typeof value === "string") {
+      return {
+        property: key,
+        people: { contains: value },
+      } satisfies NotionQueryWhere
+    }
+
+    if (!Array.isArray(value)) {
+      return undefined
+    }
+
+    if (value.length === 0) {
+      return null
+    }
+
+    const peopleConditions = value.map((user) => ({
+      property: key,
+      people: { contains: this.getUserId(user) },
+    }))
+
+    if (peopleConditions.length === 1 && peopleConditions[0]) {
+      return peopleConditions[0]
+    }
+
+    return { and: peopleConditions } satisfies NotionQueryWhere
+  }
+
+  private extractUserId(value: unknown): string | null {
+    if (typeof value === "string") {
+      return value
+    }
+
+    if (value && typeof value === "object" && "id" in value && typeof value.id === "string") {
+      return value.id
+    }
+
     return null
+  }
+
+  private getUserId(value: unknown): string {
+    if (typeof value === "string") {
+      return value
+    }
+
+    if (value && typeof value === "object" && "id" in value && typeof value.id === "string") {
+      return value.id
+    }
+
+    throw new Error(`Invalid people value: ${JSON.stringify(value)}`)
   }
 
   private getDateString(value: unknown): string {
@@ -278,8 +435,13 @@ export class NotionQueryBuilder {
       }
     }
 
+    // toISOString はUTC基準のため UTC+9 などの環境では日付が1日ずれる
+    // ローカルタイムゾーンの年月日で組み立てる
     if (value instanceof Date) {
-      return value.toISOString().split("T")[0] || value.toISOString()
+      const year = value.getFullYear()
+      const month = String(value.getMonth() + 1).padStart(2, "0")
+      const day = String(value.getDate()).padStart(2, "0")
+      return `${year}-${month}-${day}`
     }
 
     if (typeof value === "string") {

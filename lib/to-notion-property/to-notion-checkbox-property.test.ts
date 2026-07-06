@@ -25,8 +25,10 @@ test("数値を渡すとエラーをthrow", () => {
   expect(() => toNotionCheckboxProperty(1)).toThrow()
 })
 
-test("nullを渡すとエラーをthrow", () => {
-  expect(() => toNotionCheckboxProperty(null)).toThrow()
+test("nullはfalseに変換", () => {
+  const result = toNotionCheckboxProperty(null)
+
+  expect(result).toEqual({ checkbox: false })
 })
 
 test("undefinedを渡すとエラーをthrow", () => {

@@ -46,6 +46,7 @@ test("CRITICAL: Paragraph blocks with internal newlines should be split", () => 
       id: "test-id",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -132,6 +133,7 @@ test("CRITICAL: Empty paragraph blocks should create appropriate spacing", () =>
       id: "test-1",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -165,6 +167,7 @@ test("CRITICAL: Empty paragraph blocks should create appropriate spacing", () =>
       id: "test-2",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [], // Empty paragraph block
         color: "default",
       },
@@ -183,6 +186,7 @@ test("CRITICAL: Empty paragraph blocks should create appropriate spacing", () =>
       id: "test-3",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",

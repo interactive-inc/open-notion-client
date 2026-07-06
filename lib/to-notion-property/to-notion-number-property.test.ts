@@ -48,3 +48,28 @@ test("オブジェクトを渡すとエラーをthrow", () => {
 test("配列を渡すとエラーをthrow", () => {
   expect(() => toNotionNumberProperty([])).toThrow()
 })
+
+test("minを下回るとエラーをthrow", () => {
+  expect(() => toNotionNumberProperty(5, { min: 10 })).toThrow()
+})
+
+test("maxを超えるとエラーをthrow", () => {
+  expect(() => toNotionNumberProperty(15, { max: 10 })).toThrow()
+})
+
+test("min/maxの範囲内は変換される", () => {
+  const result = toNotionNumberProperty(5, { min: 0, max: 10 })
+
+  expect(result).toEqual({ number: 5 })
+})
+
+test("min/maxちょうどの境界値は変換される", () => {
+  expect(toNotionNumberProperty(0, { min: 0, max: 10 })).toEqual({ number: 0 })
+  expect(toNotionNumberProperty(10, { min: 0, max: 10 })).toEqual({ number: 10 })
+})
+
+test("nullはmin/maxがあっても許可される", () => {
+  const result = toNotionNumberProperty(null, { min: 0, max: 10 })
+
+  expect(result).toEqual({ number: null })
+})

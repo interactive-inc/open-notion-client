@@ -1,4 +1,5 @@
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
+import type { PropertyConfig } from "@/types"
 import { fromNotionCheckboxProperty } from "@/from-notion-property/from-notion-checkbox-property"
 import { fromNotionCreatedByProperty } from "@/from-notion-property/from-notion-created-by-property"
 import { fromNotionDateProperty } from "@/from-notion-property/from-notion-date-property"
@@ -17,8 +18,9 @@ type NotionProperty = PageObjectResponse["properties"][string]
 
 /**
  * Notionのプロパティを宣言された型に揃えて変換
+ * configが渡された場合はformulaの宣言型と実際の結果型を照合する
  */
-export function fromNotionProperty(property: NotionProperty): unknown {
+export function fromNotionProperty(property: NotionProperty, config?: PropertyConfig): unknown {
   if (property.type === "title") {
     return fromNotionTitleProperty(property)
   }
@@ -92,6 +94,9 @@ export function fromNotionProperty(property: NotionProperty): unknown {
   }
 
   if (property.type === "formula") {
+    if (config !== undefined && config.type === "formula") {
+      return fromNotionFormulaProperty(property, config.formulaType)
+    }
     return fromNotionFormulaProperty(property)
   }
 

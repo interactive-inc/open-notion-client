@@ -35,8 +35,33 @@ test("数値を渡すとエラーをthrow", () => {
   expect(() => toNotionRichTextProperty(123)).toThrow()
 })
 
-test("nullを渡すとエラーをthrow", () => {
-  expect(() => toNotionRichTextProperty(null)).toThrow()
+test("nullは空のrich_text配列に変換（値クリア）", () => {
+  const result = toNotionRichTextProperty(null)
+
+  expect(result).toEqual({ rich_text: [] })
+})
+
+test("2000文字ちょうどは1要素のまま", () => {
+  const result = toNotionRichTextProperty("a".repeat(2000))
+
+  expect(result.rich_text).toHaveLength(1)
+})
+
+test("2000文字を超えると複数要素に分割される", () => {
+  const result = toNotionRichTextProperty("a".repeat(2001))
+
+  expect(result.rich_text).toHaveLength(2)
+
+  const contents = result.rich_text.map((item) => {
+    if (!("text" in item)) {
+      throw new Error("text要素ではありません")
+    }
+    return item.text.content
+  })
+
+  expect(contents[0]).toHaveLength(2000)
+  expect(contents[1]).toHaveLength(1)
+  expect(contents.join("")).toBe("a".repeat(2001))
 })
 
 test("undefinedを渡すとエラーをthrow", () => {

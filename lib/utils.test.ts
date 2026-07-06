@@ -248,7 +248,143 @@ test("すべての装飾を適用したテキストを変換", () => {
     },
   ]
   const result = fromNotionRichTextItem(richTexts)
-  expect(result).toBe("`~~***All Styles***~~`")
+  // codeを最内殻にしないとCommonMarkで装飾として認識されない
+  expect(result).toBe("***~~`All Styles`~~***")
+})
+
+test("code+boldはcodeが最内殻になる", () => {
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "text", link: null },
+      plain_text: "text",
+      annotations: {
+        bold: true,
+        italic: false,
+        strikethrough: false,
+        underline: false,
+        code: true,
+        color: "default",
+      },
+      href: null,
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("**`text`**")
+})
+
+test("注釈付きテキストの前後空白はマーカーの外に出す", () => {
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "bold ", link: null },
+      plain_text: "bold ",
+      annotations: {
+        bold: true,
+        italic: false,
+        strikethrough: false,
+        underline: false,
+        code: false,
+        color: "default",
+      },
+      href: null,
+    },
+    {
+      type: "text",
+      text: { content: "plain", link: null },
+      plain_text: "plain",
+      annotations: {
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        underline: false,
+        code: false,
+        color: "default",
+      },
+      href: null,
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("**bold** plain")
+})
+
+test("空白のみの注釈付きテキストはマーカーで巻かない", () => {
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "  ", link: null },
+      plain_text: "  ",
+      annotations: {
+        bold: true,
+        italic: false,
+        strikethrough: false,
+        underline: false,
+        code: false,
+        color: "default",
+      },
+      href: null,
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("  ")
+})
+
+test("同一注釈の隣接項目はマージしてから巻く", () => {
+  const annotations = {
+    bold: true,
+    italic: false,
+    strikethrough: false,
+    underline: false,
+    code: false,
+    color: "default",
+  } as const
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "foo", link: null },
+      plain_text: "foo",
+      annotations: annotations,
+      href: null,
+    },
+    {
+      type: "text",
+      text: { content: "bar", link: null },
+      plain_text: "bar",
+      annotations: annotations,
+      href: null,
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("**foobar**")
+})
+
+test("同一hrefの隣接リンク項目はマージされる", () => {
+  const annotations = {
+    bold: false,
+    italic: false,
+    strikethrough: false,
+    underline: false,
+    code: false,
+    color: "default",
+  } as const
+  const richTexts: RichTextItemResponse[] = [
+    {
+      type: "text",
+      text: { content: "click ", link: { url: "https://example.com" } },
+      plain_text: "click ",
+      annotations: annotations,
+      href: "https://example.com",
+    },
+    {
+      type: "text",
+      text: { content: "here", link: { url: "https://example.com" } },
+      plain_text: "here",
+      annotations: annotations,
+      href: "https://example.com",
+    },
+  ]
+  const result = fromNotionRichTextItem(richTexts)
+  expect(result).toBe("[click here](https://example.com)")
 })
 
 test("特殊文字を含むコードテキストを変換", () => {

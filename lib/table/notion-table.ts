@@ -30,6 +30,8 @@ import { withConcurrency } from "@/with-concurrency"
 
 const MAX_FIND_LIMIT = 1024
 const NOTION_PAGE_SIZE = 100
+// Notion APIは1リクエストあたり100 childrenまでしか受け付けない
+const MAX_BLOCK_CHILDREN = 100
 
 type RetryOptions = {
   maxRetries?: number
@@ -95,7 +97,6 @@ export class NotionTable<T extends NotionPropertySchema> {
     const limit = options.limit || NOTION_PAGE_SIZE
 
     const maxCount = Math.min(Math.max(1, limit), MAX_FIND_LIMIT)
-    const pageSize = Math.min(maxCount, NOTION_PAGE_SIZE)
 
     const notionFilter =
       Object.keys(where).length > 0
@@ -104,13 +105,12 @@ export class NotionTable<T extends NotionPropertySchema> {
 
     const notionSort = this.buildNotionSort(options.sorts)
 
-    const result = await this.fetchPages(
-      maxCount,
-      pageSize,
-      notionFilter,
-      notionSort,
-      options.cursor,
-    )
+    const result = await this.fetchPages({
+      maxCount: maxCount,
+      notionFilter: notionFilter,
+      notionSort: notionSort,
+      startCursor: options.cursor,
+    })
 
     return {
       records: result.references(),
@@ -161,13 +161,21 @@ export class NotionTable<T extends NotionPropertySchema> {
       children = blocks.map((block) => this.markdown.enhanceBlock(block))
     }
 
+    // 100個超のchildrenはページ作成後に100個ずつ追加する
+    const initialChildren = children.slice(0, MAX_BLOCK_CHILDREN)
+    const remainingChildren = children.slice(MAX_BLOCK_CHILDREN)
+
     const response = await this.withRetry(() =>
       this.client.pages.create({
         parent: { data_source_id: this.dataSourceId },
         properties: properties,
-        children: children,
+        children: initialChildren,
       }),
     )
+
+    if (remainingChildren.length > 0) {
+      await this.appendBlockChunks(response.id, remainingChildren)
+    }
 
     const record = await this.findById(response.id)
 
@@ -225,15 +233,12 @@ export class NotionTable<T extends NotionPropertySchema> {
   }
 
   async updateMany(options: UpdateManyOptions<T>): Promise<BatchResult<NotionPageReference<T>>> {
-    const result = await this.findMany({
-      where: options.where || {},
-      limit: options.limit || MAX_FIND_LIMIT,
-    })
+    const records = await this.findAllMatching(options.where || {}, options.limit ?? null)
 
     const succeeded: NotionPageReference<T>[] = []
     const failed: Array<{ data: NotionPageReference<T>; error: Error }> = []
 
-    await withConcurrency(result.records, 3, async (record) => {
+    await withConcurrency(records, 3, async (record) => {
       try {
         const updated = await this.update(record.id, options.update)
         succeeded.push(updated)
@@ -246,6 +251,9 @@ export class NotionTable<T extends NotionPropertySchema> {
     return { succeeded, failed }
   }
 
+  /**
+   * 検索と作成が別リクエストのため、同一条件での並行実行時は重複レコードが作成される可能性がある（NotionのAPIに一意制約はない）
+   */
   async upsert(options: UpsertOptions<T>): Promise<NotionPageReference<T>> {
     const current = await this.findOne({ where: options.where })
 
@@ -257,12 +265,12 @@ export class NotionTable<T extends NotionPropertySchema> {
   }
 
   async deleteMany(where: WhereCondition<T> = {}): Promise<BatchResult<string>> {
-    const result = await this.findMany({ where, limit: MAX_FIND_LIMIT })
+    const records = await this.findAllMatching(where, null)
 
     const succeeded: string[] = []
     const failed: Array<{ data: string; error: Error }> = []
 
-    await withConcurrency(result.records, 3, async (record) => {
+    await withConcurrency(records, 3, async (record) => {
       try {
         await this.delete(record.id)
         succeeded.push(record.id)
@@ -311,6 +319,47 @@ export class NotionTable<T extends NotionPropertySchema> {
     this.cache?.clear()
   }
 
+  /**
+   * findMany の1回あたり上限（MAX_FIND_LIMIT）を超えるマッチも
+   * cursor でページ送りして全件収集する
+   */
+  private async findAllMatching(
+    where: WhereCondition<T>,
+    maxCount: number | null,
+  ): Promise<NotionPageReference<T>[]> {
+    const matchedRecords: NotionPageReference<T>[] = []
+
+    let cursor: string | undefined
+
+    while (true) {
+      const remaining =
+        maxCount === null
+          ? MAX_FIND_LIMIT
+          : Math.min(maxCount - matchedRecords.length, MAX_FIND_LIMIT)
+
+      const result = await this.findMany({ where, limit: remaining, cursor })
+
+      for (const record of result.records) {
+        matchedRecords.push(record)
+      }
+
+      if (maxCount !== null && matchedRecords.length >= maxCount) {
+        return matchedRecords
+      }
+
+      if (!result.hasMore || result.nextCursor === null) {
+        return matchedRecords
+      }
+
+      // APIが同一カーソルを返し続けた場合の無限ループを防ぐ
+      if (result.nextCursor === cursor) {
+        return matchedRecords
+      }
+
+      cursor = result.nextCursor
+    }
+  }
+
   private buildReference(notionPage: PageObjectResponse): NotionPageReference<T> {
     return new NotionPageReference({
       client: this.client,
@@ -318,6 +367,7 @@ export class NotionTable<T extends NotionPropertySchema> {
       converter: this.propertyConverter,
       notionPage: notionPage,
       cache: this.cache ?? undefined,
+      listBlockChildren: (args) => this.withRetry(() => this.client.blocks.children.list(args)),
     })
   }
 
@@ -331,28 +381,31 @@ export class NotionTable<T extends NotionPropertySchema> {
     return this.queryBuilder.buildSort(sortArray)
   }
 
-  private async fetchPages(
-    maxCount: number,
-    pageSize: number,
-    notionFilter: NotionQueryWhere | undefined,
-    notionSort: NonNullable<QueryDataSourceParameters["sorts"]>,
-    startCursor?: string,
-  ): Promise<NotionQueryResult<T>> {
+  private async fetchPages(props: {
+    maxCount: number
+    notionFilter: NotionQueryWhere | undefined
+    notionSort: NonNullable<QueryDataSourceParameters["sorts"]>
+    startCursor?: string
+  }): Promise<NotionQueryResult<T>> {
     const references: NotionPageReference<T>[] = []
 
-    let nextCursor: string | null = startCursor || null
+    let nextCursor: string | null = props.startCursor || null
     let hasMore = true
 
     // NotionQueryWhere と QueryDataSourceParameters["filter"] は
     // 構造的に同一だが独立宣言のため互換性がない
-    const apiFilter = notionFilter as QueryDataSourceParameters["filter"]
+    const apiFilter = props.notionFilter as QueryDataSourceParameters["filter"]
 
-    while (hasMore && references.length < maxCount) {
+    while (hasMore && references.length < props.maxCount) {
+      // 残り必要件数まで page_size を縮小し、maxCount を超えて取得しないようにする
+      // 超過分を捨てると nextCursor が捨てたレコードの後ろを指し、中間レコードが欠落する
+      const pageSize = Math.min(props.maxCount - references.length, NOTION_PAGE_SIZE)
+
       const response = await this.withRetry(() =>
         this.client.dataSources.query({
           data_source_id: this.dataSourceId,
           filter: apiFilter,
-          sorts: notionSort.length > 0 ? notionSort : undefined,
+          sorts: props.notionSort.length > 0 ? props.notionSort : undefined,
           start_cursor: nextCursor || undefined,
           page_size: pageSize,
         }),
@@ -369,15 +422,10 @@ export class NotionTable<T extends NotionPropertySchema> {
       hasMore = response.has_more
     }
 
-    const pageReferences = references.length > maxCount ? references.slice(0, maxCount) : references
-
-    // limit分取得してもNotion側にデータが残っている場合はhasMore=trueを保持する
-    const resultHasMore = hasMore || references.length > maxCount
-
     return new NotionQueryResult({
-      pageReferences,
+      pageReferences: references,
       cursor: nextCursor,
-      hasMore: resultHasMore,
+      hasMore: hasMore,
     })
   }
 
@@ -410,11 +458,20 @@ export class NotionTable<T extends NotionPropertySchema> {
     const blocks = toNotionBlocks(content)
     const enhancedBlocks = blocks.map((block) => this.markdown.enhanceBlock(block))
 
-    await this.withRetry(() =>
-      this.client.blocks.children.append({
-        block_id: id,
-        children: enhancedBlocks,
-      }),
-    )
+    await this.appendBlockChunks(id, enhancedBlocks)
+  }
+
+  // Notion APIの1リクエスト100 children制限を超えないよう分割して追加する
+  private async appendBlockChunks(id: string, blocks: BlockObjectRequest[]): Promise<void> {
+    for (let index = 0; index < blocks.length; index += MAX_BLOCK_CHILDREN) {
+      const chunk = blocks.slice(index, index + MAX_BLOCK_CHILDREN)
+
+      await this.withRetry(() =>
+        this.client.blocks.children.append({
+          block_id: id,
+          children: chunk,
+        }),
+      )
+    }
   }
 }

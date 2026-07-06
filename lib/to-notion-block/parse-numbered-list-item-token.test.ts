@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import type { Tokens } from "marked"
+import { lexer, type Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
 import { parseNumberedListItemToken } from "./parse-numbered-list-item-token"
 
@@ -282,4 +282,19 @@ test("テキストトークンがない場合は空の項目を返す", () => {
       children: undefined,
     },
   })
+})
+
+test("番号付きリストのtaskアイテムをto_doブロックに変換", () => {
+  const listToken = lexer("1. [x] 完了タスク")[0] as Tokens.List
+
+  const item = listToken.items[0] as Tokens.ListItem
+
+  const block = parseNumberedListItemToken(item) as unknown as {
+    type: string
+    to_do: { rich_text: Array<{ text: { content: string } }>; checked: boolean }
+  }
+
+  expect(block.type).toBe("to_do")
+  expect(block.to_do.checked).toBe(true)
+  expect(block.to_do.rich_text[0]?.text.content).toBe("完了タスク")
 })

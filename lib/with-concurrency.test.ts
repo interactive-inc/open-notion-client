@@ -38,3 +38,24 @@ test("limit 0以下は1として扱う", async () => {
   const result = await withConcurrency([1, 2], 0, async (n) => n + 1)
   expect(result).toEqual([2, 3])
 })
+
+test("undefined要素でもfnを呼び結果に穴を残さない", async () => {
+  const inputs: Array<number | undefined> = [1, undefined, 3]
+
+  const result = await withConcurrency(inputs, 2, async (input, index) => `${index}:${input}`)
+
+  expect(result).toEqual(["0:1", "1:undefined", "2:3"])
+})
+
+test("undefined要素を含んでも全要素分fnが呼ばれる", async () => {
+  const inputs: Array<string | undefined> = [undefined, undefined, "a"]
+  let callCount = 0
+
+  const result = await withConcurrency(inputs, 1, async (input) => {
+    callCount++
+    return input ?? "fallback"
+  })
+
+  expect(callCount).toBe(3)
+  expect(result).toEqual(["fallback", "fallback", "a"])
+})

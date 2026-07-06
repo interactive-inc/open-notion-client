@@ -32,7 +32,7 @@ export function toNotionProperty<T extends PropertyConfig>(
   }
 
   if (config.type === "number") {
-    return toNotionNumberProperty(value)
+    return toNotionNumberProperty(value, config)
   }
 
   if (config.type === "checkbox") {
@@ -40,11 +40,11 @@ export function toNotionProperty<T extends PropertyConfig>(
   }
 
   if (config.type === "select") {
-    return toNotionSelectProperty(value)
+    return toNotionSelectProperty(value, config)
   }
 
   if (config.type === "multi_select") {
-    return toNotionMultiSelectProperty(value)
+    return toNotionMultiSelectProperty(value, config)
   }
 
   if (config.type === "date") {
@@ -72,7 +72,7 @@ export function toNotionProperty<T extends PropertyConfig>(
   }
 
   if (config.type === "status") {
-    return toNotionStatusProperty(value)
+    return toNotionStatusProperty(value, config)
   }
 
   if (config.type === "files") {

@@ -10,6 +10,16 @@ import { BlockType } from "@/types"
 export function parseLastNumberedListItem(
   item: Tokens.ListItem,
 ): BlockObjectRequestWithoutChildren {
+  if (item.task) {
+    return {
+      type: BlockType.ToDo,
+      to_do: {
+        rich_text: expandInlineTokens(extractListItemInline(item)),
+        checked: item.checked === true,
+      },
+    }
+  }
+
   return {
     type: BlockType.NumberedListItem,
     numbered_list_item: {

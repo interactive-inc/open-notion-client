@@ -129,6 +129,12 @@ export function expandInlineTokens(
       continue
     }
 
+    if (token.type === "image") {
+      const image = token as Tokens.Image
+      result.push(buildItem(image.text || image.href, withHref(carry, image.href)))
+      continue
+    }
+
     const text = (token as Tokens.Text).text ?? ""
     result.push(buildItem(text, carry))
   }

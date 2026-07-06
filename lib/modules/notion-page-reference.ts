@@ -1,5 +1,9 @@
 import type { Client } from "@notionhq/client"
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
+import type {
+  ListBlockChildrenParameters,
+  ListBlockChildrenResponse,
+  PageObjectResponse,
+} from "@notionhq/client/build/src/api-endpoints"
 import { enhance } from "@/enhance"
 import { fromNotionBlocks } from "@/from-notion-block/from-notion-blocks"
 import type { NotionMemoryCache } from "@/table/notion-memory-cache"
@@ -12,6 +16,13 @@ type Props<T extends NotionPropertySchema> = {
   readonly notionPage: NotionPage
   readonly converter: NotionPropertyConverter
   readonly cache?: NotionMemoryCache
+  /**
+   * 子ブロック取得に使う関数。NotionTableはリトライ済みの関数を渡す
+   * 未指定時はclientを直接使う（リトライなし）
+   */
+  readonly listBlockChildren?: (
+    args: ListBlockChildrenParameters,
+  ) => Promise<ListBlockChildrenResponse>
 }
 
 /**
@@ -66,7 +77,9 @@ export class NotionPageReference<T extends NotionPropertySchema> {
       return fromNotionBlocks(cachedBlocks)
     }
 
-    const blocks = await enhance(this.props.client.blocks.children.list)({
+    const listBlockChildren = this.props.listBlockChildren ?? this.props.client.blocks.children.list
+
+    const blocks = await enhance(listBlockChildren)({
       block_id: this.props.notionPage.id,
     })
 

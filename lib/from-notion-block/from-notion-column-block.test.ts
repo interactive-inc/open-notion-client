@@ -52,6 +52,7 @@ test("カラムブロックを変換できる", () => {
         in_trash: false,
         type: "paragraph",
         paragraph: {
+          icon: null,
           rich_text: [
             {
               type: "text",
@@ -94,6 +95,7 @@ test("カラムブロックを変換できる", () => {
         in_trash: false,
         type: "paragraph",
         paragraph: {
+          icon: null,
           rich_text: [
             {
               type: "text",

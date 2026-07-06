@@ -53,6 +53,10 @@ await tasks.findMany({
 
 Supported: `equals`, `does_not_equal`, `contains`, `does_not_contain`, `starts_with`, `ends_with`, `greater_than`, `less_than`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `before`, `after`, `on_or_before`, `on_or_after`, `is_empty`, `is_not_empty`
 
+Direct values also work for `url` / `email` / `phone_number` (exact match), `relation` (a page ID or an array of page IDs), and `people` (a user ID, a user object, or an array of either).
+
+If a `where` value cannot be converted to a Notion filter, an `Error` is thrown instead of silently matching all records.
+
 ### Logical operators
 
 ```typescript

@@ -55,6 +55,24 @@ test("読み取り専用プロパティはスキップされる", () => {
   expect(Object.keys(properties)).toEqual(["title"])
 })
 
+test("read-modify-writeでnullのtitle/rich_text/checkboxがthrowしない", () => {
+  const schema: NotionPropertySchema = {
+    title: { type: "title" },
+    description: { type: "rich_text" },
+    isActive: { type: "checkbox" },
+  }
+
+  const properties = toNotionProperties(schema, {
+    title: null,
+    description: null,
+    isActive: null,
+  })
+
+  expect(properties.title).toEqual({ title: [] })
+  expect(properties.description).toEqual({ rich_text: [] })
+  expect(properties.isActive).toEqual({ checkbox: false })
+})
+
 test("空のデータは空のオブジェクトを返す", () => {
   const schema: NotionPropertySchema = {
     title: { type: "title" },

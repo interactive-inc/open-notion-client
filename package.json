@@ -1,6 +1,6 @@
 {
   "name": "@interactive-inc/notion-client",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "homepage": "https://interactive-inc.github.io/open-notion-client",
   "repository": {
     "type": "git",
@@ -28,16 +28,16 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@notionhq/client": "^5.9.0",
-    "marked": "^17.0.3",
-    "zod": "^4.3.6"
+    "@notionhq/client": "^5.22.0",
+    "marked": "^18.0.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@typescript/native-preview": "^7.0.0-dev.20260221.1",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "vite-plus": "^0.1.24",
+    "@types/bun": "^1.3.14",
+    "@typescript/native-preview": "^7.0.0-dev.20260706.1",
+    "tsdown": "^0.22.3",
+    "typescript": "^6.0.3",
+    "vite-plus": "^0.2.2",
     "vitepress": "^1.6.4"
   }
 }

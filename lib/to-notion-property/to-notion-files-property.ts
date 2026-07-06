@@ -4,14 +4,15 @@ import type { NotionFilesPropertyRequest } from "@/types"
 const fileSchema = z.object({
   name: z.string().min(1),
   url: z.string().min(1),
+  type: z.enum(["file", "external"]).optional(),
 })
 
 const filesPropertySchema = z.array(fileSchema).nullable()
 
 /**
  * unknownをNotionのfilesプロパティに変換
- * 外部URLのみサポート。Notion API経由ではアップロード済みファイルの新規登録はできないため
- * 全エントリを type: "external" として送信する
+ * type: "file"（Notionホスト済みファイル）はそのままfileとして書き戻す
+ * type未指定または"external"は外部URLとして送信する
  */
 export function toNotionFilesProperty(value: unknown): NotionFilesPropertyRequest {
   const data = filesPropertySchema.parse(value)
@@ -21,10 +22,19 @@ export function toNotionFilesProperty(value: unknown): NotionFilesPropertyReques
   }
 
   return {
-    files: data.map((file) => ({
-      name: file.name,
-      type: "external",
-      external: { url: file.url },
-    })),
+    files: data.map((file) => {
+      if (file.type === "file") {
+        return {
+          name: file.name,
+          type: "file",
+          file: { url: file.url },
+        }
+      }
+      return {
+        name: file.name,
+        type: "external",
+        external: { url: file.url },
+      }
+    }),
   }
 }

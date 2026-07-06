@@ -127,6 +127,41 @@ test("プロパティタイプが一致しない場合はエラー", () => {
   )
 })
 
+test("formulaの宣言型と実際の結果型が一致しない場合はエラー", () => {
+  const schema: NotionPropertySchema = {
+    calc: { type: "formula", formulaType: "number" },
+  }
+
+  const properties: PageObjectResponse["properties"] = {
+    calc: {
+      type: "formula",
+      formula: { type: "string", string: "not-a-number" },
+      id: "calc",
+    },
+  }
+
+  expect(() => fromNotionProperties(schema, properties)).toThrow(
+    "formulaの結果型が一致しません。期待: number, 実際: string",
+  )
+})
+
+test("formulaの宣言型と実際の結果型が一致する場合は変換される", () => {
+  const schema: NotionPropertySchema = {
+    calc: { type: "formula", formulaType: "number" },
+  }
+
+  const properties: PageObjectResponse["properties"] = {
+    calc: {
+      type: "formula",
+      formula: { type: "number", number: 42 },
+      id: "calc",
+    },
+  }
+
+  const result = fromNotionProperties(schema, properties)
+  expect(result).toEqual({ calc: 42 })
+})
+
 test("複数のプロパティタイプを含むスキーマを変換", () => {
   const schema: NotionPropertySchema = {
     name: { type: "title" },

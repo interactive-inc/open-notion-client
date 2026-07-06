@@ -26,7 +26,7 @@ const createMockBlocks = (): NotionBlock[] => {
       has_children: false,
       archived: false,
       children: [],
-      paragraph: { color: "blue", rich_text: [] },
+      paragraph: { color: "blue", rich_text: [], icon: null },
       created_by: { object: "user", id: "user-1" },
       last_edited_by: { object: "user", id: "user-1" },
       in_trash: false,

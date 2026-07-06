@@ -25,10 +25,10 @@ const table = new NotionTable({
 - `findOne(options?)` -- Find first matching record
 - `findById(id)` -- Get record by page ID
 - `update(id, input)` -- Update a record. Pass `body: null` to clear content
-- `updateMany(options)` -- Bulk update, returns `BatchResult`
+- `updateMany(options)` -- Bulk update all matching records, returns `BatchResult`
 - `upsert(options)` -- Create or update
 - `delete(id)` -- Archive a record
-- `deleteMany(where?)` -- Bulk archive, returns `BatchResult`
+- `deleteMany(where?)` -- Bulk archive all matching records, returns `BatchResult`
 - `restore(id)` -- Restore archived record
 - `clearCache()` -- Clear the memory cache
 

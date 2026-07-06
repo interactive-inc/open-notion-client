@@ -195,10 +195,12 @@ function mapLanguage(lang: string | undefined): LanguageRequest {
   return supportedLanguages.includes(lowerLang) ? lowerLang : "plain text"
 }
 
+type CodeRequest = Extract<BlockObjectRequest, { type?: "code" }>
+
 /**
  * Convert code token to Notion block
  */
-export function parseCodeToken(token: Tokens.Code): BlockObjectRequest {
+export function parseCodeToken(token: Tokens.Code): CodeRequest {
   const richText = [
     {
       type: "text" as const,

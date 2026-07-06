@@ -141,6 +141,7 @@ test("子要素を持つto_doブロックを変換できる", () => {
         in_trash: false,
         type: "paragraph",
         paragraph: {
+          icon: null,
           rich_text: [
             {
               type: "text",

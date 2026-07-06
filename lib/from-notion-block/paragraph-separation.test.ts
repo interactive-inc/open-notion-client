@@ -18,6 +18,7 @@ test("CRITICAL: Internal newlines in paragraph blocks must be converted to parag
     id: "test-id",
     type: "paragraph",
     paragraph: {
+      icon: null,
       rich_text: [
         {
           type: "text",
@@ -59,6 +60,7 @@ test("CRITICAL: Paragraph blocks without internal newlines should remain as sing
     id: "test-id",
     type: "paragraph",
     paragraph: {
+      icon: null,
       rich_text: [
         {
           type: "text",
@@ -101,6 +103,7 @@ test("CRITICAL: Multiple paragraph blocks should have proper spacing", () => {
       id: "test-1",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -134,6 +137,7 @@ test("CRITICAL: Multiple paragraph blocks should have proper spacing", () => {
       id: "test-2",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -177,6 +181,7 @@ test("CRITICAL: Mixed paragraph blocks with and without internal newlines", () =
       id: "test-1",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -210,6 +215,7 @@ test("CRITICAL: Mixed paragraph blocks with and without internal newlines", () =
       id: "test-2",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",
@@ -243,6 +249,7 @@ test("CRITICAL: Mixed paragraph blocks with and without internal newlines", () =
       id: "test-3",
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [
           {
             type: "text",

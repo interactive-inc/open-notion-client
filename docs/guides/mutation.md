@@ -65,7 +65,7 @@ await tasks.update("page-id", {
 
 ### Bulk update
 
-Returns `BatchResult` with `succeeded` and `failed` arrays:
+Returns `BatchResult` with `succeeded` and `failed` arrays. All matching records are processed, paging through results automatically:
 
 ```typescript
 const result = await tasks.updateMany({
@@ -96,7 +96,7 @@ await contacts.upsert({
 // Archive
 await tasks.delete("page-id")
 
-// Bulk archive (returns BatchResult)
+// Bulk archive (processes all matching records, returns BatchResult)
 const result = await tasks.deleteMany({ status: "cancelled" })
 
 // Restore

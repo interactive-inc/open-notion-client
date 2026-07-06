@@ -24,6 +24,7 @@ const block = {
   in_trash: false,
   type: "paragraph",
   paragraph: {
+    icon: null,
     rich_text: [
       {
         type: "text",
@@ -86,6 +87,7 @@ test("段落内の改行はそのまま保持される", () => {
     id: "mock-id",
     type: "paragraph",
     paragraph: {
+      icon: null,
       rich_text: [
         {
           type: "text",

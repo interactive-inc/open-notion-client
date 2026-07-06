@@ -586,6 +586,174 @@ test("buildFilter: ネストしたor/and条件", () => {
   })
 })
 
+test("buildFilter: url/email/phone_number型の文字列値はequalsになる", () => {
+  const schema: NotionPropertySchema = {
+    website: { type: "url" },
+    contact: { type: "email" },
+    tel: { type: "phone_number" },
+  }
+
+  const urlFilter = queryBuilder.buildFilter(schema, { website: "https://example.com" })
+  expect(urlFilter).toEqual({
+    property: "website",
+    url: { equals: "https://example.com" },
+  })
+
+  const emailFilter = queryBuilder.buildFilter(schema, { contact: "a@example.com" })
+  expect(emailFilter).toEqual({
+    property: "contact",
+    email: { equals: "a@example.com" },
+  })
+
+  const phoneFilter = queryBuilder.buildFilter(schema, { tel: "090-0000-0000" })
+  expect(phoneFilter).toEqual({
+    property: "tel",
+    phone_number: { equals: "090-0000-0000" },
+  })
+})
+
+test("buildFilter: relation型の文字列はcontainsになる", () => {
+  const schema: NotionPropertySchema = {
+    project: { type: "relation" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { project: "page-id-1" })
+
+  expect(result).toEqual({
+    property: "project",
+    relation: { contains: "page-id-1" },
+  })
+})
+
+test("buildFilter: relation型に配列を渡すとAND条件になる", () => {
+  const schema: NotionPropertySchema = {
+    project: { type: "relation" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { project: ["page-1", "page-2"] })
+
+  expect(result).toEqual({
+    and: [
+      { property: "project", relation: { contains: "page-1" } },
+      { property: "project", relation: { contains: "page-2" } },
+    ],
+  })
+})
+
+test("buildFilter: relation型に単一要素の配列を渡すと単一条件になる", () => {
+  const schema: NotionPropertySchema = {
+    project: { type: "relation" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { project: ["page-1"] })
+
+  expect(result).toEqual({
+    property: "project",
+    relation: { contains: "page-1" },
+  })
+})
+
+test("buildFilter: relation型に空配列を渡すとundefined", () => {
+  const schema: NotionPropertySchema = {
+    project: { type: "relation" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { project: [] })
+
+  expect(result).toBeUndefined()
+})
+
+test("buildFilter: people型の文字列とID配列はcontainsになる", () => {
+  const schema: NotionPropertySchema = {
+    assignees: { type: "people" },
+  }
+
+  const singleResult = queryBuilder.buildFilter(schema, { assignees: "user-1" })
+  expect(singleResult).toEqual({
+    property: "assignees",
+    people: { contains: "user-1" },
+  })
+
+  const arrayResult = queryBuilder.buildFilter(schema, { assignees: ["user-1", "user-2"] })
+  expect(arrayResult).toEqual({
+    and: [
+      { property: "assignees", people: { contains: "user-1" } },
+      { property: "assignees", people: { contains: "user-2" } },
+    ],
+  })
+})
+
+test("buildFilter: people型のNotionUser配列はidでcontainsになる", () => {
+  const schema: NotionPropertySchema = {
+    assignees: { type: "people" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    assignees: [{ id: "user-1", name: "A", avatarUrl: null, email: null }],
+  })
+
+  expect(result).toEqual({
+    property: "assignees",
+    people: { contains: "user-1" },
+  })
+})
+
+test("buildFilter: 変換できない値はエラーを投げる", () => {
+  const schema: NotionPropertySchema = {
+    status: { type: "select", options: ["todo", "done"] },
+    website: { type: "url" },
+    count: { type: "number" },
+  }
+
+  // 変換分岐がない値を黙って捨てると無条件クエリ（全件マッチ）になるためエラーにする
+  expect(() => queryBuilder.buildFilter(schema, { status: 123 })).toThrow("Cannot convert value")
+  expect(() => queryBuilder.buildFilter(schema, { website: 123 })).toThrow("Cannot convert value")
+  expect(() => queryBuilder.buildFilter(schema, { count: "abc" })).toThrow("Cannot convert value")
+})
+
+test("buildFilter: スキーマにorという名前のフィールドがあってもクラッシュしない", () => {
+  const schema: NotionPropertySchema = {
+    or: { type: "rich_text" },
+    and: { type: "rich_text" },
+  }
+
+  const orResult = queryBuilder.buildFilter(schema, { or: "value" })
+  expect(orResult).toEqual({
+    property: "or",
+    rich_text: { equals: "value" },
+  })
+
+  const andResult = queryBuilder.buildFilter(schema, { and: "value" })
+  expect(andResult).toEqual({
+    property: "and",
+    rich_text: { equals: "value" },
+  })
+})
+
+test("getDateString: Date型はローカルタイムゾーンの日付になる", () => {
+  const savedTimeZone = process.env.TZ
+  process.env.TZ = "Asia/Tokyo"
+
+  try {
+    const schema: NotionPropertySchema = {
+      deadline: { type: "date" },
+    }
+
+    // JSTの深夜1時。UTC基準（toISOString）だと前日になってしまう
+    // Date は型定義上のwhere値には含まれないがランタイムでは受け付ける
+    const result = queryBuilder.buildFilter(schema, {
+      deadline: new Date(2024, 0, 15, 1, 0, 0) as unknown as string,
+    })
+
+    expect(result).toEqual({
+      property: "deadline",
+      date: { equals: "2024-01-15" },
+    })
+  } finally {
+    process.env.TZ = savedTimeZone
+  }
+})
+
 test("buildFilter: status型の単純な値", () => {
   const schema: NotionPropertySchema = {
     state: { type: "status", options: ["todo", "done"] },
@@ -596,5 +764,50 @@ test("buildFilter: status型の単純な値", () => {
   expect(result).toEqual({
     property: "state",
     status: { equals: "todo" },
+  })
+})
+
+test("buildFilter: created_time型は文字列でフィルターできる", () => {
+  const schema: NotionPropertySchema = {
+    createdAt: { type: "created_time" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, { createdAt: "2024-01-01T00:00:00.000Z" })
+
+  expect(result).toEqual({
+    property: "createdAt",
+    created_time: { equals: "2024-01-01T00:00:00.000Z" },
+  })
+})
+
+test("buildFilter: last_edited_time型はDateでフィルターできる", () => {
+  const schema: NotionPropertySchema = {
+    updatedAt: { type: "last_edited_time" },
+  }
+
+  const editedAt = new Date("2024-06-01T12:00:00.000Z")
+
+  const result = queryBuilder.buildFilter(schema, {
+    updatedAt: editedAt as unknown as string,
+  })
+
+  expect(result).toEqual({
+    property: "updatedAt",
+    last_edited_time: { equals: "2024-06-01T12:00:00.000Z" },
+  })
+})
+
+test("buildFilter: created_by型はNotionUserオブジェクトでフィルターできる", () => {
+  const schema: NotionPropertySchema = {
+    author: { type: "created_by" },
+  }
+
+  const result = queryBuilder.buildFilter(schema, {
+    author: { id: "user-1", name: "User" } as unknown as string,
+  })
+
+  expect(result).toEqual({
+    property: "author",
+    created_by: { contains: "user-1" },
   })
 })

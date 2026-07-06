@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import type { Tokens } from "marked"
+import { lexer, type Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
 import { parseParagraphToken } from "./parse-paragraph-token"
 
@@ -249,4 +249,51 @@ test("空の段落を変換", () => {
       rich_text: [],
     },
   })
+})
+
+test("$$...$$のみの段落をequationブロックに変換", () => {
+  const token = lexer("$$e = mc^2$$")[0] as Tokens.Paragraph
+
+  const block = parseParagraphToken(token) as unknown as {
+    type: string
+    equation: { expression: string }
+  }
+
+  expect(block.type).toBe("equation")
+  expect(block.equation.expression).toBe("e = mc^2")
+})
+
+test("段落直下の単独画像をimageブロックに変換", () => {
+  const token = lexer("![サンプル](https://example.com/a.png)")[0] as Tokens.Paragraph
+
+  const block = parseParagraphToken(token) as unknown as {
+    type: string
+    image: { external: { url: string }; caption: Array<{ text: { content: string } }> }
+  }
+
+  expect(block.type).toBe("image")
+  expect(block.image.external.url).toBe("https://example.com/a.png")
+  expect(block.image.caption[0]?.text.content).toBe("サンプル")
+})
+
+test("テキスト中のインライン画像はリンクとして保持", () => {
+  const token = lexer("前 ![alt](https://example.com/a.png) 後")[0] as Tokens.Paragraph
+
+  const block = parseParagraphToken(token) as unknown as {
+    type: string
+    paragraph: { rich_text: Array<{ text: { content: string; link?: { url: string } } }> }
+  }
+
+  expect(block.type).toBe("paragraph")
+  const linkItem = block.paragraph.rich_text.find((item) => item.text.link)
+  expect(linkItem?.text.link?.url).toBe("https://example.com/a.png")
+  expect(linkItem?.text.content).toBe("alt")
+})
+
+test("複数の数式と平文が混在する段落はequationブロックにしない", () => {
+  const token = lexer("$$a$$ と本文 $$b$$")[0] as Tokens.Paragraph
+
+  const block = parseParagraphToken(token)
+
+  expect(block.type).toBe("paragraph")
 })

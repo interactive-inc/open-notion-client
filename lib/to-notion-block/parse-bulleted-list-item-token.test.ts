@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import type { Tokens } from "marked"
+import { lexer, type Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
 import { parseBulletedListItemToken } from "./parse-bulleted-list-item-token"
 
@@ -264,4 +264,34 @@ test("番号付きリストが混在するネストを変換", () => {
       ],
     },
   })
+})
+
+test("taskアイテムをto_doブロックに変換", () => {
+  const listToken = lexer("- [x] 完了タスク")[0] as Tokens.List
+
+  const item = listToken.items[0] as Tokens.ListItem
+
+  const block = parseBulletedListItemToken(item) as unknown as {
+    type: string
+    to_do: { rich_text: Array<{ text: { content: string } }>; checked: boolean }
+  }
+
+  expect(block.type).toBe("to_do")
+  expect(block.to_do.checked).toBe(true)
+  expect(block.to_do.rich_text[0]?.text.content).toBe("完了タスク")
+})
+
+test("未チェックのtaskアイテムはchecked: falseになる", () => {
+  const listToken = lexer("- [ ] 未完了タスク")[0] as Tokens.List
+
+  const item = listToken.items[0] as Tokens.ListItem
+
+  const block = parseBulletedListItemToken(item) as unknown as {
+    type: string
+    to_do: { rich_text: Array<{ text: { content: string } }>; checked: boolean }
+  }
+
+  expect(block.type).toBe("to_do")
+  expect(block.to_do.checked).toBe(false)
+  expect(block.to_do.rich_text[0]?.text.content).toBe("未完了タスク")
 })

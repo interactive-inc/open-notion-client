@@ -52,3 +52,19 @@ test("真偽値を渡すとエラーをthrow", () => {
 test("数値配列を渡すとエラーをthrow", () => {
   expect(() => toNotionMultiSelectProperty([1, 2, 3])).toThrow()
 })
+
+test("optionsに含まれる値は変換される", () => {
+  const result = toNotionMultiSelectProperty(["A", "B"], { options: ["A", "B", "C"] })
+
+  expect(result).toEqual({ multi_select: [{ name: "A" }, { name: "B" }] })
+})
+
+test("options外の値を含むとエラーをthrow", () => {
+  expect(() => toNotionMultiSelectProperty(["A", "D"], { options: ["A", "B"] })).toThrow()
+})
+
+test("optionsがnullの場合は検証しない", () => {
+  const result = toNotionMultiSelectProperty(["自由入力"], { options: null })
+
+  expect(result).toEqual({ multi_select: [{ name: "自由入力" }] })
+})

@@ -60,3 +60,33 @@ test("date formulaがnullの場合", () => {
 
   expect(fromNotionFormulaProperty(property)).toBe(null)
 })
+
+test("期待型と実際の結果型が一致する場合は変換される", () => {
+  const property = {
+    type: "formula",
+    formula: { type: "number", number: 42 },
+    id: "f",
+  } as unknown as FormulaProperty
+
+  expect(fromNotionFormulaProperty(property, "number")).toBe(42)
+})
+
+test("期待型numberに対しstringが返るとエラーをthrow", () => {
+  const property = {
+    type: "formula",
+    formula: { type: "string", string: "not-a-number" },
+    id: "f",
+  } as unknown as FormulaProperty
+
+  expect(() => fromNotionFormulaProperty(property, "number")).toThrow()
+})
+
+test("期待型dateに対しbooleanが返るとエラーをthrow", () => {
+  const property = {
+    type: "formula",
+    formula: { type: "boolean", boolean: true },
+    id: "f",
+  } as unknown as FormulaProperty
+
+  expect(() => fromNotionFormulaProperty(property, "date")).toThrow()
+})

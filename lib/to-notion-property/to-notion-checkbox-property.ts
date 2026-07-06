@@ -1,16 +1,16 @@
 import { z } from "zod"
 import type { NotionCheckboxPropertyRequest } from "@/types"
 
-const checkboxPropertySchema = z.boolean()
+const checkboxPropertySchema = z.boolean().nullable()
 
 /**
  * unknownをNotionのcheckboxプロパティに変換
- * booleanでない場合はエラー（nullも許可しない）
+ * Notionのcheckboxに未設定状態はないためnullはfalseとして扱う
  */
 export function toNotionCheckboxProperty(value: unknown): NotionCheckboxPropertyRequest {
   const data = checkboxPropertySchema.parse(value)
 
   return {
-    checkbox: data,
+    checkbox: data === null ? false : data,
   }
 }

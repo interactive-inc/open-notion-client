@@ -26,6 +26,10 @@ export function extractListItemInline(item: Tokens.ListItem): Tokens.Generic[] {
       continue
     }
 
+    if (token.type === "checkbox") {
+      continue
+    }
+
     if (token.type === "paragraph") {
       const para = token as Tokens.Paragraph
       if (para.tokens && para.tokens.length > 0) {

@@ -27,7 +27,7 @@ export function fromNotionProperties<T extends NotionPropertySchema>(
       )
     }
 
-    result[key] = fromNotionProperty(property)
+    result[key] = fromNotionProperty(property, config)
   }
 
   return result as SchemaType<T>

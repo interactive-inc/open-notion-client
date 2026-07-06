@@ -54,6 +54,7 @@ test("段落のラウンドトリップ: Notion → markdown → Notion", () => 
     createMockBlock({
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [createRichText("段落テキスト")],
         color: "default",
       },
@@ -104,6 +105,7 @@ test("dividerのラウンドトリップ: Notion → markdown → Notion", () =>
     createMockBlock({
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [createRichText("上")],
         color: "default",
       },
@@ -115,6 +117,7 @@ test("dividerのラウンドトリップ: Notion → markdown → Notion", () =>
     createMockBlock({
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [createRichText("下")],
         color: "default",
       },
@@ -137,12 +140,16 @@ test("未対応ブロックのコールバック通知", () => {
     createMockBlock({
       type: "paragraph",
       paragraph: {
+        icon: null,
         rich_text: [createRichText("通常テキスト")],
         color: "default",
       },
     }),
     {
-      ...createMockBlock({ type: "paragraph", paragraph: { rich_text: [], color: "default" } }),
+      ...createMockBlock({
+        type: "paragraph",
+        paragraph: { rich_text: [], color: "default", icon: null },
+      }),
       id: "synced-1",
       type: "synced_block",
     } as unknown as NotionBlock,
@@ -203,6 +210,194 @@ test("引用のラウンドトリップ: Notion → markdown → Notion", () => 
   const roundTripped = toNotionBlocks(markdown)
   expect(roundTripped).toHaveLength(1)
   expect(roundTripped[0]?.type).toBe("quote")
+})
+
+test("テーブルのラウンドトリップ: Notion → markdown → Notion", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "table",
+      table: {
+        table_width: 2,
+        has_column_header: true,
+        has_row_header: false,
+      },
+      children: [
+        createMockBlock({
+          type: "table_row",
+          table_row: {
+            cells: [[createRichText("見出しA")], [createRichText("見出しB")]],
+          },
+        }),
+        createMockBlock({
+          type: "table_row",
+          table_row: {
+            cells: [[createRichText("値|パイプ")], [createRichText("1行目\n2行目")]],
+          },
+        }),
+      ],
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toContain("| 見出しA | 見出しB |")
+  expect(markdown).toContain("値\\|パイプ")
+  expect(markdown).toContain("1行目<br>2行目")
+
+  const roundTripped = toNotionBlocks(markdown)
+  expect(roundTripped).toHaveLength(1)
+
+  const table = roundTripped[0] as unknown as {
+    type: string
+    table: {
+      table_width: number
+      children: Array<{ table_row: { cells: Array<Array<{ text: { content: string } }>> } }>
+    }
+  }
+  expect(table.type).toBe("table")
+  expect(table.table.table_width).toBe(2)
+  expect(table.table.children).toHaveLength(2)
+  expect(table.table.children[1]?.table_row.cells[0]?.[0]?.text.content).toBe("値|パイプ")
+
+  const secondCellTexts = (table.table.children[1]?.table_row.cells[1] ?? []).map(
+    (item) => item.text.content,
+  )
+  expect(secondCellTexts.join("")).toBe("1行目\n2行目")
+})
+
+test("to_doのラウンドトリップ: Notion → markdown → Notion", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "to_do",
+      to_do: {
+        rich_text: [createRichText("完了タスク")],
+        checked: true,
+        color: "default",
+      },
+    }),
+    createMockBlock({
+      type: "to_do",
+      to_do: {
+        rich_text: [createRichText("未完了タスク")],
+        checked: false,
+        color: "default",
+      },
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toBe("- [x] 完了タスク\n- [ ] 未完了タスク")
+
+  const roundTripped = toNotionBlocks(markdown) as unknown as Array<{
+    type: string
+    to_do: { checked: boolean; rich_text: Array<{ text: { content: string } }> }
+  }>
+  expect(roundTripped).toHaveLength(2)
+  expect(roundTripped[0]?.type).toBe("to_do")
+  expect(roundTripped[0]?.to_do.checked).toBe(true)
+  expect(roundTripped[0]?.to_do.rich_text[0]?.text.content).toBe("完了タスク")
+  expect(roundTripped[1]?.type).toBe("to_do")
+  expect(roundTripped[1]?.to_do.checked).toBe(false)
+})
+
+test("画像のラウンドトリップ: Notion → markdown → Notion", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "image",
+      image: {
+        type: "external",
+        external: { url: "https://example.com/a.png" },
+        caption: [createRichText("サンプル画像")],
+      },
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toBe("![サンプル画像](https://example.com/a.png)")
+
+  const roundTripped = toNotionBlocks(markdown) as unknown as Array<{
+    type: string
+    image: { external: { url: string }; caption: Array<{ text: { content: string } }> }
+  }>
+  expect(roundTripped).toHaveLength(1)
+  expect(roundTripped[0]?.type).toBe("image")
+  expect(roundTripped[0]?.image.external.url).toBe("https://example.com/a.png")
+  expect(roundTripped[0]?.image.caption[0]?.text.content).toBe("サンプル画像")
+})
+
+test("数式ブロックのラウンドトリップ: Notion → markdown → Notion", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "equation",
+      equation: { expression: "e = mc^2" },
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toBe("$$e = mc^2$$")
+
+  const roundTripped = toNotionBlocks(markdown) as unknown as Array<{
+    type: string
+    equation: { expression: string }
+  }>
+  expect(roundTripped).toHaveLength(1)
+  expect(roundTripped[0]?.type).toBe("equation")
+  expect(roundTripped[0]?.equation.expression).toBe("e = mc^2")
+})
+
+test("リスト直後の段落が前ブロックに吸収されない", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "bulleted_list_item",
+      bulleted_list_item: {
+        rich_text: [createRichText("項目")],
+        color: "default",
+      },
+    }),
+    createMockBlock({
+      type: "paragraph",
+      paragraph: {
+        icon: null,
+        rich_text: [createRichText("後続の段落")],
+        color: "default",
+      },
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toBe("- 項目\n\n後続の段落")
+
+  const roundTripped = toNotionBlocks(markdown)
+  expect(roundTripped).toHaveLength(2)
+  expect(roundTripped[0]?.type).toBe("bulleted_list_item")
+  expect(roundTripped[1]?.type).toBe("paragraph")
+})
+
+test("引用直後の段落が引用に吸収されない", () => {
+  const notionBlocks: NotionBlock[] = [
+    createMockBlock({
+      type: "quote",
+      quote: {
+        rich_text: [createRichText("引用")],
+        color: "default",
+      },
+    }),
+    createMockBlock({
+      type: "paragraph",
+      paragraph: {
+        icon: null,
+        rich_text: [createRichText("後続の段落")],
+        color: "default",
+      },
+    }),
+  ]
+
+  const markdown = fromNotionBlocks(notionBlocks)
+  expect(markdown).toBe("> 引用\n\n後続の段落")
+
+  const roundTripped = toNotionBlocks(markdown)
+  expect(roundTripped).toHaveLength(2)
+  expect(roundTripped[0]?.type).toBe("quote")
+  expect(roundTripped[1]?.type).toBe("paragraph")
 })
 
 test("複合ドキュメントのラウンドトリップ", () => {
