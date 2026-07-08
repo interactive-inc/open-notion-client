@@ -39,7 +39,7 @@ agent-browser での撮影手順
 
 ## アップロードと貼り付け
 
-`inta tools images upload` の URL は約4分間しか有効ではない。これは Slack 等での即時共有を想定した ephemeral 設計のため。
+`inta tools images upload` の URL はヘルプに「約4分間有効」とあるが、実測（2026-07-08）では 30 分以上生存していた。実際の TTL はサービス側（ephemeral-images-api、別リポジトリ）の実装依存で保証がない。ephemeral を名乗る以上いずれ消える前提で扱い、PR に残す恒久画像の置き場としては信頼しない。
 
 PR 本文に貼る場合は GitHub の自動取り込みを狙う。GitHub は Issue / PR 本文内の外部画像 URL を、保存時に `user-attachments` に取り込んで永続化することがある。ただしこの取り込みは**保証されない**。実測（2026-07-08）では `gh pr comment` の comment 内も `gh pr edit --body` の本文内も画像 URL は変換されず、ephemeral URL のまま残った（=4分後に画像が死ぬ）。`gh pr create` 時の変換は未検証。API（gh）経由の投稿では変換されない前提で、下の検証手順を必ず実行する。
 
