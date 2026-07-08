@@ -39,9 +39,13 @@ agent-browser での撮影手順
 
 ## アップロードと貼り付け
 
-`inta tools images upload` の URL はヘルプに「約4分間有効」とあるが、実測（2026-07-08）では 30 分以上生存していた。実際の TTL はサービス側（ephemeral-images-api、別リポジトリ）の実装依存で保証がない。ephemeral を名乗る以上いずれ消える前提で扱い、PR に残す恒久画像の置き場としては信頼しない。
+`inta tools images upload` の URL をそのまま Issue / PR の本文に貼ればよい。ephemeral-images-api（2026-07-09 更新）は GitHub の camo プロキシ（User-Agent `github-camo`、GitHub の IP レンジ検証つき）からの取得を TTL 無視で常に配信するため、**GitHub のページ上では画像が恒久表示される**。ブラウザでの貼り直しや user-attachments 化は不要。
 
-PR 本文に貼る場合は GitHub の自動取り込みを狙う。GitHub は Issue / PR 本文内の外部画像 URL を、保存時に `user-attachments` に取り込んで永続化することがある。ただしこの取り込みは**保証されない**。実測（2026-07-08）では `gh pr comment` の comment 内も `gh pr edit --body` の本文内も画像 URL は変換されず、ephemeral URL のまま残った（=4分後に画像が死ぬ）。`gh pr create` 時の変換は未検証。API（gh）経由の投稿では変換されない前提で、下の検証手順を必ず実行する。
+補足の性質を理解して使う。
+
+- 直接 URL を開く一般アクセスは従来どおり TTL（サービス側実装依存、2026-07 時点で 1 日）で expired になる。GitHub 経由でだけ生き続ける設計
+- GitHub は本文中の外部画像 URL を user-attachments に**変換しない**（2026-07-08 実測: `gh pr comment` / `gh pr edit --body` とも非変換）。変換されないことを前提にした仕組みなので、URL が ephemeral のまま残っていて正しい
+- Slack 等 GitHub 以外への貼り回しは不可（TTL で死ぬ）
 
 手順
 
@@ -50,45 +54,14 @@ URL=$(inta tools images upload workspace/users/{自分}/tmp/after.png)
 gh pr create --body "...![after]($URL)..."
 ```
 
-`gh pr create` の `--body` 内に画像 URL を含めれば、GitHub 側が同期的に取り込み、保存後の本文には `https://github.com/user-attachments/...` の永続 URL が入る。元の4分URL が失効しても画像は残る。
+複数枚も同様に、全 URL を取得してから 1 回の `gh pr create` / `gh pr edit --body` で本文に含める。
 
-順序が重要
+## 投稿直後の検証
 
-アップロードから `gh pr create` までを4分以内に終わらせる。途中で長い処理を挟まない。
-
-複数枚
-
-```bash
-BEFORE=$(inta tools images upload workspace/users/{自分}/tmp/before.png)
-AFTER=$(inta tools images upload workspace/users/{自分}/tmp/after.png)
-gh pr create --body "...
-## Screenshots
-
-### Before
-![before]($BEFORE)
-
-### After
-![after]($AFTER)
-..."
-```
-
-全ての URL を取得してから1回の `gh pr create` で本文に含める。1枚ずつ追加するとアップロードから貼り付けまでの時間が読めなくなる。
-
-## 投稿直後の検証（必須）
-
-GitHub の取り込みはベストエフォートで、API 経由では変換されないことが多い。投稿・作成の直後に必ず本文を再取得し、URL が `user-attachments` に置換されたか確認する。
-
-```bash
-gh pr view {N} --json body -q .body | grep -c "user-attachments"
-```
-
-置換されていない場合の復旧手順（上から順に）。
-
-1. ブラウザ操作が使える環境なら、画像をクリップボード経由で PR コメント欄に貼り付けて永続 URL を作り、本文をその URL で `gh pr edit --body` する（macOS: `osascript -e 'set the clipboard to (read (POSIX file "...") as «class PNGf»)'` → GitHub のコメント欄で cmd+v → アップロード完了を待って URL を回収）
-2. ブラウザが使えなければ、人間に「PR コメント欄に画像を直接ドロップしてください」と依頼し、ローカルの画像パスを伝える。ephemeral URL を貼ったまま放置しない（4分で死んだ画像リンクが残る）
+投稿・作成の直後に、GitHub の PR ページ上（またはレンダリング済み body: `gh api .../comments -H "Accept: application/vnd.github.html+json"`）で画像が表示されることを確認する。表示されない場合は URL の打ち間違いかアップロード失敗なので、再アップロードして本文を `gh pr edit --body` で更新する。それでも表示されなければ、人間に「PR コメント欄に画像を直接ドロップしてください」と依頼し、ローカルの画像パスを伝える。
 
 ## やらないこと
 
 PR コメントの後追い投稿だけで済ませない。本文に貼ること。レビュアーが本文だけ見て変更内容を把握できる状態にする。
 
-`inta tools images upload` の出力 URL をそのまま Slack や別チャンネルに貼り回さない。4分で死ぬ。
+`inta tools images upload` の出力 URL をそのまま Slack や別チャンネルに貼り回さない。GitHub 以外では TTL で死ぬ。
