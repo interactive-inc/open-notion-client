@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { RichTextItemResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { NotionBlock } from "@/types"
 import { fromNotionBlock } from "./from-notion-block"

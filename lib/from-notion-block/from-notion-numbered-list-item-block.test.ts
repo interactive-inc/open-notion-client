@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { NotionNumberedListItemBlock } from "@/types"
 import { fromNotionNumberedListItemBlock } from "./from-notion-numbered-list-item-block"
 

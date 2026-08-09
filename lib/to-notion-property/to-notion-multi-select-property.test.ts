@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionMultiSelectProperty } from "./to-notion-multi-select-property"
 
 test("文字列配列を正しくmulti_selectプロパティに変換", () => {

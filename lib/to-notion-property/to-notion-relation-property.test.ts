@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionRelationProperty } from "./to-notion-relation-property"
 
 test("ID配列を正しくrelationプロパティに変換", () => {

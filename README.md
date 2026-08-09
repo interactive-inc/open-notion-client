@@ -41,7 +41,18 @@ notion-client flattens this to `{ name: "Hello World" }` and gives you a clean, 
 ## Installation
 
 ```bash
-bun add @interactive-inc/notion-client @notionhq/client
+vp add @interactive-inc/notion-client @notionhq/client
+```
+
+## Development
+
+```bash
+vp install
+vp lint
+vp fmt
+vp test
+vp run check
+vp run build
 ```
 
 ## Quick Start

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { splitTextContent } from "./split-text-content"
 
 test("2000文字以下はそのまま1要素", () => {

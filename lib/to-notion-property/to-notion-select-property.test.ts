@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionSelectProperty } from "./to-notion-select-property"
 
 test("文字列を正しくselectプロパティに変換", () => {

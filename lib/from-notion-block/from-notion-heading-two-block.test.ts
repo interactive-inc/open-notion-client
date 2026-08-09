@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { Heading2BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionHeadingTwoBlock } from "./from-notion-heading-two-block"
 

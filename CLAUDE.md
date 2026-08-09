@@ -21,8 +21,8 @@ bun run check              # 型チェック（tsgo使用）
 bun run fmt                # フォーマット（vite-plus使用）
 bun run lint               # リント（vite-plus使用）
 bun run build              # tsdownでビルド
-bun test                   # 全テスト実行
-bun test <file>            # 単一テスト実行（例: bun test lib/table/notion-table.test.ts）
+vp test                    # 全テスト実行
+vp test <file>             # 単一テスト実行（例: vp test lib/table/notion-table.test.ts）
 ```
 
 ## Architecture

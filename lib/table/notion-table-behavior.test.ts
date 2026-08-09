@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { Client } from "@notionhq/client"
 import type { NotionPropertySchema } from "@/types"
 import { NotionTable } from "./notion-table"

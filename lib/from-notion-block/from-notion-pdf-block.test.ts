@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { PdfBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionPdfBlock } from "./from-notion-pdf-block"
 

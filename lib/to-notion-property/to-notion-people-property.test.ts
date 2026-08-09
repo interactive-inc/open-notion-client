@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionPeopleProperty } from "./to-notion-people-property"
 
 test("ユーザー配列をpeopleプロパティに変換", () => {

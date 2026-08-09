@@ -11,7 +11,7 @@ build
 # !/.cursor/rules/.gitkeep
 # CLAUDE.md
 
-# dependencies (bun install)
+# dependencies
 node_modules
 
 # output

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionNumberProperty } from "./to-notion-number-property"
 
 test("数値を正しくnumberプロパティに変換", () => {

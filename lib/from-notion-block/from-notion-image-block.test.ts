@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { ImageBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionImageBlock } from "./from-notion-image-block"
 

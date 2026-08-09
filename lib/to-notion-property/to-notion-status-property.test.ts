@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionStatusProperty } from "./to-notion-status-property"
 
 test("文字列を正しくstatusプロパティに変換", () => {

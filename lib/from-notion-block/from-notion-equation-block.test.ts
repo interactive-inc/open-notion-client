@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { EquationBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionEquationBlock } from "./from-notion-equation-block"
 

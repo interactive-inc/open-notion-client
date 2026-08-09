@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionTitleProperty } from "./to-notion-title-property"
 
 test("文字列を正しくtitleプロパティに変換", () => {

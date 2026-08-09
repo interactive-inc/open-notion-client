@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionFilesProperty } from "./to-notion-files-property"
 
 test("外部URLの配列を変換", () => {

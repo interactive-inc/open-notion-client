@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { BlockObjectRequest } from "@notionhq/client/build/src/api-endpoints"
 import { NotionMarkdown } from "./notion-markdown"
 

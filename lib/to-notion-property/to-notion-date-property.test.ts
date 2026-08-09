@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionDateProperty } from "./to-notion-date-property"
 
 test("日付オブジェクトを正しくdateプロパティに変換", () => {

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { ChildDatabaseBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionChildDatabaseBlock } from "./from-notion-child-database-block"
 

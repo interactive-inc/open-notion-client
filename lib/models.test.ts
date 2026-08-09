@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { zNumberPropertyConfig } from "@/models"
 
 test("Notion API仕様の全number formatを受け付ける", () => {

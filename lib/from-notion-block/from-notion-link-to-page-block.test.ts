@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { LinkToPageBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionLinkToPageBlock } from "./from-notion-link-to-page-block"
 

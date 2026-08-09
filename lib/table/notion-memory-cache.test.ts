@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { NotionBlock, NotionPage } from "@/types"
 import { NotionMemoryCache } from "./notion-memory-cache"
 

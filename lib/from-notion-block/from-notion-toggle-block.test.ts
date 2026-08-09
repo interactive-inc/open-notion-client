@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { NotionToggleBlock } from "@/types"
 import { fromNotionToggleBlock } from "./from-notion-toggle-block"
 

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { ChildPageBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionChildPageBlock } from "./from-notion-child-page-block"
 

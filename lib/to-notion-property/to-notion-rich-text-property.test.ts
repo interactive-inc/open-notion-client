@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionRichTextProperty } from "./to-notion-rich-text-property"
 
 test("文字列を正しくrich_textプロパティに変換", () => {

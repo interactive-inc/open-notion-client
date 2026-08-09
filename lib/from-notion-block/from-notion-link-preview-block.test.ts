@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { LinkPreviewBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionLinkPreviewBlock } from "./from-notion-link-preview-block"
 

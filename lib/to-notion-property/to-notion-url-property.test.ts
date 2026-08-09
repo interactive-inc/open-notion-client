@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionUrlProperty } from "./to-notion-url-property"
 
 test("URLを正しくurlプロパティに変換", () => {

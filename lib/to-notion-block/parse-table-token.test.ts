@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { lexer, type Tokens } from "marked"
 import { parseTableToken } from "./parse-table-token"
 

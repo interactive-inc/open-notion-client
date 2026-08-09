@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionCheckboxProperty } from "./to-notion-checkbox-property"
 
 test("trueを正しくcheckboxプロパティに変換", () => {

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { withConcurrency } from "./with-concurrency"
 
 test("結果の順序は入力順を保つ", async () => {

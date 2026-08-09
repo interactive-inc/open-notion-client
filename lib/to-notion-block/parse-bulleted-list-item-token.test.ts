@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { lexer, type Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
 import { parseBulletedListItemToken } from "./parse-bulleted-list-item-token"

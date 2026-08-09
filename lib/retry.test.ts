@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from "bun:test"
+import { expect, test, vi } from "vite-plus/test"
 import { withRetry } from "./retry"
 
 test("成功時はそのまま値を返す", async () => {
@@ -174,7 +174,7 @@ test("Retry-Afterが不正な値ならバックオフにフォールバックす
 })
 
 test("バックオフにフルジッターが適用される", async () => {
-  const randomSpy = spyOn(Math, "random").mockReturnValue(0)
+  const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0)
 
   try {
     let attempts = 0

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionProperty } from "./to-notion-property"
 
 test("statusはstatusキーで包む（selectで包んではいけない）", () => {

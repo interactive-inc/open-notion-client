@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { BookmarkBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionBookmarkBlock } from "./from-notion-bookmark-block"
 

@@ -2,16 +2,18 @@
 
 update-packages:
 	bunx npm-check-updates -u
-	bun i
+	vp install
 
 deploy:
-	bun biome check . --fix --unsafe
-	bun run check
-	bun test
-	bun run build
+	vp fmt --write
+	vp lint
+	vp test
+	vp run check
+	vp run build
 	npm publish
 
 check:
-	bun biome check . --fix --unsafe
-	bun check
-	bun test
+	vp fmt
+	vp lint
+	vp test
+	vp run check

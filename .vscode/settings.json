@@ -1,9 +1,13 @@
 {
+  "npm.scriptRunner": "vp",
+  "oxc.fmt.disableNestedConfig": true,
+  "oxc.disableNestedConfig": true,
+  "editor.formatOnSaveMode": "file",
   "[typescript][typescriptreact][json][css]": {
     "editor.codeActionsOnSave": {
-      "source.fixAll.biome": "explicit"
+      "source.fixAll.oxc": "explicit"
     },
-    "editor.defaultFormatter": "biomejs.biome",
+    "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true
   },
   "files.associations": {

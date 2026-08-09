@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { ParagraphBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionParagraphBlock } from "./from-notion-paragraph-block"
 

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
 import { parseNestedNumberedListItemToken } from "./parse-nested-numbered-list-item-token"

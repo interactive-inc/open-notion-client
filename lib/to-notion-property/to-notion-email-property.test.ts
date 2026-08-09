@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { toNotionEmailProperty } from "./to-notion-email-property"
 
 test("メールアドレスを正しくemailプロパティに変換", () => {

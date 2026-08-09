@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import { lexer } from "marked"
 import { fromNotionBlocks } from "@/from-notion-block/from-notion-blocks"
 import type { NotionBlock } from "@/types"

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "vite-plus/test"
 import type { CodeBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import { fromNotionCodeBlock } from "./from-notion-code-block"
 
