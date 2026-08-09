@@ -76,7 +76,6 @@ test("段落間の空行が正しく処理される", () => {
         {
           type: "text",
           text: { content: "段落1" },
-          // @ts-expect-error テストでplain_textプロパティを検証するが実際の型にはない
           plain_text: "段落1",
           annotations: {},
         },
@@ -90,7 +89,6 @@ test("段落間の空行が正しく処理される", () => {
         {
           type: "text",
           text: { content: "段落2" },
-          // @ts-expect-error テストでplain_textプロパティを検証するが実際の型にはない
           plain_text: "段落2",
           annotations: {},
         },

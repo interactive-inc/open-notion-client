@@ -1,16 +1,16 @@
 .PHONY: deploy check
 
 update-packages:
-	bunx npm-check-updates -u
+	vp update
 	vp install
 
 deploy:
-	vp fmt --write
+	vp fmt
 	vp lint
 	vp test
 	vp run check
 	vp run build
-	npm publish
+	vp pm publish
 
 check:
 	vp fmt

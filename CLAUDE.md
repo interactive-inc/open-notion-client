@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Rules
 
 - Always respond in Japanese.
-- Use Bun instead of npm or yarn for package management and scripts.
+- Use Vite+ for dependency management, scripts, lint, format, and tests. Bun remains the managed runtime.
 - Don't downgrade any dependencies; keep the latest versions.
 
 ## Overview
@@ -17,10 +17,10 @@ NotionをTypeScript対応のデータベースとして扱うためのOSSライ�
 ## Commands
 
 ```bash
-bun run check              # 型チェック（tsgo使用）
-bun run fmt                # フォーマット（vite-plus使用）
-bun run lint               # リント（vite-plus使用）
-bun run build              # tsdownでビルド
+vp run check               # 型チェック（tsgo使用）
+vp fmt                     # フォーマット
+vp lint                    # リント
+vp run build               # tsdownでビルド
 vp test                    # 全テスト実行
 vp test <file>             # 単一テスト実行（例: vp test lib/table/notion-table.test.ts）
 ```
@@ -53,13 +53,13 @@ lib/
 
 ## Tech Stack
 
-- TypeScript 5.9
-- Bun（ランタイム・パッケージマネージャー）
+- TypeScript 6
+- Vite+（依存管理・lint・format・test）
+- Bun（管理対象ランタイム）
 - @notionhq/client（Notion API公式クライアント）
 - marked（Markdownパーサー）
 - zod（スキーマバリデーション）
 - tsdown（ビルドツール）
-- vite-plus（リンター・フォーマッター）
 - VitePress（ドキュメントサイト）
 
 ## Features
