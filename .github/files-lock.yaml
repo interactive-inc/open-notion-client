@@ -43,6 +43,5 @@ RyukyuInteractive/inta:
   - .github/PULL_REQUEST_TEMPLATE.md
 RyukyuInteractive/inta#open-libraries:
   - .claude/rules/md.md
-  - .claude/rules/ts.md
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
