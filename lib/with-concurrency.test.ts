@@ -59,3 +59,7 @@ test("undefined要素を含んでも全要素分fnが呼ばれる", async () => 
   expect(callCount).toBe(3)
   expect(result).toEqual(["fallback", "fallback", "a"])
 })
+
+test("NaNでも作業を黙って飛ばさず全要素を処理する", async () => {
+  expect(await withConcurrency([1, 2, 3], NaN, async (value) => value * 2)).toEqual([2, 4, 6])
+})

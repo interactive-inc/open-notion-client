@@ -8,6 +8,12 @@ export default defineConfig({
   lint: {
     ignorePatterns: ["dist/**"],
   },
+  test: {
+    allowOnly: false,
+    clearMocks: true,
+    restoreMocks: true,
+    setupFiles: ["./lib/testing/setup.ts"],
+  },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./lib", import.meta.url)) },
   },

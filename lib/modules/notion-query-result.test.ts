@@ -1,186 +1,115 @@
 import { expect, test } from "vite-plus/test"
-import type { Client } from "@notionhq/client"
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { NotionPropertyConverter } from "../table/notion-property-converter"
-import type { NotionPropertySchema } from "../types"
-import { NotionPageReference } from "./notion-page-reference"
-import { NotionQueryResult } from "./notion-query-result"
+import { NotionPageReference } from "@/modules/notion-page-reference"
+import { NotionQueryResult } from "@/modules/notion-query-result"
+import { NotionPropertyConverter } from "@/table/notion-property-converter"
+import { NotionHttpMock } from "@/testing/notion-http-mock"
+import { notionPage } from "@/testing/notion-page"
+import { notionRichText } from "@/testing/notion-rich-text"
+
+function reference(http: NotionHttpMock, id: string) {
+  return new NotionPageReference({
+    client: http.client,
+    schema: { title: { type: "title" } },
+    converter: new NotionPropertyConverter(),
+    notionPage: notionPage(id),
+  })
+}
 
 test("ページ参照の配列を取得できる", () => {
-  const mockSchema = {
-    title: { type: "title" as const },
-  } satisfies NotionPropertySchema
-
-  const mockClient = {} as Client
-  const mockConverter = {
-    fromNotion: (_schema: NotionPropertySchema, properties: Record<string, unknown>) => {
-      return { title: properties.id === "page-1" ? "Page 1" : "Page 2" }
-    },
-    toNotion: () => ({}),
-  } as unknown as NotionPropertyConverter
-
-  const pageRef1 = new NotionPageReference({
-    client: mockClient,
-    schema: mockSchema,
-    converter: mockConverter,
-    notionPage: {
-      id: "page-1",
-      properties: {},
-    } as unknown as PageObjectResponse,
-  })
-  const pageRef2 = new NotionPageReference({
-    client: mockClient,
-    schema: mockSchema,
-    converter: mockConverter,
-    notionPage: {
-      id: "page-2",
-      properties: {},
-    } as unknown as PageObjectResponse,
-  })
-
+  const http = new NotionHttpMock()
+  const first = reference(http, "page-1")
+  const second = reference(http, "page-2")
   const queryResult = new NotionQueryResult({
-    pageReferences: [pageRef1, pageRef2],
-    cursor: "next-cursor",
+    pageReferences: [first, second],
+    cursor: "next",
     hasMore: true,
   })
-
-  const refs = queryResult.references()
-  expect(refs).toHaveLength(2)
-  expect(refs[0]).toBe(pageRef1)
-  expect(refs[1]).toBe(pageRef2)
+  expect(queryResult.references()).toEqual([first, second])
+  expect(queryResult.references()[0]).toBe(first)
+  expect(queryResult.references()[1]).toBe(second)
 })
 
 test("カーソルを取得できる", () => {
-  const queryResult = new NotionQueryResult({
-    pageReferences: [],
-    cursor: "next-page-cursor",
-    hasMore: true,
-  })
-
-  expect(queryResult.cursor()).toBe("next-page-cursor")
+  expect(
+    new NotionQueryResult({ pageReferences: [], cursor: "next", hasMore: true }).cursor(),
+  ).toBe("next")
 })
 
 test("カーソルがnullの場合", () => {
-  const queryResult = new NotionQueryResult({
-    pageReferences: [],
-    cursor: null,
-    hasMore: false,
-  })
-
-  expect(queryResult.cursor()).toBeNull()
+  expect(
+    new NotionQueryResult({ pageReferences: [], cursor: null, hasMore: false }).cursor(),
+  ).toBeNull()
 })
 
 test("さらにページがあるかを確認できる", () => {
-  const queryResultWithMore = new NotionQueryResult({
-    pageReferences: [],
-    cursor: "cursor",
-    hasMore: true,
-  })
-
-  const queryResultNoMore = new NotionQueryResult({
-    pageReferences: [],
-    cursor: null,
-    hasMore: false,
-  })
-
-  expect(queryResultWithMore.hasMore()).toBe(true)
-  expect(queryResultNoMore.hasMore()).toBe(false)
+  expect(
+    new NotionQueryResult({ pageReferences: [], cursor: "next", hasMore: true }).hasMore(),
+  ).toBe(true)
+  expect(
+    new NotionQueryResult({ pageReferences: [], cursor: null, hasMore: false }).hasMore(),
+  ).toBe(false)
 })
 
 test("ページ数を取得できる", () => {
-  const mockSchema = {
-    title: { type: "title" as const },
-  } satisfies NotionPropertySchema
-
-  const mockClient = {} as Client
-  const mockConverter = {
-    fromNotion: (_: NotionPropertySchema, properties: Record<string, unknown>) => {
-      return { title: `Page ${properties.id}` }
-    },
-    toNotion: () => ({}),
-  } as unknown as NotionPropertyConverter
-
-  const pageRefs = Array.from(
-    { length: 5 },
-    (_, i) =>
-      new NotionPageReference({
-        client: mockClient,
-        schema: mockSchema,
-        converter: mockConverter,
-        notionPage: {
-          id: `page-${i}`,
-          properties: {},
-        } as unknown as PageObjectResponse,
-      }),
-  )
-
-  const queryResult = new NotionQueryResult({
-    pageReferences: pageRefs,
-    cursor: null,
-    hasMore: false,
-  })
-
-  expect(queryResult.length).toBe(5)
+  const http = new NotionHttpMock()
+  const references = Array.from({ length: 5 }, (_, index) => reference(http, `page-${index}`))
+  expect(
+    new NotionQueryResult({ pageReferences: references, cursor: null, hasMore: false }).length,
+  ).toBe(5)
 })
 
 test("空の結果の場合", () => {
-  const queryResult = new NotionQueryResult({
-    pageReferences: [],
-    cursor: null,
-    hasMore: false,
-  })
-
+  const queryResult = new NotionQueryResult({ pageReferences: [], cursor: null, hasMore: false })
   expect(queryResult.references()).toEqual([])
   expect(queryResult.length).toBe(0)
-  expect(queryResult.hasMore()).toBe(false)
   expect(queryResult.cursor()).toBeNull()
+  expect(queryResult.hasMore()).toBe(false)
 })
 
 test("イミュータブルなオブジェクトである", () => {
-  const queryResult = new NotionQueryResult({
-    pageReferences: [],
-    cursor: null,
-    hasMore: false,
-  })
-
-  expect(Object.isFrozen(queryResult)).toBe(true)
+  expect(
+    Object.isFrozen(new NotionQueryResult({ pageReferences: [], cursor: null, hasMore: false })),
+  ).toBe(true)
 })
 
 test("型安全なプロパティを持つページ参照を扱える", () => {
-  const mockSchema = {
-    title: { type: "title" as const },
-    author: { type: "rich_text" as const },
-    publishedDate: { type: "date" as const },
-    tags: { type: "multi_select" as const, options: null },
-  } satisfies NotionPropertySchema
-
-  const mockClient = {} as Client
-  const mockConverter = {
-    fromNotion: () => ({
-      title: "TypeScriptの基礎",
-      author: "山田太郎",
-      publishedDate: { start: "2024-01-01", end: null },
-      tags: ["TypeScript", "プログラミング"],
-    }),
-    toNotion: () => ({}),
-  } as unknown as NotionPropertyConverter
-
-  const articleRef = new NotionPageReference({
-    client: mockClient,
-    schema: mockSchema,
-    converter: mockConverter,
-    notionPage: { id: "article-1", properties: {} } as PageObjectResponse,
+  const http = new NotionHttpMock()
+  const page = notionPage("article", "TypeScriptの基礎")
+  page.properties.author = {
+    id: "author",
+    type: "rich_text",
+    rich_text: [notionRichText("山田太郎")],
+  }
+  page.properties.publishedDate = {
+    id: "date",
+    type: "date",
+    date: { start: "2024-01-01", end: null, time_zone: null },
+  }
+  page.properties.tags = {
+    id: "tags",
+    type: "multi_select",
+    multi_select: [{ id: "typescript", name: "TypeScript", color: "default" }],
+  }
+  const article = new NotionPageReference({
+    client: http.client,
+    schema: {
+      title: { type: "title" },
+      author: { type: "rich_text" },
+      publishedDate: { type: "date" },
+      tags: { type: "multi_select", options: null },
+    },
+    converter: new NotionPropertyConverter(),
+    notionPage: page,
   })
-
   const queryResult = new NotionQueryResult({
-    pageReferences: [articleRef],
+    pageReferences: [article],
     cursor: null,
     hasMore: false,
   })
-
-  const refs = queryResult.references()
-  const props = refs[0]?.properties()
-  expect(props?.title).toBe("TypeScriptの基礎")
-  expect(props?.author).toBe("山田太郎")
-  expect(props?.tags).toContain("TypeScript")
+  expect(queryResult.references()[0]?.properties()).toEqual({
+    title: "TypeScriptの基礎",
+    author: "山田太郎",
+    publishedDate: { start: "2024-01-01", end: null, timeZone: null },
+    tags: ["TypeScript"],
+  })
 })

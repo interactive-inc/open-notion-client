@@ -1,10 +1,9 @@
 import type { CodeBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import { fromNotionRichTextItem } from "@/utils"
 
 export function fromNotionCodeBlock(block: CodeBlockObjectResponse): string {
   const language = block.code.language || ""
 
-  const code = fromNotionRichTextItem(block.code.rich_text)
+  const code = block.code.rich_text.map((item) => item.plain_text).join("")
 
   const backtickRuns = code.match(/`+/g) ?? []
 

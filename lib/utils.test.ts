@@ -405,7 +405,7 @@ test("特殊文字を含むコードテキストを変換", () => {
     },
   ]
   const result = fromNotionRichTextItem(richTexts)
-  expect(result).toBe("`const str = `Hello $" + "{name}!``")
+  expect(result).toBe("`` const str = `Hello $" + "{name}!` ``")
 })
 
 test("text.link.urlからリンクを抽出する（hrefがnullでも）", () => {

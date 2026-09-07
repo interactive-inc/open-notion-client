@@ -78,12 +78,13 @@ export class NotionPageReference<T extends NotionPropertySchema> {
     }
 
     const listBlockChildren = this.props.listBlockChildren ?? this.props.client.blocks.children.list
+    const cacheVersion = this.props.cache?.version
 
     const blocks = await enhance(listBlockChildren)({
       block_id: this.props.notionPage.id,
     })
 
-    this.props.cache?.setBlocks(this.id, blocks)
+    if (this.props.cache?.version === cacheVersion) this.props.cache?.setBlocks(this.id, blocks)
 
     return fromNotionBlocks(blocks)
   }

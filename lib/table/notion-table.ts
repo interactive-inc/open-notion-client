@@ -27,6 +27,9 @@ import { withRetry } from "@/retry"
 import { type SafeNotionTable, createSafeNotionTable } from "@/table/safe-notion-table"
 import { toNotionPage } from "@/utils"
 import { withConcurrency } from "@/with-concurrency"
+import { paginationCursor } from "@/pagination-cursor"
+import { validateLimit } from "@/table/validate-limit"
+import { validateBlockRequests } from "@/to-notion-block/validate-block-requests"
 
 const MAX_FIND_LIMIT = 1024
 const NOTION_PAGE_SIZE = 100
@@ -84,8 +87,8 @@ export class NotionTable<T extends NotionPropertySchema> {
     Object.freeze(this)
   }
 
-  private withRetry<R>(fn: () => Promise<R>): Promise<R> {
-    return withRetry(fn, this.retryOptions)
+  private withRetry<R>(fn: () => Promise<R>, retryServerErrors = true): Promise<R> {
+    return withRetry(fn, { ...this.retryOptions, retryServerErrors })
   }
 
   async findMany(options: FindOptions<T> = {}): Promise<{
@@ -94,9 +97,11 @@ export class NotionTable<T extends NotionPropertySchema> {
     nextCursor: string | null
   }> {
     const where = options.where || {}
-    const limit = options.limit || NOTION_PAGE_SIZE
+    const limit = validateLimit(options.limit ?? NOTION_PAGE_SIZE)
 
-    const maxCount = Math.min(Math.max(1, limit), MAX_FIND_LIMIT)
+    const maxCount = Math.min(limit, MAX_FIND_LIMIT)
+
+    if (maxCount === 0) return { records: [], hasMore: false, nextCursor: null }
 
     const notionFilter =
       Object.keys(where).length > 0
@@ -136,11 +141,13 @@ export class NotionTable<T extends NotionPropertySchema> {
       return this.buildReference(cached)
     }
 
+    const cacheVersion = this.cache?.version
+
     try {
       const response = await this.withRetry(() => this.client.pages.retrieve({ page_id: id }))
       const notionPage = toNotionPage(response)
 
-      this.cache?.setPage(id, notionPage)
+      if (this.cache?.version === cacheVersion) this.cache?.setPage(id, notionPage)
 
       return this.buildReference(notionPage)
     } catch (e) {
@@ -161,16 +168,20 @@ export class NotionTable<T extends NotionPropertySchema> {
       children = blocks.map((block) => this.markdown.enhanceBlock(block))
     }
 
+    validateBlockRequests(children)
+
     // 100個超のchildrenはページ作成後に100個ずつ追加する
     const initialChildren = children.slice(0, MAX_BLOCK_CHILDREN)
     const remainingChildren = children.slice(MAX_BLOCK_CHILDREN)
 
-    const response = await this.withRetry(() =>
-      this.client.pages.create({
-        parent: { data_source_id: this.dataSourceId },
-        properties: properties,
-        children: initialChildren,
-      }),
+    const response = await this.withRetry(
+      () =>
+        this.client.pages.create({
+          parent: { data_source_id: this.dataSourceId },
+          properties: properties,
+          children: initialChildren,
+        }),
+      false,
     )
 
     if (remainingChildren.length > 0) {
@@ -212,24 +223,34 @@ export class NotionTable<T extends NotionPropertySchema> {
 
   async update(id: string, input: UpdateInput<T>): Promise<NotionPageReference<T>> {
     const properties = this.propertyConverter.toNotion(this.properties, input.properties)
+    const children =
+      input.body === undefined
+        ? undefined
+        : toNotionBlocks(input.body ?? "").map((block) => this.markdown.enhanceBlock(block))
+    if (children !== undefined) validateBlockRequests(children)
 
-    const result = await this.withRetry(() =>
-      this.client.pages.update({
-        page_id: id,
-        properties: properties,
-      }),
-    )
+    // 途中まで更新された場合も古い値を返さない。失敗応答でも書き込み済みの可能性がある。
+    this.cache?.deletePage(id)
 
-    if (input.body !== undefined) {
-      await this.updatePageContent(id, input.body)
-      this.cache?.deleteBlocks(id)
+    try {
+      const result = await this.withRetry(() =>
+        this.client.pages.update({ page_id: id, properties }),
+      )
+
+      if (children !== undefined) {
+        await this.updatePageContent(id, children)
+      }
+
+      const notionPage = toNotionPage(result)
+      this.cache?.setPage(id, notionPage)
+
+      return this.buildReference(notionPage)
+    } catch (error) {
+      this.cache?.deletePage(id)
+      throw error
+    } finally {
+      if (children !== undefined) this.cache?.deleteBlocks(id)
     }
-
-    const notionPage = toNotionPage(result)
-
-    this.cache?.setPage(id, notionPage)
-
-    return this.buildReference(notionPage)
   }
 
   async updateMany(options: UpdateManyOptions<T>): Promise<BatchResult<NotionPageReference<T>>> {
@@ -255,6 +276,7 @@ export class NotionTable<T extends NotionPropertySchema> {
    * 検索と作成が別リクエストのため、同一条件での並行実行時は重複レコードが作成される可能性がある（NotionのAPIに一意制約はない）
    */
   async upsert(options: UpsertOptions<T>): Promise<NotionPageReference<T>> {
+    this.assertMutationFilter(options.where)
     const current = await this.findOne({ where: options.where })
 
     if (current !== null) {
@@ -329,7 +351,11 @@ export class NotionTable<T extends NotionPropertySchema> {
   ): Promise<NotionPageReference<T>[]> {
     const matchedRecords: NotionPageReference<T>[] = []
 
+    if (maxCount !== null && validateLimit(maxCount) === 0) return matchedRecords
+    this.assertMutationFilter(where)
+
     let cursor: string | undefined
+    const visited = new Set<string>()
 
     while (true) {
       const remaining =
@@ -347,16 +373,12 @@ export class NotionTable<T extends NotionPropertySchema> {
         return matchedRecords
       }
 
-      if (!result.hasMore || result.nextCursor === null) {
-        return matchedRecords
-      }
-
-      // APIが同一カーソルを返し続けた場合の無限ループを防ぐ
-      if (result.nextCursor === cursor) {
-        return matchedRecords
-      }
-
-      cursor = result.nextCursor
+      const nextCursor = paginationCursor(
+        { has_more: result.hasMore, next_cursor: result.nextCursor },
+        visited,
+      )
+      if (nextCursor === null) return matchedRecords
+      cursor = nextCursor
     }
   }
 
@@ -369,6 +391,17 @@ export class NotionTable<T extends NotionPropertySchema> {
       cache: this.cache ?? undefined,
       listBlockChildren: (args) => this.withRetry(() => this.client.blocks.children.list(args)),
     })
+  }
+
+  private assertMutationFilter(where: WhereCondition<T>): void {
+    if (
+      Object.keys(where).length > 0 &&
+      this.queryBuilder.buildFilter(this.properties, where) === undefined
+    ) {
+      throw new Error(
+        "where must contain an effective filter; use {} to explicitly match all records",
+      )
+    }
   }
 
   private buildNotionSort(
@@ -391,6 +424,7 @@ export class NotionTable<T extends NotionPropertySchema> {
 
     let nextCursor: string | null = props.startCursor || null
     let hasMore = true
+    const visited = new Set<string>(props.startCursor ? [props.startCursor] : [])
 
     // NotionQueryWhere と QueryDataSourceParameters["filter"] は
     // 構造的に同一だが独立宣言のため互換性がない
@@ -411,14 +445,18 @@ export class NotionTable<T extends NotionPropertySchema> {
         }),
       )
 
-      for (const result of response.results) {
-        if (!("properties" in result)) {
-          continue
-        }
-        references.push(this.buildReference(result as PageObjectResponse))
+      if (response.request_status?.type === "incomplete") {
+        throw new Error("Notion returned an incomplete query result")
       }
 
-      nextCursor = response.next_cursor
+      for (const result of response.results) {
+        if (result.object !== "page") {
+          continue
+        }
+        references.push(this.buildReference(toNotionPage(result)))
+      }
+
+      nextCursor = paginationCursor(response, visited)
       hasMore = response.has_more
     }
 
@@ -429,8 +467,9 @@ export class NotionTable<T extends NotionPropertySchema> {
     })
   }
 
-  private async updatePageContent(id: string, content: string | null): Promise<void> {
+  private async updatePageContent(id: string, blocks: BlockObjectRequest[]): Promise<void> {
     let cursor: string | undefined
+    const visited = new Set<string>()
 
     const existing: { id: string }[] = []
 
@@ -444,21 +483,19 @@ export class NotionTable<T extends NotionPropertySchema> {
       for (const block of response.results) {
         existing.push({ id: block.id })
       }
-      if (!response.has_more || response.next_cursor === null) break
-      cursor = response.next_cursor
+      const nextCursor = paginationCursor(response, visited)
+      if (nextCursor === null) break
+      cursor = nextCursor
     }
+
+    // 追加失敗時に元の本文を失わないよう、全チャンクの追加成功後に旧本文を消す。
+    // Notionにはトランザクションがないため、途中失敗では旧本文と追加済み部分が残る。
+    await this.appendBlockChunks(id, blocks)
 
     // 並列で削除するとNotionのレート制限に直撃するため逐次で実行する
     for (const block of existing) {
       await this.withRetry(() => this.client.blocks.delete({ block_id: block.id }))
     }
-
-    if (content === null) return
-
-    const blocks = toNotionBlocks(content)
-    const enhancedBlocks = blocks.map((block) => this.markdown.enhanceBlock(block))
-
-    await this.appendBlockChunks(id, enhancedBlocks)
   }
 
   // Notion APIの1リクエスト100 children制限を超えないよう分割して追加する
@@ -466,11 +503,13 @@ export class NotionTable<T extends NotionPropertySchema> {
     for (let index = 0; index < blocks.length; index += MAX_BLOCK_CHILDREN) {
       const chunk = blocks.slice(index, index + MAX_BLOCK_CHILDREN)
 
-      await this.withRetry(() =>
-        this.client.blocks.children.append({
-          block_id: id,
-          children: chunk,
-        }),
+      await this.withRetry(
+        () =>
+          this.client.blocks.children.append({
+            block_id: id,
+            children: chunk,
+          }),
+        false,
       )
     }
   }

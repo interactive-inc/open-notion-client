@@ -2,6 +2,7 @@ type Props = {
   maxRetries: number
   baseDelayMs: number
   isRetryable?: (error: unknown) => boolean
+  retryServerErrors?: boolean
 }
 
 const MAX_RETRY_AFTER_MS = 60_000
@@ -12,7 +13,7 @@ const DEFAULT_IS_RETRYABLE = (error: unknown): boolean => {
   }
 
   if ("status" in error && typeof error.status === "number") {
-    return error.status === 429 || error.status >= 500
+    return error.status === 429 || (error.status >= 500 && error.status < 600)
   }
 
   if ("code" in error && error.code === "rate_limited") {
@@ -52,7 +53,7 @@ function getRetryAfterMs(error: unknown): number | null {
 
   const headerValue = readHeaderValue(error.headers, "retry-after")
 
-  if (headerValue === null) {
+  if (headerValue === null || headerValue.trim() === "") {
     return null
   }
 
@@ -83,14 +84,26 @@ export async function withRetry<T>(fn: () => Promise<T>, props: Props): Promise<
     } catch (e) {
       lastError = e
 
-      if (attempt >= maxRetries || !isRetryable(e)) {
+      const isAmbiguousWrite =
+        props.retryServerErrors === false &&
+        e !== null &&
+        typeof e === "object" &&
+        "status" in e &&
+        typeof e.status === "number" &&
+        e.status >= 500 &&
+        e.status !== 529
+
+      if (attempt >= maxRetries || !isRetryable(e) || isAmbiguousWrite) {
         throw e
       }
 
       // Retry-Afterヘッダがあれば従い、なければフルジッター付き指数バックオフ
       const retryAfterMs = getRetryAfterMs(e)
 
-      const delay = retryAfterMs ?? Math.random() * props.baseDelayMs * 2 ** attempt
+      const baseDelayMs = Number.isFinite(props.baseDelayMs) ? Math.max(0, props.baseDelayMs) : 400
+      const backoffMs =
+        baseDelayMs === 0 ? 0 : Math.min(baseDelayMs * 2 ** attempt, MAX_RETRY_AFTER_MS)
+      const delay = retryAfterMs ?? Math.random() * backoffMs
 
       await new Promise((resolve) => setTimeout(resolve, delay))
     }

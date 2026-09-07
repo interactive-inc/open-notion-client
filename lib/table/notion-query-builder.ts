@@ -19,19 +19,28 @@ export class NotionQueryBuilder {
     schema: T,
     where: WhereCondition<T>,
   ): NotionQueryWhere | undefined {
-    // スキーマ側に or / and という名前のフィールドが定義できるため
-    // 配列であることも確認してから論理結合子として扱う
-    // in 演算子だけでは WhereCondition<T>[] に絞り込めずキャストが必要になる
-    if ("or" in where && Array.isArray(where.or)) {
-      return this.buildOrCondition(schema, where.or as WhereCondition<T>[])
+    const conditions: NotionQueryWhere[] = []
+
+    for (const entry of Object.entries(where)) {
+      const key = entry[0]
+      const value = entry[1]
+      let condition: NotionQueryWhere | undefined
+
+      if ((key === "or" || key === "and") && !Object.hasOwn(schema, key) && Array.isArray(value)) {
+        condition =
+          key === "or"
+            ? this.buildOrCondition(schema, value)
+            : this.buildAndCondition(schema, value)
+      } else {
+        condition = this.buildFieldConditions(schema, { [key]: value })
+      }
+
+      if (condition !== undefined) conditions.push(condition)
     }
 
-    if ("and" in where && Array.isArray(where.and)) {
-      return this.buildAndCondition(schema, where.and as WhereCondition<T>[])
-    }
+    if (conditions.length <= 1) return conditions[0]
 
-    // Handle field conditions
-    return this.buildFieldConditions(schema, where)
+    return { and: conditions }
   }
 
   buildSort<T extends NotionPropertySchema>(sorts: SortOption<T>[]): NotionSort[] {
@@ -89,8 +98,8 @@ export class NotionQueryBuilder {
       const key = entry[0]
       const value = entry[1]
       const config = schema[key]
-      if (!config) {
-        continue
+      if (!Object.hasOwn(schema, key) || !config) {
+        throw new Error(`Unknown property "${key}" in filter`)
       }
 
       // Notion API filter format
@@ -143,6 +152,17 @@ export class NotionQueryBuilder {
       "after",
       "on_or_before",
       "on_or_after",
+      "this_week",
+      "past_week",
+      "past_month",
+      "past_year",
+      "next_week",
+      "next_month",
+      "next_year",
+      "string",
+      "number",
+      "checkbox",
+      "date",
     ]
     return Object.keys(value).some((key) => notionFilterKeys.includes(key))
   }
@@ -376,10 +396,11 @@ export class NotionQueryBuilder {
   }
 
   private buildPeopleCondition(key: string, value: unknown): NotionQueryWhere | null | undefined {
-    if (typeof value === "string") {
+    const userId = this.extractUserId(value)
+    if (userId !== null) {
       return {
         property: key,
-        people: { contains: value },
+        people: { contains: userId },
       } satisfies NotionQueryWhere
     }
 
@@ -438,6 +459,7 @@ export class NotionQueryBuilder {
     // toISOString はUTC基準のため UTC+9 などの環境では日付が1日ずれる
     // ローカルタイムゾーンの年月日で組み立てる
     if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) throw new Error("Invalid date value")
       const year = value.getFullYear()
       const month = String(value.getMonth() + 1).padStart(2, "0")
       const day = String(value.getDate()).padStart(2, "0")

@@ -426,16 +426,16 @@ test("buildFilter: 空の条件は undefined を返す", () => {
   expect(result).toBeUndefined()
 })
 
-test("buildFilter: 存在しないフィールドは無視される", () => {
+test("buildFilter: 存在しないフィールドは全件検索を防ぐため拒否する", () => {
   const schema: NotionPropertySchema = {
     slug: { type: "rich_text" },
   }
 
-  const result = queryBuilder.buildFilter(schema, {
-    nonexistent: "value",
-  })
-
-  expect(result).toBeUndefined()
+  expect(() =>
+    queryBuilder.buildFilter(schema, {
+      nonexistent: "value",
+    }),
+  ).toThrow('Unknown property "nonexistent"')
 })
 
 test("buildFilter: Notion API filter format - equals", () => {

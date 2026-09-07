@@ -57,6 +57,12 @@ Direct values also work for `url` / `email` / `phone_number` (exact match), `rel
 
 If a `where` value cannot be converted to a Notion filter, an `Error` is thrown instead of silently matching all records.
 
+Unknown property names also throw. `null`, `undefined`, and empty array values are omitted; use `{ is_empty: true }` to search for empty values. Bulk mutations and `upsert` reject a nonempty `where` that produces no effective filter. Use `{}` explicitly for operations intended to match all records.
+
+Relative date operators (`this_week`, `past_week`, `past_month`, `past_year`, `next_week`, `next_month`, `next_year`) and typed formula filters are supported. Logical operators and property conditions at the same level are combined with AND. A schema property named `or` or `and` takes precedence over the logical operator of the same name.
+
+`limit` must be a non-negative safe integer. `limit: 0` returns an empty result without an API call. Each `findMany` call returns at most 1,024 records; follow `nextCursor` for more. Inconsistent or repeated cursors, partial pages and incomplete query responses throw rather than return a result that appears complete.
+
 ### Logical operators
 
 ```typescript

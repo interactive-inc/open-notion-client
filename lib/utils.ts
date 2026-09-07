@@ -3,6 +3,7 @@ import type {
   RichTextItemResponse,
   UpdatePageResponse,
 } from "@notionhq/client/build/src/api-endpoints"
+import { escapeMarkdownText } from "@/escape-markdown-text"
 
 /**
  * UpdatePageResponse (PageObjectResponse | PartialPageObjectResponse) を
@@ -90,7 +91,8 @@ function wrapAnnotatedSegment(segment: AnnotatedSegment): string {
   const hasStyle = segment.isBold || segment.isItalic || segment.isStrikethrough || segment.isCode
 
   if (!hasStyle) {
-    return segment.href ? `[${segment.plainText}](${segment.href})` : segment.plainText
+    const plainText = escapeMarkdownText(segment.plainText)
+    return segment.href ? `[${plainText}](${segment.href})` : plainText
   }
 
   const matched = segment.plainText.match(/^(\s*)([\s\S]*?)(\s*)$/)
@@ -105,9 +107,14 @@ function wrapAnnotatedSegment(segment: AnnotatedSegment): string {
     return segment.href ? `[${segment.plainText}](${segment.href})` : segment.plainText
   }
 
-  let wrapped = core
+  let wrapped = segment.isCode ? core : escapeMarkdownText(core)
 
-  if (segment.isCode) wrapped = `\`${wrapped}\``
+  if (segment.isCode) {
+    const longestRun = Math.max(0, ...(wrapped.match(/`+/g) ?? []).map((run) => run.length))
+    const fence = "`".repeat(longestRun + 1)
+    const padding = wrapped.startsWith("`") || wrapped.endsWith("`") ? " " : ""
+    wrapped = `${fence}${padding}${wrapped}${padding}${fence}`
+  }
 
   if (segment.isStrikethrough) wrapped = `~~${wrapped}~~`
 

@@ -1,256 +1,161 @@
-import { expect, test, vi } from "vite-plus/test"
-import { withRetry } from "./retry"
+import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test"
+import { withRetry } from "@/retry"
 
-test("成功時はそのまま値を返す", async () => {
-  const result = await withRetry(() => Promise.resolve(42), {
-    maxRetries: 3,
-    baseDelayMs: 10,
-  })
-
-  expect(result).toBe(42)
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.spyOn(Math, "random").mockReturnValue(0.5)
 })
 
-test("リトライ可能なエラーはリトライする", async () => {
-  let attempts = 0
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts < 3) {
-        const error = new Error("rate limited") as Error & { status: number }
-        error.status = 429
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    { maxRetries: 3, baseDelayMs: 10 },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(3)
+afterEach(() => {
+  vi.useRealTimers()
+  vi.restoreAllMocks()
 })
 
-test("リトライ不可能なエラーは即座にthrow", async () => {
-  const promise = withRetry(
-    () => {
-      throw new Error("auth failed")
-    },
-    { maxRetries: 3, baseDelayMs: 10 },
-  )
-
-  expect(promise).rejects.toThrow("auth failed")
+test("成功時は待機せず値を返す", async () => {
+  const attempt = vi.fn(async () => 42)
+  expect(await withRetry(attempt, { maxRetries: 3, baseDelayMs: 100 })).toBe(42)
+  expect(attempt).toHaveBeenCalledTimes(1)
+  expect(vi.getTimerCount()).toBe(0)
 })
 
-test("maxRetries回リトライしても失敗したらthrow", async () => {
-  const promise = withRetry(
-    () => {
-      const error = new Error("server error") as Error & { status: number }
-      error.status = 500
-      throw error
-    },
-    { maxRetries: 2, baseDelayMs: 10 },
-  )
+test.each([429, 500, 502, 503, 504, 529])(
+  "HTTP %s は指数バックオフとジッターで再試行する",
+  async (status) => {
+    const attempt = vi
+      .fn()
+      .mockRejectedValueOnce({ status })
+      .mockRejectedValueOnce({ status })
+      .mockResolvedValue("ok")
+    const pending = withRetry(attempt, { maxRetries: 2, baseDelayMs: 100 })
+    await vi.advanceTimersByTimeAsync(49)
+    expect(attempt).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(attempt).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(99)
+    expect(attempt).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(await pending).toBe("ok")
+    expect(attempt).toHaveBeenCalledTimes(3)
+  },
+)
 
-  expect(promise).rejects.toThrow("server error")
+test.each([400, 401, 403, 404, 600])("HTTP %s を再試行せず元の値をthrowする", async (status) => {
+  const error = { status }
+  const attempt = vi.fn().mockRejectedValue(error)
+  await expect(withRetry(attempt, { maxRetries: 3, baseDelayMs: 100 })).rejects.toBe(error)
+  expect(attempt).toHaveBeenCalledTimes(1)
+  expect(vi.getTimerCount()).toBe(0)
 })
 
-test("rate_limitedコードもリトライ対象", async () => {
-  let attempts = 0
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts === 1) {
-        const error = new Error("rate limited") as Error & { code: string }
-        error.code = "rate_limited"
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    { maxRetries: 2, baseDelayMs: 10 },
+test("再試行上限に到達したら最後のエラーをそのまま返す", async () => {
+  const lastError = { status: 503, message: "final" }
+  const attempt = vi.fn().mockRejectedValueOnce({ status: 500 }).mockRejectedValue(lastError)
+  const assertion = expect(withRetry(attempt, { maxRetries: 2, baseDelayMs: 100 })).rejects.toBe(
+    lastError,
   )
+  await vi.runAllTimersAsync()
+  await assertion
+  expect(attempt).toHaveBeenCalledTimes(3)
+})
 
-  expect(result).toBe("ok")
-  expect(attempts).toBe(2)
+test.each([null, undefined, "error", new Error("auth failed")])(
+  "非HTTPエラー %s の同一性を保つ",
+  async (error) => {
+    await expect(
+      withRetry(
+        async () => {
+          throw error
+        },
+        { maxRetries: 3, baseDelayMs: 100 },
+      ),
+    ).rejects.toBe(error)
+  },
+)
+
+test("rate_limitedコードだけでも再試行する", async () => {
+  const attempt = vi.fn().mockRejectedValueOnce({ code: "rate_limited" }).mockResolvedValue("ok")
+  const pending = withRetry(attempt, { maxRetries: 1, baseDelayMs: 100 })
+  await vi.runAllTimersAsync()
+  expect(await pending).toBe("ok")
 })
 
 test("カスタムisRetryableを使える", async () => {
-  let attempts = 0
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts === 1) {
-        throw new Error("custom retriable")
-      }
-      return Promise.resolve("ok")
-    },
-    {
-      maxRetries: 2,
-      baseDelayMs: 10,
-      isRetryable: (e) => e instanceof Error && e.message === "custom retriable",
-    },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(2)
+  const error = new Error("custom")
+  const attempt = vi.fn().mockRejectedValueOnce(error).mockResolvedValue("ok")
+  const pending = withRetry(attempt, {
+    maxRetries: 1,
+    baseDelayMs: 100,
+    isRetryable: (value) => value === error,
+  })
+  await vi.runAllTimersAsync()
+  expect(await pending).toBe("ok")
 })
 
-test("429のRetry-Afterヘッダ(Record形式)を優先して待つ", async () => {
-  let attempts = 0
-  const startedAt = Date.now()
+test.each([{ "Retry-After": "2" }, new Headers({ "retry-after": "2" })])(
+  "Retry-Afterはバックオフより優先する: %s",
+  async (headers) => {
+    const attempt = vi.fn().mockRejectedValueOnce({ status: 429, headers }).mockResolvedValue("ok")
+    const pending = withRetry(attempt, { maxRetries: 1, baseDelayMs: 10 })
+    await vi.advanceTimersByTimeAsync(1999)
+    expect(attempt).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(await pending).toBe("ok")
+  },
+)
 
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts === 1) {
-        const error = new Error("rate limited") as Error & {
-          status: number
-          headers: Record<string, string>
-        }
-        error.status = 429
-        error.headers = { "Retry-After": "0" }
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    // baseDelayMsが使われていたら5秒待つはずなので、即リトライ=ヘッダ優先の証明になる
-    { maxRetries: 2, baseDelayMs: 5000 },
-  )
+test.each(["", " ", "bad", "-1", "Infinity"])(
+  "不正なRetry-After %j はバックオフに戻す",
+  async (value) => {
+    const attempt = vi
+      .fn()
+      .mockRejectedValueOnce({ status: 429, headers: { "retry-after": value } })
+      .mockResolvedValue("ok")
+    const pending = withRetry(attempt, { maxRetries: 1, baseDelayMs: 100 })
+    await vi.advanceTimersByTimeAsync(49)
+    expect(attempt).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(await pending).toBe("ok")
+  },
+)
 
-  expect(result).toBe("ok")
-  expect(attempts).toBe(2)
-  expect(Date.now() - startedAt).toBeLessThan(1000)
+test("Retry-Afterの異常に大きな値は60秒を上限にする", async () => {
+  const attempt = vi
+    .fn()
+    .mockRejectedValueOnce({ status: 429, headers: { "Retry-After": "999999999" } })
+    .mockResolvedValue("ok")
+  const pending = withRetry(attempt, { maxRetries: 1, baseDelayMs: 100 })
+  await vi.advanceTimersByTimeAsync(59999)
+  expect(attempt).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(await pending).toBe("ok")
 })
 
-test("429のRetry-Afterヘッダ(Headersインスタンス)を優先して待つ", async () => {
-  let attempts = 0
-  const startedAt = Date.now()
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts === 1) {
-        const error = new Error("rate limited") as Error & {
-          status: number
-          headers: Headers
-        }
-        error.status = 429
-        error.headers = new Headers({ "retry-after": "0" })
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    { maxRetries: 2, baseDelayMs: 5000 },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(2)
-  expect(Date.now() - startedAt).toBeLessThan(1000)
+test("巨大なバックオフ値がタイマーのオーバーフローで即時再試行にならない", async () => {
+  const attempt = vi.fn().mockRejectedValueOnce({ status: 503 }).mockResolvedValue("ok")
+  const pending = withRetry(attempt, { maxRetries: 1, baseDelayMs: Number.MAX_VALUE })
+  await vi.advanceTimersByTimeAsync(29999)
+  expect(attempt).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(await pending).toBe("ok")
 })
 
-test("Retry-Afterが不正な値ならバックオフにフォールバックする", async () => {
-  let attempts = 0
+test.each([-5, -1, NaN, -Infinity, 0.5])(
+  "maxRetries %s でもfnは一度実行される",
+  async (maxRetries) => {
+    const error = { status: 503 }
+    const attempt = vi.fn().mockRejectedValue(error)
+    await expect(withRetry(attempt, { maxRetries, baseDelayMs: 10 })).rejects.toBe(error)
+    expect(attempt).toHaveBeenCalledTimes(1)
+  },
+)
 
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts === 1) {
-        const error = new Error("rate limited") as Error & {
-          status: number
-          headers: Record<string, string>
-        }
-        error.status = 429
-        error.headers = { "Retry-After": "not-a-number" }
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    { maxRetries: 2, baseDelayMs: 1 },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(2)
-})
-
-test("バックオフにフルジッターが適用される", async () => {
-  const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0)
-
-  try {
-    let attempts = 0
-    const startedAt = Date.now()
-
-    const result = await withRetry(
-      () => {
-        attempts++
-        if (attempts < 3) {
-          const error = new Error("server error") as Error & { status: number }
-          error.status = 500
-          throw error
-        }
-        return Promise.resolve("ok")
-      },
-      // Math.random()=0でdelay=0になる=乱数が掛けられている証明。固定値なら計10.5秒待つ
-      { maxRetries: 3, baseDelayMs: 3500 },
-    )
-
-    expect(result).toBe("ok")
-    expect(attempts).toBe(3)
-    expect(randomSpy).toHaveBeenCalled()
-    expect(Date.now() - startedAt).toBeLessThan(1000)
-  } finally {
-    randomSpy.mockRestore()
-  }
-})
-
-test("maxRetriesが負でもfnは1回実行される", async () => {
-  let attempts = 0
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      return Promise.resolve("ok")
-    },
-    { maxRetries: -1, baseDelayMs: 10 },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(1)
-})
-
-test("maxRetriesが負で失敗した場合は元のエラーをthrow", async () => {
-  let attempts = 0
-
-  const promise = withRetry(
-    () => {
-      attempts++
-      const error = new Error("server error") as Error & { status: number }
-      error.status = 500
-      throw error
-    },
-    { maxRetries: -5, baseDelayMs: 10 },
-  )
-
-  await expect(promise).rejects.toThrow("server error")
-  expect(attempts).toBe(1)
-})
-
-test("maxRetries: Infinityは無限リトライとして扱われる", async () => {
-  let attempts = 0
-
-  const result = await withRetry(
-    () => {
-      attempts++
-      if (attempts < 5) {
-        const error = new Error("server error") as Error & { status: number }
-        error.status = 503
-        throw error
-      }
-      return Promise.resolve("ok")
-    },
-    { maxRetries: Number.POSITIVE_INFINITY, baseDelayMs: 1 },
-  )
-
-  expect(result).toBe("ok")
-  expect(attempts).toBe(5)
+test("maxRetries Infinityは成功まで再試行する", async () => {
+  const attempt = vi
+    .fn()
+    .mockRejectedValueOnce({ status: 503 })
+    .mockRejectedValueOnce({ status: 503 })
+    .mockResolvedValue("ok")
+  const pending = withRetry(attempt, { maxRetries: Infinity, baseDelayMs: 100 })
+  await vi.runAllTimersAsync()
+  expect(await pending).toBe("ok")
 })

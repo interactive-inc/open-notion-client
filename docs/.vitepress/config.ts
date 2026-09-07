@@ -19,6 +19,7 @@ export default defineConfig({
           { text: "Query", link: "/guides/query" },
           { text: "Mutation", link: "/guides/mutation" },
           { text: "Markdown", link: "/guides/markdown" },
+          { text: "Testing", link: "/guides/testing" },
         ],
       },
       {

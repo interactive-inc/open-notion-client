@@ -295,6 +295,7 @@ export type SortOption<T extends NotionPropertySchema> = {
 import type {
   CheckboxPropertyFilter,
   DatePropertyFilter,
+  ExistencePropertyFilter,
   MultiSelectPropertyFilter,
   NumberPropertyFilter,
   PeoplePropertyFilter,
@@ -304,7 +305,9 @@ import type {
   TextPropertyFilter,
 } from "@/notion-types"
 
-type PropertyFilterForType<Config> = Config extends { type: "title" }
+type PropertyFilterForType<Config> = Config extends {
+  type: "title" | "rich_text" | "url" | "email" | "phone_number"
+}
   ? TextPropertyFilter
   : Config extends { type: "rich_text" }
     ? TextPropertyFilter
@@ -318,16 +321,36 @@ type PropertyFilterForType<Config> = Config extends { type: "title" }
             ? MultiSelectPropertyFilter
             : Config extends { type: "status" }
               ? StatusPropertyFilter
-              : Config extends { type: "date" }
+              : Config extends { type: "date" | "created_time" | "last_edited_time" }
                 ? DatePropertyFilter
-                : Config extends { type: "people" }
+                : Config extends { type: "people" | "created_by" | "last_edited_by" }
                   ? PeoplePropertyFilter
                   : Config extends { type: "relation" }
                     ? RelationPropertyFilter
-                    : never
+                    : Config extends { type: "files" }
+                      ? ExistencePropertyFilter
+                      : Config extends { type: "formula"; formulaType: "string" }
+                        ? { string: TextPropertyFilter }
+                        : Config extends { type: "formula"; formulaType: "number" }
+                          ? { number: NumberPropertyFilter }
+                          : Config extends { type: "formula"; formulaType: "boolean" }
+                            ? { checkbox: CheckboxPropertyFilter }
+                            : Config extends { type: "formula"; formulaType: "date" }
+                              ? { date: DatePropertyFilter }
+                              : never
+
+type QueryValue<Config> = Config extends { type: "date" | "created_time" | "last_edited_time" }
+  ? string | Date
+  : Config extends { type: "people" }
+    ? string | NotionUser | Array<string | NotionUser>
+    : Config extends { type: "relation" | "created_by" | "last_edited_by" | "multi_select" }
+      ? string
+      : Config extends { type: "formula"; formulaType: "date" }
+        ? string | Date
+        : never
 
 type WhereFieldCondition<T extends NotionPropertySchema> = {
-  [K in keyof SchemaType<T>]?: SchemaType<T>[K] | PropertyFilterForType<T[K]>
+  [K in keyof SchemaType<T>]?: SchemaType<T>[K] | PropertyFilterForType<T[K]> | QueryValue<T[K]>
 }
 
 export type WhereCondition<T extends NotionPropertySchema> =

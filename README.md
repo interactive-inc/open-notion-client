@@ -55,6 +55,8 @@ vp run check
 vp run build
 ```
 
+See [Testing](docs/guides/testing.md) for HTTP mocks, regression scenarios, and verification limits. Pull requests run format, lint, type, test, library build, and documentation build checks.
+
 ## Quick Start
 
 ### Define Your Schema

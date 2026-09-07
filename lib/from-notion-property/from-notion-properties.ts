@@ -9,15 +9,15 @@ export function fromNotionProperties<T extends NotionPropertySchema>(
   schema: T,
   properties: PageObjectResponse["properties"],
 ): SchemaType<T> {
-  const result: Record<string, unknown> = {}
+  const result: Array<[string, unknown]> = []
 
   for (const entry of Object.entries(schema)) {
     const key = entry[0]
     const config = entry[1]
-    const property = properties[key]
+    const property = Object.hasOwn(properties, key) ? properties[key] : undefined
 
     if (!property) {
-      result[key] = null
+      result.push([key, null])
       continue
     }
 
@@ -27,8 +27,8 @@ export function fromNotionProperties<T extends NotionPropertySchema>(
       )
     }
 
-    result[key] = fromNotionProperty(property, config)
+    result.push([key, fromNotionProperty(property, config)])
   }
 
-  return result as SchemaType<T>
+  return Object.fromEntries(result) as SchemaType<T>
 }

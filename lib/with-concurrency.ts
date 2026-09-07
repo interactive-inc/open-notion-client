@@ -9,7 +9,7 @@ export async function withConcurrency<T, R>(
   limit: number,
   fn: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
-  const effectiveLimit = Math.max(1, Math.floor(limit))
+  const effectiveLimit = Number.isNaN(limit) ? 1 : Math.max(1, Math.floor(limit))
 
   if (items.length === 0) {
     return []

@@ -9,11 +9,12 @@ export function toNotionProperties<
   T extends NotionPropertySchema,
   D extends Partial<SchemaType<T>>,
 >(schema: T, data: D): Record<string, NotionPropertyRequest> {
-  const properties: Record<string, NotionPropertyRequest> = {}
+  const properties: Array<[string, NotionPropertyRequest]> = []
 
   for (const entry of Object.entries(schema)) {
     const key = entry[0]
     const config = entry[1]
+    if (!Object.hasOwn(data, key)) continue
     const value = data[key as keyof SchemaType<T>]
 
     if (value === undefined) {
@@ -26,8 +27,8 @@ export function toNotionProperties<
       continue
     }
 
-    properties[key] = converted
+    properties.push([key, converted])
   }
 
-  return properties
+  return Object.fromEntries(properties)
 }

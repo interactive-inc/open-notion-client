@@ -1,6 +1,7 @@
 import type { BlockObjectRequest } from "@notionhq/client/build/src/api-endpoints"
 import type { Tokens } from "marked"
 import { BlockType } from "@/types"
+import { splitTextContent } from "@/to-notion-property/split-text-content"
 
 type LanguageRequest =
   | "abc"
@@ -201,14 +202,12 @@ type CodeRequest = Extract<BlockObjectRequest, { type?: "code" }>
  * Convert code token to Notion block
  */
 export function parseCodeToken(token: Tokens.Code): CodeRequest {
-  const richText = [
-    {
-      type: "text" as const,
-      text: { content: token.text },
-      plain_text: token.text,
-      annotations: {},
-    },
-  ]
+  const richText = splitTextContent(token.text).map((content) => ({
+    type: "text" as const,
+    text: { content },
+    plain_text: content,
+    annotations: {},
+  }))
 
   // Notion APIリクエストではplain_text/annotationsは無視されるが、テスト時の
   // レスポンス形互換を保つため付与している。型レベルでは構造的に互換なので

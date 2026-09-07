@@ -1,5 +1,6 @@
 import type { Tokens } from "marked"
 import type { RichTextItemResponse } from "@/types"
+import { splitTextContent } from "@/to-notion-property/split-text-content"
 
 type Annotations = NonNullable<RichTextItemResponse["annotations"]>
 
@@ -139,7 +140,13 @@ export function expandInlineTokens(
     result.push(buildItem(text, carry))
   }
 
-  return result
+  return result.flatMap((item) =>
+    splitTextContent(item.text.content).map((content) => ({
+      ...item,
+      text: { ...item.text, content },
+      plain_text: content,
+    })),
+  )
 }
 
 /**

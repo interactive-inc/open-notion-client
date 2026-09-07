@@ -3,6 +3,7 @@ import type {
   ListBlockChildrenResponse,
 } from "@notionhq/client/build/src/api-endpoints"
 import type { NotionBlock } from "@/types"
+import { paginationCursor } from "@/pagination-cursor"
 
 type Client = (args: ListBlockChildrenParameters) => Promise<ListBlockChildrenResponse>
 
@@ -19,7 +20,10 @@ type Options = {
  * 同時リクエスト数は再帰の深さによらず木全体でconcurrency以下に保たれる
  */
 export function enhance(client: Client, options: Options = {}) {
-  const concurrency = options.concurrency && options.concurrency > 0 ? options.concurrency : 3
+  const concurrency =
+    options.concurrency && options.concurrency > 0
+      ? Math.max(1, Math.floor(options.concurrency))
+      : 3
 
   // 再帰全体で共有するセマフォ。スロットはAPI呼び出しの区間だけ保持し、
   // 親が子の完了を待つ間はスロットを解放するためデッドロックしない
@@ -65,14 +69,15 @@ export function enhance(client: Client, options: Options = {}) {
     const collected: ListBlockChildrenResponse["results"] = []
 
     let cursor: string | null = null
+    const visited = new Set<string>(args.start_cursor ? [args.start_cursor] : [])
 
     while (true) {
       const response = await callClient(cursor ? { ...args, start_cursor: cursor } : args)
       collected.push(...response.results)
-      if (!response.has_more || response.next_cursor === null) {
+      cursor = paginationCursor(response, visited)
+      if (cursor === null) {
         return collected
       }
-      cursor = response.next_cursor
     }
   }
 
