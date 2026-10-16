@@ -10,6 +10,9 @@
   "main": "build/index.js",
   "module": "build/index.js",
   "types": "build/index.d.ts",
+  "files": [
+    "build"
+  ],
   "exports": {
     ".": "./build/index.js",
     "./models": "./build/models.js"
